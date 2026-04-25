@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "User": {
+      "title": "Benutzerprofil",
+      "description": "Informationen über den Athleten",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "age": { "type": "integer" },
+        "weight": { "type": "number" },
+        "height": { "type": "number" },
+        "goal": { "type": "string" },
+        "level": { "type": "string" },
+        "equipment": { "type": "array", "items": { "type": "string" } },
+        "daysPerWeek": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "age", "weight", "height", "goal", "level", "daysPerWeek"]
+    },
+    "TrainingPlan": {
+      "title": "Trainingsplan",
+      "description": "KI-generierter Plan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "workouts": { "type": "array" },
+        "userId": { "type": "string" }
+      }
+    },
+    "Meal": {
+      "title": "Mahlzeit",
+      "description": "Eintrag im Ernährungstagebuch",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "type": { "type": "string" },
+        "macros": { "type": "object" },
+        "imageUrl": { "type": "string" },
+        "userId": { "type": "string" }
+      }
+    },
+    "ExerciseHistory": {
+      "title": "Trainingsverlauf",
+      "description": "Fortschritt bei einer Übung",
+      "type": "object",
+      "properties": {
+        "exerciseName": { "type": "string" },
+        "entries": { "type": "array" },
+        "userId": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Benutzerspezifische Profile"
+    },
+    "plans/{planId}": {
+      "schema": "TrainingPlan",
+      "description": "KI-Trainingspläne der Nutzer"
+    },
+    "meals/{mealId}": {
+      "schema": "Meal",
+      "description": "Ernährungseinträge"
+    },
+    "history/{historyId}": {
+      "schema": "ExerciseHistory",
+      "description": "Fortschrittsdaten"
+    }
+  }
+}
