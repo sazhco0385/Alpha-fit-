@@ -2,39 +2,46 @@ import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import api from "../lib/api";
 import { toast } from "sonner";
-import { Trash2, Crown, Euro, Users, Calendar, TrendingUp, Loader2, Shield, X, Activity, Circle } from "lucide-react";
+import { Trash2, Crown, Euro, Users, Calendar, TrendingUp, Loader2, Shield, X, Activity, Circle, Zap, UserPlus, CheckCircle2, ShoppingCart, Sparkles, Play } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 
 export default function Admin() {
   const [stats, setStats] = useState(null);
   const [members, setMembers] = useState([]);
   const [online, setOnline] = useState({ online: [], count: 0 });
+  const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [premiumModal, setPremiumModal] = useState(null);
   const [premiumDays, setPremiumDays] = useState(30);
 
   const load = async () => {
     setLoading(true);
-    const [{ data: s }, { data: m }, { data: o }] = await Promise.all([
+    const [{ data: s }, { data: m }, { data: o }, { data: a }] = await Promise.all([
       api.get("/admin/stats"),
       api.get("/admin/members"),
       api.get("/admin/online"),
+      api.get("/admin/activity?limit=50"),
     ]);
     setStats(s);
     setMembers(m.members);
     setOnline(o);
+    setActivity(a.events);
     setLoading(false);
   };
 
   useEffect(() => {
     load();
-    // Refresh online list every 30s
+    // Refresh online + activity every 15s
     const id = setInterval(async () => {
       try {
-        const { data: o } = await api.get("/admin/online");
+        const [{ data: o }, { data: a }] = await Promise.all([
+          api.get("/admin/online"),
+          api.get("/admin/activity?limit=50"),
+        ]);
         setOnline(o);
+        setActivity(a.events);
       } catch {}
-    }, 30000);
+    }, 15000);
     return () => clearInterval(id);
   }, []);
 
@@ -95,6 +102,9 @@ export default function Admin() {
         <StatBlock icon={TrendingUp} label="Gesamt Umsatz" value={`${(stats.revenue_total || 0).toFixed(2)} €`} sub={`${stats.revenue_total_count} Käufe insgesamt`} testid="stat-revenue-total" highlight />
         <OnlineList online={online} />
       </div>
+
+      {/* Live Activity Feed */}
+      <ActivityFeed events={activity} />
 
       {/* Daily revenue chart */}
       <div className="af-card p-6 mb-8 clip-corner-tl-br">
@@ -200,8 +210,66 @@ function StatBlock({ icon: Icon, label, value, sub, highlight, testid }) {
   );
 }
 
-function OnlineList({ online }) {
+function ActivityFeed({ events }) {
+  const config = {
+    registered: { icon: UserPlus, color: "#00BFFF", text: (m) => `hat sich registriert` },
+    onboarding_completed: { icon: CheckCircle2, color: "#00FF7F", text: (m) => `hat Onboarding abgeschlossen (${m.goal || ""})` },
+    workout_started: { icon: Play, color: "#00E5FF", text: (m) => `trainiert gerade Tag ${m.day_index}` },
+    workout_completed: { icon: Zap, color: "#FFD700", text: (m) => `hat Training Tag ${m.day_index} abgeschlossen (${m.sets || 0} Sätze)` },
+    checkout_started: { icon: ShoppingCart, color: "#FF9800", text: (m) => `hat Checkout gestartet — ${m.plan} (${m.amount}€)` },
+    payment_succeeded: { icon: Sparkles, color: "#FFD700", text: (m) => `🎉 PREMIUM GEKAUFT — ${m.plan} (${m.amount}€)` },
+  };
+
+  const timeAgo = (iso) => {
+    if (!iso) return "";
+    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (diff < 60) return `vor ${diff}s`;
+    if (diff < 3600) return `vor ${Math.floor(diff/60)}m`;
+    if (diff < 86400) return `vor ${Math.floor(diff/3600)}h`;
+    return `vor ${Math.floor(diff/86400)}d`;
+  };
+
   return (
+    <div className="af-card p-4 sm:p-6 clip-corner-tl-br mb-6 sm:mb-8" data-testid="activity-feed">
+      <div className="flex items-center justify-between mb-4">
+        <div className="font-teko text-xl sm:text-2xl chrome-text flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-[#00E5FF] opacity-75 animate-ping"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00E5FF]"></span>
+          </span>
+          LIVE AKTIVITÄT
+        </div>
+        <span className="text-[10px] text-gray-500 uppercase tracking-widest font-chakra">Auto-Update 15s</span>
+      </div>
+
+      {events.length === 0 ? (
+        <div className="text-gray-500 text-sm font-chakra py-6 text-center">Noch keine Aktivität.</div>
+      ) : (
+        <div className="space-y-1 max-h-[400px] overflow-y-auto">
+          {events.map((e) => {
+            const cfg = config[e.action];
+            if (!cfg) return null;
+            const Icon = cfg.icon;
+            return (
+              <div key={e.id} className="flex items-start gap-3 p-2 hover:bg-[#0A0A10] border-b border-[#1A1A24] transition" data-testid={`activity-${e.id}`}>
+                <Icon size={16} style={{ color: cfg.color, filter: `drop-shadow(0 0 6px ${cfg.color}99)` }} className="mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-chakra text-sm text-white">
+                    <span className="font-bold text-[#00BFFF]">{e.user_name || "User"}</span>{" "}
+                    <span className="text-gray-300">{cfg.text(e.metadata || {})}</span>
+                  </div>
+                </div>
+                <div className="text-[10px] text-gray-500 font-chakra whitespace-nowrap flex-shrink-0 mt-0.5">{timeAgo(e.created_at)}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OnlineList({ online }) {  return (
     <div className="af-card p-4 clip-corner-tl-br" data-testid="online-list">
       <div className="flex items-center justify-between mb-3">
         <div className="font-teko text-xl chrome-text flex items-center gap-2">

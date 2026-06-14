@@ -213,6 +213,7 @@ async def register(payload: RegisterRequest):
         "created_at": now_iso(),
     }
     await db.users.insert_one(user)
+    await log_activity(user["id"], user["name"], "registered", {})
     token = create_token(user["id"])
     return {"token": token, "user": public_user(user)}
 
@@ -245,6 +246,7 @@ async def save_onboarding(data: OnboardingData, user: dict = Depends(get_current
         {"id": user["id"]},
         {"$set": {"profile": data.model_dump(), "onboarding_completed": True}}
     )
+    await log_activity(user["id"], user.get("name", ""), "onboarding_completed", {"goal": data.goal})
     # Auto-generate first AI plan
     plan = await generate_ai_plan(user["id"], data.model_dump())
     return {"ok": True, "plan_id": plan["id"]}
@@ -542,6 +544,8 @@ async def start_session(payload: dict, user: dict = Depends(get_current_user)):
     }
     await db.workout_sessions.insert_one(session)
     session.pop("_id", None)
+    day_index_val = session.get("day_index")
+    await log_activity(user["id"], user.get("name", ""), "workout_started", {"day_index": day_index_val})
     return {"session": session, "resumed": False}
 
 @api_router.get("/sessions/active")
@@ -600,6 +604,7 @@ async def complete_session(payload: dict, user: dict = Depends(get_current_user)
         {"id": sid},
         {"$set": {"status": "completed", "completed_at": now_iso()}}
     )
+    await log_activity(user["id"], user.get("name", ""), "workout_completed", {"day_index": s.get("day_index"), "sets": len(s.get("logged_sets", []))})
     # Reload user + sessions for badge calc
     user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
     badges = user.get("badges", [])
@@ -873,6 +878,7 @@ async def create_checkout(payload: CheckoutRequest, user: dict = Depends(get_cur
         "payment_status": "pending",
         "created_at": now_iso(),
     })
+    await log_activity(user["id"], user.get("name", ""), "checkout_started", {"plan": payload.plan, "amount": p["amount"]})
     return {"url": session.url, "session_id": session.id}
 
 @api_router.get("/payments/status/{session_id}")
@@ -909,6 +915,7 @@ async def payment_status(session_id: str, user: dict = Depends(get_current_user)
             {"session_id": session_id},
             {"$set": {"status": status_str, "payment_status": "paid", "completed_at": now_iso()}}
         )
+        await log_activity(tx["user_id"], "", "payment_succeeded", {"plan": tx["plan"], "amount": tx.get("amount")})
 
     return {
         "status": status_str,
@@ -1049,6 +1056,12 @@ async def admin_online(admin: dict = Depends(require_admin)):
         "count": len(users),
     }
 
+@api_router.get("/admin/activity")
+async def admin_activity(admin: dict = Depends(require_admin), limit: int = 50):
+    """Live-Aktivitäts-Feed - die letzten Events."""
+    events = await db.activity_events.find({}, {"_id": 0}).sort("created_at", -1).to_list(limit)
+    return {"events": events}
+
 def is_recently_active(last_active: Optional[str]) -> bool:
     if not last_active:
         return False
@@ -1066,6 +1079,17 @@ def minutes_since(last_active: Optional[str]) -> int:
         return int((datetime.now(timezone.utc) - dt).total_seconds() / 60)
     except Exception:
         return 9999
+
+async def log_activity(user_id: str, user_name: str, action: str, metadata: dict = None):
+    """Logge ein Live-Aktivitäts-Event für das Admin-Dashboard."""
+    await db.activity_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "user_name": user_name,
+        "action": action,
+        "metadata": metadata or {},
+        "created_at": now_iso(),
+    })
 
 @api_router.delete("/admin/members/{user_id}")
 async def admin_delete_member(user_id: str, admin: dict = Depends(require_admin)):
