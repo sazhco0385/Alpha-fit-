@@ -15,6 +15,7 @@ import Premium from "./pages/Premium";
 import PaymentReturn from "./pages/PaymentReturn";
 import Admin from "./pages/Admin";
 import { Impressum, AGB, Datenschutz } from "./pages/Legal";
+import A2HSPrompt from "./components/A2HSPrompt";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
               },
             }}
           />
+          <A2HSPrompt />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<AuthPage />} />

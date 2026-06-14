@@ -591,11 +591,15 @@ async def complete_session(payload: dict, user: dict = Depends(get_current_user)
         {"id": sid},
         {"$set": {"status": "completed", "completed_at": now_iso()}}
     )
-    # Badge logic
+    # Reload user + sessions for badge calc
+    user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
     badges = user.get("badges", [])
-    completed_count = await db.workout_sessions.count_documents({"user_id": user["id"], "status": "completed"})
+    existing_ids = {b["id"] for b in badges}
     new_badges = []
-    badge_def = [
+
+    # 1) WORKOUT COUNT BADGES
+    completed_count = await db.workout_sessions.count_documents({"user_id": user["id"], "status": "completed"})
+    workout_def = [
         (1, "first_workout", "Erstes Blut", "1 Training absolviert"),
         (3, "warm_up", "Aufgewärmt", "3 Trainings absolviert"),
         (5, "five_workouts", "5er Streak", "5 Trainings absolviert"),
@@ -614,13 +618,87 @@ async def complete_session(payload: dict, user: dict = Depends(get_current_user)
         (750, "myth", "Mythos", "750 Trainings absolviert"),
         (1000, "legend", "Legende", "1000 Trainings - Gott-Tier"),
     ]
-    existing_ids = {b["id"] for b in badges}
-    for threshold, bid, title, desc in badge_def:
+    for threshold, bid, title, desc in workout_def:
         if completed_count >= threshold and bid not in existing_ids:
             new_badges.append({"id": bid, "title": title, "description": desc, "earned_at": now_iso()})
+
+    # 2) STREAK BADGES (consecutive days with workouts)
+    streak = await calculate_streak(user["id"])
+    streak_def = [
+        (3, "streak_3", "3-Tage Streak", "3 Tage in Folge trainiert"),
+        (7, "streak_7", "Wochen-Krieger", "7 Tage in Folge trainiert"),
+        (14, "streak_14", "Zwei-Wochen Fokus", "14 Tage in Folge trainiert"),
+        (30, "streak_30", "Monats-Beast", "30 Tage in Folge trainiert"),
+        (60, "streak_60", "Konsistenz-King", "60 Tage in Folge trainiert"),
+        (100, "streak_100", "Eiserne Disziplin", "100 Tage in Folge trainiert"),
+    ]
+    for threshold, bid, title, desc in streak_def:
+        if streak >= threshold and bid not in existing_ids:
+            new_badges.append({"id": bid, "title": title, "description": desc, "earned_at": now_iso()})
+
+    # 3) VOLUME BADGES (total kg lifted across all sessions)
+    total_volume = await calculate_total_volume(user["id"])
+    volume_def = [
+        (10000, "vol_10t", "10 Tonnen Club", "10.000 kg insgesamt gehoben"),
+        (50000, "vol_50t", "50 Tonnen Club", "50.000 kg insgesamt gehoben"),
+        (100000, "vol_100t", "100 Tonnen Club", "100.000 kg insgesamt gehoben"),
+        (250000, "vol_250t", "Quarter Million", "250.000 kg insgesamt gehoben"),
+        (500000, "vol_500t", "Halbe Million", "500.000 kg insgesamt gehoben"),
+        (1000000, "vol_1m", "Millionär", "1.000.000 kg insgesamt gehoben"),
+    ]
+    for threshold, bid, title, desc in volume_def:
+        if total_volume >= threshold and bid not in existing_ids:
+            new_badges.append({"id": bid, "title": title, "description": desc, "earned_at": now_iso()})
+
     if new_badges:
         await db.users.update_one({"id": user["id"]}, {"$push": {"badges": {"$each": new_badges}}})
-    return {"ok": True, "new_badges": new_badges, "total_completed": completed_count}
+
+    return {
+        "ok": True,
+        "new_badges": new_badges,
+        "total_completed": completed_count,
+        "current_streak": streak,
+        "total_volume_kg": total_volume,
+    }
+
+async def calculate_streak(user_id: str) -> int:
+    """Berechnet die aktuelle Streak (konsekutive Tage mit abgeschlossenem Training)."""
+    sessions = await db.workout_sessions.find(
+        {"user_id": user_id, "status": "completed"}, {"_id": 0, "completed_at": 1}
+    ).sort("completed_at", -1).to_list(500)
+    if not sessions:
+        return 0
+    # Convert to date strings (YYYY-MM-DD), unique sorted desc
+    dates = sorted({(s.get("completed_at") or "")[:10] for s in sessions if s.get("completed_at")}, reverse=True)
+    if not dates:
+        return 0
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    yesterday_str = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+    # Streak only valid if last training is today or yesterday
+    if dates[0] != today_str and dates[0] != yesterday_str:
+        return 0
+    streak = 1
+    for i in range(1, len(dates)):
+        prev_date = datetime.fromisoformat(dates[i-1])
+        curr_date = datetime.fromisoformat(dates[i])
+        if (prev_date - curr_date).days == 1:
+            streak += 1
+        else:
+            break
+    return streak
+
+async def calculate_total_volume(user_id: str) -> float:
+    """Summiert das Gesamtvolumen (reps * weight_kg) aller abgeschlossenen Sessions."""
+    pipeline = [
+        {"$match": {"user_id": user_id, "status": "completed"}},
+        {"$unwind": "$logged_sets"},
+        {"$group": {
+            "_id": None,
+            "total": {"$sum": {"$multiply": ["$logged_sets.reps", "$logged_sets.weight_kg"]}}
+        }}
+    ]
+    result = await db.workout_sessions.aggregate(pipeline).to_list(1)
+    return result[0]["total"] if result else 0
 
 @api_router.get("/sessions/history")
 async def session_history(user: dict = Depends(get_current_user)):
@@ -628,6 +706,18 @@ async def session_history(user: dict = Depends(get_current_user)):
         {"user_id": user["id"]}, {"_id": 0}
     ).sort("started_at", -1).to_list(50)
     return {"sessions": sessions}
+
+@api_router.get("/sessions/stats")
+async def user_stats(user: dict = Depends(get_current_user)):
+    """Streak + Volume + Workout-Count für Dashboard."""
+    completed_count = await db.workout_sessions.count_documents({"user_id": user["id"], "status": "completed"})
+    streak = await calculate_streak(user["id"])
+    total_volume = await calculate_total_volume(user["id"])
+    return {
+        "total_completed": completed_count,
+        "current_streak": streak,
+        "total_volume_kg": total_volume,
+    }
 
 @api_router.get("/sessions/suggestion/{day_index}/{exercise_index}")
 async def progression_suggestion(day_index: int, exercise_index: int, user: dict = Depends(get_current_user)):

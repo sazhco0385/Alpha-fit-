@@ -4,7 +4,7 @@ import Layout from "../components/Layout";
 import BadgeGlow from "../components/BadgeGlow";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { Dumbbell, Brain, TrendingUp, Crown, Play, Calendar, Flame, Award, RefreshCw, Loader2 } from "lucide-react";
+import { Dumbbell, Brain, TrendingUp, Crown, Play, Calendar, Flame, Award, RefreshCw, Loader2, Weight } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -13,22 +13,23 @@ export default function Dashboard() {
   const [plan, setPlan] = useState(null);
   const [activeSession, setActiveSession] = useState(null);
   const [sessions, setSessions] = useState([]);
+  const [stats, setStats] = useState({ total_completed: 0, current_streak: 0, total_volume_kg: 0 });
   const [regenerating, setRegenerating] = useState(false);
 
   const load = async () => {
-    const [{ data: planData }, { data: sessData }, { data: hist }] = await Promise.all([
+    const [{ data: planData }, { data: sessData }, { data: hist }, { data: st }] = await Promise.all([
       api.get("/plans/current"),
       api.get("/sessions/active"),
       api.get("/sessions/history"),
+      api.get("/sessions/stats"),
     ]);
     setPlan(planData.plan);
     setActiveSession(sessData.session);
     setSessions(hist.sessions || []);
+    setStats(st);
   };
 
   useEffect(() => { load(); }, []);
-
-  const completedCount = sessions.filter((s) => s.status === "completed").length;
 
   const startDay = async (dayIndex) => {
     try {
@@ -54,6 +55,7 @@ export default function Dashboard() {
   };
 
   const nextBadges = [
+    // Workout count
     { id: "first_workout", title: "Erstes Blut", description: "1 Training", threshold: 1 },
     { id: "warm_up", title: "Aufgewärmt", description: "3 Trainings", threshold: 3 },
     { id: "five_workouts", title: "5er Streak", description: "5 Trainings", threshold: 5 },
@@ -71,6 +73,20 @@ export default function Dashboard() {
     { id: "immortal", title: "Unsterblich", description: "500 Trainings", threshold: 500 },
     { id: "myth", title: "Mythos", description: "750 Trainings", threshold: 750 },
     { id: "legend", title: "Legende", description: "1000 Trainings", threshold: 1000 },
+    // Streak
+    { id: "streak_3", title: "3-Tage Streak", description: "3 Tage Folge" },
+    { id: "streak_7", title: "Wochen-Krieger", description: "7 Tage Folge" },
+    { id: "streak_14", title: "Zwei-Wochen Fokus", description: "14 Tage Folge" },
+    { id: "streak_30", title: "Monats-Beast", description: "30 Tage Folge" },
+    { id: "streak_60", title: "Konsistenz-King", description: "60 Tage Folge" },
+    { id: "streak_100", title: "Eiserne Disziplin", description: "100 Tage Folge" },
+    // Volume
+    { id: "vol_10t", title: "10 Tonnen", description: "10.000 kg gehoben" },
+    { id: "vol_50t", title: "50 Tonnen", description: "50.000 kg gehoben" },
+    { id: "vol_100t", title: "100 Tonnen", description: "100.000 kg gehoben" },
+    { id: "vol_250t", title: "Quarter Million", description: "250.000 kg gehoben" },
+    { id: "vol_500t", title: "Halbe Million", description: "500.000 kg gehoben" },
+    { id: "vol_1m", title: "Millionär", description: "1.000.000 kg gehoben" },
   ];
 
   return (
@@ -99,11 +115,25 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Streak Banner */}
+      {stats.current_streak >= 3 && !activeSession && (
+        <div className="af-card p-4 mb-5 sm:mb-6 clip-corner-tl-br relative overflow-hidden" data-testid="streak-banner" style={{ borderColor: "#FF5722" }}>
+          <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 20% 50%, #FF5722 0%, transparent 50%)" }} />
+          <div className="relative flex items-center gap-3">
+            <Flame size={36} className="text-[#FF5722] flex-shrink-0" style={{ filter: "drop-shadow(0 0 12px rgba(255,87,34,0.8))" }} />
+            <div className="min-w-0">
+              <div className="font-teko text-2xl sm:text-3xl chrome-text">{stats.current_streak}-TAGE STREAK</div>
+              <div className="text-xs sm:text-sm text-gray-300 font-chakra">Verliere ihn nicht — trainiere heute!</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats Bento */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <StatCard icon={Flame} label="Workouts" value={completedCount} testid="stat-workouts" />
-        <StatCard icon={Award} label="Badges" value={user?.badges?.length || 0} testid="stat-badges" />
-        <StatCard icon={Calendar} label="Plan Version" value={plan?.version || 0} testid="stat-version" />
+        <StatCard icon={Flame} label="Workouts" value={stats.total_completed} testid="stat-workouts" />
+        <StatCard icon={Calendar} label="Streak (Tage)" value={stats.current_streak} highlight={stats.current_streak >= 3} testid="stat-streak" />
+        <StatCard icon={Weight} label="Volumen (kg)" value={formatVolume(stats.total_volume_kg)} testid="stat-volume" />
         <StatCard icon={Crown} label="Status" value={user?.is_premium ? "PREMIUM" : "FREE"} highlight={user?.is_premium} testid="stat-status" />
       </div>
 
@@ -170,4 +200,11 @@ function StatCard({ icon: Icon, label, value, highlight, testid }) {
       <div className="text-[10px] text-gray-500 uppercase tracking-[0.25em] font-chakra mt-1">{label}</div>
     </div>
   );
+}
+
+function formatVolume(kg) {
+  if (!kg) return "0";
+  if (kg >= 1000000) return `${(kg / 1000000).toFixed(1)}M`;
+  if (kg >= 1000) return `${(kg / 1000).toFixed(1)}t`;
+  return Math.round(kg).toLocaleString();
 }

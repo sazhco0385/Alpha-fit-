@@ -1,6 +1,7 @@
-import { Award, Flame, Zap, Trophy, Crown, Shield, Swords, Star, Skull, Mountain, Gem, Sparkles, Target, Heart } from "lucide-react";
+import { Award, Flame, Zap, Trophy, Crown, Shield, Swords, Star, Skull, Mountain, Gem, Sparkles, Target, Heart, Calendar, CalendarDays, CalendarCheck, CalendarHeart, CalendarRange, CalendarClock, Weight, Dumbbell, Anchor, Layers, Sigma, Infinity as InfinityIcon } from "lucide-react";
 
 const ICONS = {
+  // Workout count
   first_workout: Zap,
   warm_up: Flame,
   five_workouts: Flame,
@@ -18,10 +19,54 @@ const ICONS = {
   immortal: Heart,
   myth: Skull,
   legend: Trophy,
+  // Streak
+  streak_3: Calendar,
+  streak_7: CalendarDays,
+  streak_14: CalendarCheck,
+  streak_30: CalendarHeart,
+  streak_60: CalendarRange,
+  streak_100: CalendarClock,
+  // Volume
+  vol_10t: Weight,
+  vol_50t: Dumbbell,
+  vol_100t: Anchor,
+  vol_250t: Layers,
+  vol_500t: Sigma,
+  vol_1m: InfinityIcon,
 };
 
-// Color tier by threshold (visual progression)
+const STREAK_IDS = ["streak_3", "streak_7", "streak_14", "streak_30", "streak_60", "streak_100"];
+const VOLUME_IDS = ["vol_10t", "vol_50t", "vol_100t", "vol_250t", "vol_500t", "vol_1m"];
+
+// Color tier by category + threshold (visual progression)
 function tierColor(id) {
+  // Streak: orange/red flame palette
+  if (STREAK_IDS.includes(id)) {
+    const idx = STREAK_IDS.indexOf(id);
+    const palette = [
+      { ring: "linear-gradient(180deg, #FFB74D, #E65100)", icon: "#FFB74D" }, // 3d
+      { ring: "linear-gradient(180deg, #FF9800, #BF360C)", icon: "#FF9800" }, // 7d
+      { ring: "linear-gradient(180deg, #FF5722, #B71C1C)", icon: "#FF5722" }, // 14d
+      { ring: "linear-gradient(180deg, #F44336, #880E4F)", icon: "#FF1744" }, // 30d
+      { ring: "linear-gradient(180deg, #E91E63, #4A148C)", icon: "#FF4081" }, // 60d
+      { ring: "linear-gradient(180deg, #FF1744, #6A1B9A)", icon: "#FF1744" }, // 100d
+    ];
+    return palette[idx] || palette[0];
+  }
+  // Volume: blue/cyan plate-stack palette
+  if (VOLUME_IDS.includes(id)) {
+    const idx = VOLUME_IDS.indexOf(id);
+    const palette = [
+      { ring: "linear-gradient(180deg, #4FC3F7, #01579B)", icon: "#4FC3F7" }, // 10t
+      { ring: "linear-gradient(180deg, #29B6F6, #0277BD)", icon: "#29B6F6" }, // 50t
+      { ring: "linear-gradient(180deg, #00BFFF, #1E90FF)", icon: "#00BFFF" }, // 100t
+      { ring: "linear-gradient(180deg, #00E5FF, #0091EA)", icon: "#00E5FF" }, // 250t
+      { ring: "linear-gradient(180deg, #18FFFF, #006064)", icon: "#18FFFF" }, // 500t
+      { ring: "linear-gradient(180deg, #84FFFF, #00838F)", icon: "#84FFFF" }, // 1M
+    ];
+    return palette[idx] || palette[0];
+  }
+  // Workout count: bronze → silver → gold → platinum → diamond → mythic
   const bronze = ["first_workout", "warm_up", "five_workouts"];
   const silver = ["ten_workouts", "fifteen", "warrior"];
   const gold = ["granite", "alpha", "titan"];
