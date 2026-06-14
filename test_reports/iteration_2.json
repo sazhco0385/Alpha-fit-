@@ -1,0 +1,47 @@
+{
+  "summary": "Backend-only regression + new-feature testing for alpha-fit. 47/47 tests pass (24 baseline + 23 new). Covered heartbeat & admin online tracking, activity feed (register/onboarding/workout events), workout stats, progression suggestion (with & without history), first_workout badge logic, full support ticket lifecycle (create/list/respond/delete) + 403 for non-admin, nutrition (today/log/history/delete), GPT-5.2 Vision food-photo analyze with a real Unsplash food image (returns valid JSON with all required fields), coach chat, Stripe LIVE checkout session creation, admin stats with online_users + revenue. Existing 24-test baseline still green (no regression).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/coach/adjust-plan", "issue": "Returns HTTP 500 if LLM JSON parsing fails (no fallback to current plan). Onboarding has fallback_plan(); adjust-plan does not. Consider mirroring the fallback for resilience."},
+      {"endpoint": "/api/webhook/stripe", "issue": "STRIPE_WEBHOOK_SECRET is not set in backend/.env so the webhook silently falls back to unsigned payloads (json.loads of raw body). This is a security risk in production - any attacker reaching /api/webhook/stripe can forge checkout.session.completed and grant premium."},
+      {"endpoint": "/api/nutrition/analyze", "issue": "Returns 500 if GPT JSON is unparseable. Reasonable but could provide a graceful fallback or 422 with a clearer client-friendly message."},
+      {"endpoint": "/api/admin/members/{user_id}", "issue": "Cascading delete removes workout_sessions/training_plans/chat_messages but NOT nutrition_entries, support_tickets, payment_transactions, activity_events. Orphan data accumulates."},
+      {"endpoint": "/api/admin/tickets/{id}/respond", "issue": "No 404 check if ticket_id doesn't exist - update_one matched_count is not validated; silently returns ok=true."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_new_features.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/pytest/pytest_new_features.xml"
+  ],
+  "action_items": [
+    "Add fallback handling in /api/coach/adjust-plan when LLM JSON parsing fails (mirror onboarding's fallback_plan pattern).",
+    "Configure STRIPE_WEBHOOK_SECRET in backend/.env and ensure the webhook handler always verifies signature in production.",
+    "Extend admin_delete_member to also purge nutrition_entries, support_tickets, payment_transactions, activity_events for the user (or anonymize) to avoid orphan data.",
+    "Validate ticket existence (matched_count) in admin_respond_ticket and admin_delete_ticket; return 404 otherwise.",
+    "Consider splitting server.py (1413 lines) into routers: auth, coach, sessions, nutrition, support, admin, payments - exceeds the 700-line guideline by 2x."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 1413 lines - significantly over the 700-line guideline. Routers should be split for maintainability.",
+    "is_premium_active() silently treats malformed premium_until/trial_until ISO strings as 'not premium' (broad except). Could mask data corruption.",
+    "Activity feed has no index on user_id/created_at - will degrade as collection grows.",
+    "/api/nutrition/analyze + /api/coach/chat have no rate limiting; LLM calls are expensive and a malicious user can drain the EMERGENT_LLM_KEY budget.",
+    "calculate_streak() does datetime.fromisoformat on a YYYY-MM-DD string slice [:10] which works but is brittle (relies on completed_at always being UTC ISO).",
+    "Support ticket length caps (subject 200, message 5000) are silently truncated rather than rejected with 400 - user gets no feedback.",
+    "Admin endpoints rely on is_admin flag but no audit log for destructive ops (delete user, grant premium). Consider logging into activity_events.",
+    "is_premium field in DB is decoupled from is_premium_active() - DB may say is_premium=true even when premium_until is expired; admin_stats counts on is_premium flag (line 996) so it can over-report premium users."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_new_features.py (new comprehensive suite for nutrition/support/online/activity/badges/suggestion/stats)"
+  ],
+  "success_rate": {"backend": "100% (47/47)", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "Admin sazhco0385@gmail.com / Bellakiki1 (from /app/memory/test_credentials.md). Test users registered dynamically with TEST_ prefix and the new-features user is deleted at end via admin cleanup.",
+  "seed_data_creation": "Created two throwaway TEST_ users per run (one in baseline suite, one in new-features suite). New-features suite cleans up its user via /api/admin/members/{user_id}. Baseline suite leaves TEST_ users in DB; consider periodic purge.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All backend flows green including GPT-5.2 Vision (Unsplash food image -> full nutrition JSON in ~10s) and Stripe LIVE checkout. STRIPE_WEBHOOK_SECRET still missing. admin_stats.premium_users uses the boolean is_premium flag (not the time-aware is_premium_active), so revoked-but-not-yet-expired-cleared accounts can inflate the count - worth a follow-up if accuracy matters. Two test suites: backend/tests/backend_test.py (baseline 24) and backend/tests/test_new_features.py (new 23). Run both for full coverage.",
+  "rca of the issue": "No issues found in this iteration. All previously-flagged issues from iteration_1 (ObjectId serialization, etc.) remain fixed and verified."
+}
