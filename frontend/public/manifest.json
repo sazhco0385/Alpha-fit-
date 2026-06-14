@@ -1,0 +1,27 @@
+{
+  "name": "alpha-fit",
+  "short_name": "alpha-fit",
+  "description": "Werde zum Alpha - KI-gestützte Fitness-App",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#00BFFF",
+  "categories": ["fitness", "health", "lifestyle"],
+  "lang": "de",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/alphafit-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/alphafit-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

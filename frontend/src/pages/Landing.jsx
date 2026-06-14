@@ -66,17 +66,16 @@ export default function Landing() {
 
         {/* Right Visual */}
         <div className="relative order-first md:order-last">
-          <div className="relative w-full max-w-xs sm:max-w-md mx-auto aspect-square">
-            <div className="absolute inset-0 hex-shield pulse-glow" style={{
-              background: "linear-gradient(180deg, #00E5FF, #0066CC)",
+          <div className="relative w-full max-w-xs sm:max-w-md mx-auto aspect-square flex items-center justify-center">
+            <div className="absolute inset-4 sm:inset-8 rounded-full pulse-glow" style={{
+              background: "radial-gradient(circle, rgba(0,191,255,0.4) 0%, transparent 70%)",
             }} />
-            <div className="absolute inset-[4px] hex-shield bg-black flex items-center justify-center">
-              <div className="text-center">
-                <Zap size={80} className="mx-auto text-[#00BFFF] md:w-[120px] md:h-[120px]" style={{ filter: "drop-shadow(0 0 30px rgba(0,229,255,1))" }} />
-                <div className="mt-4 font-teko text-3xl sm:text-5xl tracking-widest chrome-text">ALPHA</div>
-                <div className="font-teko text-2xl sm:text-3xl electric-text glow-text">PROTOKOLL</div>
-              </div>
-            </div>
+            <img
+              src="/alphafit-logo.png"
+              alt="alpha-fit"
+              className="relative z-10 w-full h-full object-contain"
+              style={{ filter: "drop-shadow(0 0 40px rgba(0,191,255,0.6))" }}
+            />
           </div>
         </div>
       </section>

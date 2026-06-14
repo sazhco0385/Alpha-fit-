@@ -35,8 +35,8 @@ export default function Layout({ children }) {
                 <Crown size={12} /> <span className="hidden sm:inline">PREMIUM</span><span className="sm:hidden">PRO</span>
               </span>
             )}
-            <button onClick={() => { logout(); navigate("/"); }} className="text-gray-400 hover:text-[#00BFFF] transition p-1" data-testid="logout-btn" aria-label="Logout">
-              <LogOut size={18} />
+            <button onClick={() => { logout(); navigate("/"); }} className="text-gray-400 hover:text-[#00BFFF] transition w-11 h-11 flex items-center justify-center" data-testid="logout-btn" aria-label="Logout">
+              <LogOut size={20} />
             </button>
           </div>
         </div>
@@ -63,16 +63,16 @@ export default function Layout({ children }) {
               to={it.to}
               data-testid={it.testid}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 py-2.5 px-1 transition-all min-w-0 ${
+                `flex flex-col items-center justify-center gap-0.5 py-3 px-1 min-h-[56px] transition-all min-w-0 ${
                   isActive
                     ? "text-[#00E5FF] glow-text-soft"
-                    : "text-gray-500 hover:text-[#00BFFF]"
+                    : "text-gray-500 hover:text-[#00BFFF] active:text-[#00E5FF]"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <it.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  <it.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                   <span className="font-teko text-[10px] sm:text-xs tracking-wider truncate w-full text-center">{it.label.toUpperCase()}</span>
                 </>
               )}

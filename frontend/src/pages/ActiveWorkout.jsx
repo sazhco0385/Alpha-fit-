@@ -166,9 +166,9 @@ export default function ActiveWorkout() {
       <div className="absolute inset-0 bg-radial-blue" />
 
       {/* Top bar */}
-      <div className="relative z-10 p-3 sm:p-6 flex items-center justify-between gap-2">
-        <button onClick={() => navigate("/dashboard")} className="text-gray-400 hover:text-[#00BFFF] font-chakra uppercase tracking-widest text-xs flex-shrink-0" data-testid="workout-exit-btn">
-          <X size={18} className="inline mr-1" /> <span className="hidden sm:inline">PAUSE</span>
+      <div className="relative z-10 p-2 sm:p-6 flex items-center justify-between gap-2">
+        <button onClick={() => navigate("/dashboard")} className="text-gray-400 hover:text-[#00BFFF] font-chakra uppercase tracking-widest text-xs flex-shrink-0 w-11 h-11 flex items-center justify-center sm:w-auto sm:px-3" data-testid="workout-exit-btn">
+          <X size={20} /> <span className="hidden sm:inline ml-1">PAUSE</span>
         </button>
         <div className="font-teko text-base sm:text-2xl tracking-widest chrome-text text-center min-w-0 truncate">
           TAG {day.day_index} · <span className="electric-text glow-text-soft">{day.name}</span>
@@ -306,15 +306,16 @@ function NumberStepper({ label, value, onChange, step, testid }) {
     <div>
       <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-widest font-chakra mb-2">{label}</div>
       <div className="flex items-center gap-1.5 sm:gap-2">
-        <button onClick={() => onChange(Math.max(0, Number(value) - step))} className="w-10 h-10 sm:w-12 sm:h-12 border border-[#1A1A24] hover:border-[#00BFFF] font-teko text-xl sm:text-2xl text-[#00BFFF] transition flex-shrink-0" data-testid={`${testid}-minus`}>-</button>
+        <button onClick={() => onChange(Math.max(0, Number(value) - step))} className="w-11 h-11 sm:w-12 sm:h-12 border border-[#1A1A24] hover:border-[#00BFFF] active:bg-[#00BFFF]/10 font-teko text-xl sm:text-2xl text-[#00BFFF] transition flex-shrink-0 flex items-center justify-center" data-testid={`${testid}-minus`}>−</button>
         <input
           type="number"
+          inputMode="decimal"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="af-input text-center font-teko text-xl sm:text-3xl flex-1 min-w-0 px-1 sm:px-4"
           data-testid={testid}
         />
-        <button onClick={() => onChange(Number(value) + step)} className="w-10 h-10 sm:w-12 sm:h-12 border border-[#1A1A24] hover:border-[#00BFFF] font-teko text-xl sm:text-2xl text-[#00BFFF] transition flex-shrink-0" data-testid={`${testid}-plus`}>+</button>
+        <button onClick={() => onChange(Number(value) + step)} className="w-11 h-11 sm:w-12 sm:h-12 border border-[#1A1A24] hover:border-[#00BFFF] active:bg-[#00BFFF]/10 font-teko text-xl sm:text-2xl text-[#00BFFF] transition flex-shrink-0 flex items-center justify-center" data-testid={`${testid}-plus`}>+</button>
       </div>
     </div>
   );

@@ -125,17 +125,17 @@ export default function Admin() {
                   <td className="py-3 px-2 text-gray-500 text-xs hidden md:table-cell">{(m.created_at || "").slice(0, 10)}</td>
                   <td className="py-3 px-2">
                     <div className="flex justify-end gap-1">
-                      <button onClick={() => setPremiumModal(m)} className="p-2 text-[#00BFFF] hover:bg-[#00BFFF]/10 transition" title="Premium freischalten" data-testid={`grant-premium-${m.id}`}>
-                        <Crown size={16} />
+                      <button onClick={() => setPremiumModal(m)} className="w-11 h-11 flex items-center justify-center text-[#00BFFF] hover:bg-[#00BFFF]/10 transition" title="Premium freischalten" data-testid={`grant-premium-${m.id}`}>
+                        <Crown size={18} />
                       </button>
                       {m.is_premium && (
-                        <button onClick={() => revokePremium(m.id)} className="p-2 text-yellow-500 hover:bg-yellow-500/10 transition" title="Premium entziehen" data-testid={`revoke-premium-${m.id}`}>
-                          <X size={16} />
+                        <button onClick={() => revokePremium(m.id)} className="w-11 h-11 flex items-center justify-center text-yellow-500 hover:bg-yellow-500/10 transition" title="Premium entziehen" data-testid={`revoke-premium-${m.id}`}>
+                          <X size={18} />
                         </button>
                       )}
                       {!m.is_admin && (
-                        <button onClick={() => deleteMember(m.id, m.name)} className="p-2 text-[#FF3B30] hover:bg-red-500/10 transition" title="Löschen" data-testid={`delete-member-${m.id}`}>
-                          <Trash2 size={16} />
+                        <button onClick={() => deleteMember(m.id, m.name)} className="w-11 h-11 flex items-center justify-center text-[#FF3B30] hover:bg-red-500/10 transition" title="Löschen" data-testid={`delete-member-${m.id}`}>
+                          <Trash2 size={18} />
                         </button>
                       )}
                     </div>
