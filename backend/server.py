@@ -1,74 +1,850 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Header
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import json
 import logging
-from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
 import uuid
-from datetime import datetime, timezone
+import bcrypt
+import jwt
+import stripe
+from pathlib import Path
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional, Dict, Any
+from datetime import datetime, timezone, timedelta
 
+from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# ===== Config =====
+MONGO_URL = os.environ['MONGO_URL']
+DB_NAME = os.environ['DB_NAME']
+EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
+STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
+JWT_SECRET = os.environ.get('JWT_SECRET', 'changeme')
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 
-# Create the main app without a prefix
-app = FastAPI()
+stripe.api_key = STRIPE_API_KEY
 
-# Create a router with the /api prefix
+client = AsyncIOMotorClient(MONGO_URL)
+db = client[DB_NAME]
+
+app = FastAPI(title="alpha-fit API")
 api_router = APIRouter(prefix="/api")
+security = HTTPBearer(auto_error=False)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("alphafit")
+
+# ===== Pricing Plans (server-side only) =====
+PLANS = {
+    "monthly": {"amount": 9.99, "currency": "eur", "label": "1 Monat", "interval": "month", "interval_count": 1, "days": 30},
+    "quarterly": {"amount": 19.99, "currency": "eur", "label": "3 Monate", "interval": "month", "interval_count": 3, "days": 90},
+    "yearly": {"amount": 69.99, "currency": "eur", "label": "1 Jahr", "interval": "year", "interval_count": 1, "days": 365},
+}
+TRIAL_DAYS = 7
 
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+# ===== Models =====
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
 
-# Add your routes to the router instead of directly to app
+class OnboardingData(BaseModel):
+    goal: str  # muscle_gain | fat_loss | strength | endurance | general
+    experience: str  # beginner | intermediate | advanced
+    gender: str
+    age: int
+    height_cm: float
+    weight_kg: float
+    days_per_week: int
+    equipment: str  # home | gym | minimal
+    injuries: Optional[str] = ""
+
+class ChatMessage(BaseModel):
+    text: str
+
+class LogSetRequest(BaseModel):
+    session_id: str
+    exercise_index: int
+    set_index: int
+    reps: int
+    weight_kg: float
+
+class CheckoutRequest(BaseModel):
+    plan: str  # monthly | quarterly | yearly
+    origin_url: str
+
+class AdminPremiumRequest(BaseModel):
+    user_id: str
+    days: int
+
+
+# ===== Helpers =====
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+def hash_password(pw: str) -> str:
+    return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
+
+def verify_password(pw: str, hashed: str) -> bool:
+    try:
+        return bcrypt.checkpw(pw.encode(), hashed.encode())
+    except Exception:
+        return False
+
+def create_token(user_id: str) -> str:
+    payload = {"sub": user_id, "exp": datetime.now(timezone.utc) + timedelta(days=30)}
+    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+
+def decode_token(token: str) -> Optional[str]:
+    try:
+        data = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        return data.get("sub")
+    except Exception:
+        return None
+
+def public_user(u: dict) -> dict:
+    if not u:
+        return None
+    return {
+        "id": u.get("id"),
+        "email": u.get("email"),
+        "name": u.get("name"),
+        "is_admin": u.get("is_admin", False),
+        "is_premium": is_premium_active(u),
+        "premium_until": u.get("premium_until"),
+        "trial_until": u.get("trial_until"),
+        "onboarding_completed": u.get("onboarding_completed", False),
+        "profile": u.get("profile"),
+        "current_plan_id": u.get("current_plan_id"),
+        "badges": u.get("badges", []),
+        "created_at": u.get("created_at"),
+    }
+
+def is_premium_active(u: dict) -> bool:
+    now = datetime.now(timezone.utc)
+    for key in ("premium_until", "trial_until"):
+        v = u.get(key)
+        if v:
+            try:
+                dt = datetime.fromisoformat(v)
+                if dt > now:
+                    return True
+            except Exception:
+                pass
+    return False
+
+async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> dict:
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Missing token")
+    user_id = decode_token(credentials.credentials)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
+
+async def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin only")
+    return user
+
+
+# ===== Startup: Seed admin =====
+@app.on_event("startup")
+async def seed_admin():
+    if not ADMIN_EMAIL or not ADMIN_PASSWORD:
+        return
+    existing = await db.users.find_one({"email": ADMIN_EMAIL})
+    if existing:
+        # Make sure flag is set
+        await db.users.update_one({"email": ADMIN_EMAIL}, {"$set": {"is_admin": True}})
+        return
+    user = {
+        "id": str(uuid.uuid4()),
+        "email": ADMIN_EMAIL,
+        "password_hash": hash_password(ADMIN_PASSWORD),
+        "name": "Alpha Admin",
+        "is_admin": True,
+        "is_premium": True,
+        "premium_until": (datetime.now(timezone.utc) + timedelta(days=3650)).isoformat(),
+        "trial_until": None,
+        "onboarding_completed": False,
+        "profile": None,
+        "current_plan_id": None,
+        "badges": [],
+        "created_at": now_iso(),
+    }
+    await db.users.insert_one(user)
+    logger.info(f"Seeded admin user: {ADMIN_EMAIL}")
+
+
+# ===== Auth =====
+@api_router.post("/auth/register")
+async def register(payload: RegisterRequest):
+    existing = await db.users.find_one({"email": payload.email.lower()})
+    if existing:
+        raise HTTPException(status_code=400, detail="E-Mail bereits registriert")
+    user = {
+        "id": str(uuid.uuid4()),
+        "email": payload.email.lower(),
+        "password_hash": hash_password(payload.password),
+        "name": payload.name,
+        "is_admin": False,
+        "is_premium": False,
+        "premium_until": None,
+        "trial_until": None,
+        "onboarding_completed": False,
+        "profile": None,
+        "current_plan_id": None,
+        "badges": [],
+        "created_at": now_iso(),
+    }
+    await db.users.insert_one(user)
+    token = create_token(user["id"])
+    return {"token": token, "user": public_user(user)}
+
+@api_router.post("/auth/login")
+async def login(payload: LoginRequest):
+    user = await db.users.find_one({"email": payload.email.lower()}, {"_id": 0})
+    if not user or not verify_password(payload.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Ungültige Anmeldedaten")
+    token = create_token(user["id"])
+    return {"token": token, "user": public_user(user)}
+
+@api_router.get("/auth/me")
+async def me(user: dict = Depends(get_current_user)):
+    return public_user(user)
+
+
+# ===== Onboarding =====
+@api_router.post("/onboarding")
+async def save_onboarding(data: OnboardingData, user: dict = Depends(get_current_user)):
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"profile": data.model_dump(), "onboarding_completed": True}}
+    )
+    # Auto-generate first AI plan
+    plan = await generate_ai_plan(user["id"], data.model_dump())
+    return {"ok": True, "plan_id": plan["id"]}
+
+
+# ===== AI Coach =====
+def build_coach_system() -> str:
+    return (
+        "Du bist Alpha Coach, ein hochmoderner KI-Personaltrainer für die alpha-fit App. "
+        "Du erstellst Trainingspläne und passt sie progressiv an. "
+        "Antworte IMMER auf Deutsch. Sei direkt, motivierend, alpha-männlich, präzise."
+    )
+
+async def call_llm(system: str, user_text: str, session_id: str) -> str:
+    chat = LlmChat(
+        api_key=EMERGENT_LLM_KEY,
+        session_id=session_id,
+        system_message=system,
+    ).with_model("openai", "gpt-5.2")
+    resp = await chat.send_message(UserMessage(text=user_text))
+    return resp if isinstance(resp, str) else str(resp)
+
+async def generate_ai_plan(user_id: str, profile: dict) -> dict:
+    """Use LLM to generate a structured workout plan as JSON."""
+    prompt = f"""
+Erstelle einen Trainingsplan für folgenden Athleten:
+- Ziel: {profile.get('goal')}
+- Erfahrung: {profile.get('experience')}
+- Geschlecht: {profile.get('gender')}
+- Alter: {profile.get('age')}
+- Größe: {profile.get('height_cm')} cm
+- Gewicht: {profile.get('weight_kg')} kg
+- Tage pro Woche: {profile.get('days_per_week')}
+- Equipment: {profile.get('equipment')}
+- Verletzungen: {profile.get('injuries') or 'keine'}
+
+Gib AUSSCHLIESSLICH valides JSON zurück (kein Markdown, keine Erklärungen), genau in diesem Format:
+{{
+  "name": "Plan-Name",
+  "weeks": 4,
+  "progression_notes": "Kurzer Hinweis zur Progression",
+  "days": [
+    {{
+      "day_index": 1,
+      "name": "Push - Brust/Schulter/Trizeps",
+      "focus": "Push",
+      "exercises": [
+        {{
+          "name": "Bankdrücken",
+          "target_muscle": "Brust",
+          "sets": 4,
+          "reps": 8,
+          "weight_kg": 60,
+          "rest_seconds": 90,
+          "notes": "Sauber, kontrolliert"
+        }}
+      ]
+    }}
+  ]
+}}
+
+Erstelle exakt {profile.get('days_per_week')} Trainingstage. Jeder Tag 5-7 Übungen. Realistische Startgewichte basierend auf Erfahrung und Körpergewicht."""
+
+    text = await call_llm(build_coach_system(), prompt, f"plan-{user_id}")
+    # Try to extract JSON
+    plan_data = parse_json_from_llm(text)
+    if not plan_data:
+        plan_data = fallback_plan(profile)
+
+    plan = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "name": plan_data.get("name", "Alpha Plan"),
+        "weeks": plan_data.get("weeks", 4),
+        "progression_notes": plan_data.get("progression_notes", ""),
+        "days": plan_data.get("days", []),
+        "created_at": now_iso(),
+        "version": 1,
+    }
+    await db.training_plans.insert_one(plan)
+    plan.pop("_id", None)
+    await db.users.update_one({"id": user_id}, {"$set": {"current_plan_id": plan["id"]}})
+    return plan
+
+def parse_json_from_llm(text: str) -> Optional[dict]:
+    if not text:
+        return None
+    t = text.strip()
+    # strip code fences
+    if t.startswith("```"):
+        t = t.strip("`")
+        if t.startswith("json"):
+            t = t[4:]
+    # find first { and last }
+    start = t.find("{")
+    end = t.rfind("}")
+    if start == -1 or end == -1:
+        return None
+    try:
+        return json.loads(t[start:end+1])
+    except Exception:
+        return None
+
+def fallback_plan(profile: dict) -> dict:
+    """Fallback plan if AI fails."""
+    days_count = profile.get("days_per_week", 3)
+    base_w = max(20, int(profile.get("weight_kg", 70) * 0.5))
+    template_days = [
+        {"name": "Push - Brust/Schulter/Trizeps", "focus": "Push",
+         "exercises": [
+             {"name": "Bankdrücken", "target_muscle": "Brust", "sets": 4, "reps": 8, "weight_kg": base_w, "rest_seconds": 90, "notes": ""},
+             {"name": "Schulterdrücken", "target_muscle": "Schulter", "sets": 4, "reps": 10, "weight_kg": int(base_w*0.6), "rest_seconds": 75, "notes": ""},
+             {"name": "Schrägbankdrücken Kurzhantel", "target_muscle": "Brust oben", "sets": 3, "reps": 10, "weight_kg": int(base_w*0.4), "rest_seconds": 75, "notes": ""},
+             {"name": "Trizepsdrücken", "target_muscle": "Trizeps", "sets": 3, "reps": 12, "weight_kg": int(base_w*0.4), "rest_seconds": 60, "notes": ""},
+             {"name": "Seitheben", "target_muscle": "Schulter", "sets": 3, "reps": 15, "weight_kg": 8, "rest_seconds": 45, "notes": ""},
+         ]},
+        {"name": "Pull - Rücken/Bizeps", "focus": "Pull",
+         "exercises": [
+             {"name": "Klimmzüge", "target_muscle": "Rücken", "sets": 4, "reps": 8, "weight_kg": 0, "rest_seconds": 90, "notes": ""},
+             {"name": "Langhantelrudern", "target_muscle": "Rücken", "sets": 4, "reps": 10, "weight_kg": int(base_w*0.8), "rest_seconds": 90, "notes": ""},
+             {"name": "Latziehen", "target_muscle": "Latissimus", "sets": 3, "reps": 12, "weight_kg": int(base_w*0.7), "rest_seconds": 75, "notes": ""},
+             {"name": "Bizeps Curl", "target_muscle": "Bizeps", "sets": 3, "reps": 12, "weight_kg": int(base_w*0.3), "rest_seconds": 60, "notes": ""},
+             {"name": "Face Pulls", "target_muscle": "Schulter hinten", "sets": 3, "reps": 15, "weight_kg": 15, "rest_seconds": 45, "notes": ""},
+         ]},
+        {"name": "Legs - Beine/Po", "focus": "Legs",
+         "exercises": [
+             {"name": "Kniebeugen", "target_muscle": "Quadrizeps", "sets": 4, "reps": 8, "weight_kg": base_w, "rest_seconds": 120, "notes": ""},
+             {"name": "Rumänisches Kreuzheben", "target_muscle": "Hamstrings", "sets": 4, "reps": 10, "weight_kg": int(base_w*0.9), "rest_seconds": 90, "notes": ""},
+             {"name": "Beinpresse", "target_muscle": "Beine", "sets": 3, "reps": 12, "weight_kg": int(base_w*1.5), "rest_seconds": 90, "notes": ""},
+             {"name": "Wadenheben", "target_muscle": "Waden", "sets": 4, "reps": 15, "weight_kg": int(base_w*0.5), "rest_seconds": 45, "notes": ""},
+             {"name": "Ausfallschritte", "target_muscle": "Beine", "sets": 3, "reps": 12, "weight_kg": int(base_w*0.3), "rest_seconds": 60, "notes": ""},
+         ]},
+        {"name": "Upper Body", "focus": "Upper",
+         "exercises": [
+             {"name": "Bankdrücken", "target_muscle": "Brust", "sets": 4, "reps": 8, "weight_kg": base_w, "rest_seconds": 90, "notes": ""},
+             {"name": "Langhantelrudern", "target_muscle": "Rücken", "sets": 4, "reps": 8, "weight_kg": int(base_w*0.8), "rest_seconds": 90, "notes": ""},
+             {"name": "Schulterdrücken", "target_muscle": "Schulter", "sets": 3, "reps": 10, "weight_kg": int(base_w*0.6), "rest_seconds": 75, "notes": ""},
+             {"name": "Latziehen", "target_muscle": "Latissimus", "sets": 3, "reps": 12, "weight_kg": int(base_w*0.7), "rest_seconds": 75, "notes": ""},
+         ]},
+        {"name": "Lower Body", "focus": "Lower",
+         "exercises": [
+             {"name": "Kniebeugen", "target_muscle": "Quadrizeps", "sets": 4, "reps": 8, "weight_kg": base_w, "rest_seconds": 120, "notes": ""},
+             {"name": "Kreuzheben", "target_muscle": "Rücken/Beine", "sets": 4, "reps": 6, "weight_kg": int(base_w*1.2), "rest_seconds": 120, "notes": ""},
+             {"name": "Beinpresse", "target_muscle": "Beine", "sets": 3, "reps": 12, "weight_kg": int(base_w*1.5), "rest_seconds": 90, "notes": ""},
+             {"name": "Wadenheben", "target_muscle": "Waden", "sets": 4, "reps": 15, "weight_kg": int(base_w*0.5), "rest_seconds": 45, "notes": ""},
+         ]},
+        {"name": "Full Body", "focus": "Full",
+         "exercises": [
+             {"name": "Kniebeugen", "target_muscle": "Beine", "sets": 3, "reps": 10, "weight_kg": int(base_w*0.8), "rest_seconds": 90, "notes": ""},
+             {"name": "Bankdrücken", "target_muscle": "Brust", "sets": 3, "reps": 10, "weight_kg": int(base_w*0.8), "rest_seconds": 90, "notes": ""},
+             {"name": "Klimmzüge", "target_muscle": "Rücken", "sets": 3, "reps": 8, "weight_kg": 0, "rest_seconds": 90, "notes": ""},
+             {"name": "Plank", "target_muscle": "Core", "sets": 3, "reps": 60, "weight_kg": 0, "rest_seconds": 45, "notes": "Sekunden"},
+         ]},
+    ]
+    selected = template_days[:days_count] if days_count <= len(template_days) else template_days + template_days[:days_count-len(template_days)]
+    for i, d in enumerate(selected):
+        d["day_index"] = i + 1
+    return {
+        "name": f"Alpha {profile.get('goal','Custom').title()} Plan",
+        "weeks": 4,
+        "progression_notes": "Steigere alle 2 Wochen das Gewicht um 2.5-5kg wenn die Wiederholungen sauber sind.",
+        "days": selected,
+    }
+
+@api_router.post("/coach/generate-plan")
+async def coach_generate(user: dict = Depends(get_current_user)):
+    if not user.get("profile"):
+        raise HTTPException(status_code=400, detail="Onboarding erst abschließen")
+    plan = await generate_ai_plan(user["id"], user["profile"])
+    return {"plan": plan}
+
+@api_router.post("/coach/adjust-plan")
+async def coach_adjust(user: dict = Depends(get_current_user)):
+    """Adjust plan based on recent workout performance."""
+    plan_id = user.get("current_plan_id")
+    if not plan_id:
+        raise HTTPException(status_code=400, detail="Kein aktiver Plan")
+    plan = await db.training_plans.find_one({"id": plan_id}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan nicht gefunden")
+
+    # gather last 10 completed sessions
+    sessions = await db.workout_sessions.find(
+        {"user_id": user["id"], "status": "completed"}, {"_id": 0}
+    ).sort("completed_at", -1).to_list(10)
+
+    perf_summary = []
+    for s in sessions:
+        day = next((d for d in plan["days"] if d["day_index"] == s.get("day_index")), None)
+        if not day:
+            continue
+        for log in s.get("logged_sets", []):
+            ex_idx = log["exercise_index"]
+            if ex_idx < len(day["exercises"]):
+                ex = day["exercises"][ex_idx]
+                perf_summary.append(f"{ex['name']}: Soll {ex['sets']}x{ex['reps']}@{ex['weight_kg']}kg, Ist {log['reps']} Whdh @ {log['weight_kg']}kg")
+
+    perf_text = "\n".join(perf_summary[-30:]) or "Noch keine Daten."
+    prompt = f"""
+Hier der aktuelle Trainingsplan (JSON): {json.dumps(plan['days'])}
+
+Performance der letzten Einheiten:
+{perf_text}
+
+User-Profil: {json.dumps(user.get('profile'))}
+
+Passe den Plan progressiv an. Erhöhe Gewichte wo Athlet die Ziel-Wiederholungen geschafft hat (2.5-5kg). Verringere wo unterschritten (-2.5-5kg). Anzahl Tage und Übungen beibehalten falls möglich, aber du darfst Übungen variieren wenn sinnvoll.
+
+Gib NUR JSON zurück im Format:
+{{
+  "name": "Plan-Name v2",
+  "weeks": 4,
+  "progression_notes": "Was wurde angepasst",
+  "days": [...]
+}}
+"""
+    text = await call_llm(build_coach_system(), prompt, f"adjust-{user['id']}-{uuid.uuid4()}")
+    plan_data = parse_json_from_llm(text)
+    if not plan_data:
+        raise HTTPException(status_code=500, detail="Konnte Plan nicht aktualisieren")
+
+    new_plan = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "name": plan_data.get("name", "Alpha Plan v2"),
+        "weeks": plan_data.get("weeks", 4),
+        "progression_notes": plan_data.get("progression_notes", ""),
+        "days": plan_data.get("days", []),
+        "created_at": now_iso(),
+        "version": plan.get("version", 1) + 1,
+        "previous_plan_id": plan["id"],
+    }
+    await db.training_plans.insert_one(new_plan)
+    new_plan.pop("_id", None)
+    await db.users.update_one({"id": user["id"]}, {"$set": {"current_plan_id": new_plan["id"]}})
+    return {"plan": new_plan}
+
+@api_router.post("/coach/chat")
+async def coach_chat(msg: ChatMessage, user: dict = Depends(get_current_user)):
+    profile_ctx = json.dumps(user.get("profile") or {})
+    sys = build_coach_system() + f"\n\nUser-Profil: {profile_ctx}"
+    text = await call_llm(sys, msg.text, f"chat-{user['id']}")
+    await db.chat_messages.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "user_text": msg.text,
+        "ai_text": text,
+        "created_at": now_iso(),
+    })
+    return {"reply": text}
+
+@api_router.get("/coach/chat/history")
+async def chat_history(user: dict = Depends(get_current_user)):
+    msgs = await db.chat_messages.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", 1).to_list(200)
+    return {"messages": msgs}
+
+
+# ===== Training Plans =====
+@api_router.get("/plans/current")
+async def get_current_plan(user: dict = Depends(get_current_user)):
+    plan_id = user.get("current_plan_id")
+    if not plan_id:
+        return {"plan": None}
+    plan = await db.training_plans.find_one({"id": plan_id}, {"_id": 0})
+    return {"plan": plan}
+
+
+# ===== Workout Sessions =====
+@api_router.post("/sessions/start")
+async def start_session(payload: dict, user: dict = Depends(get_current_user)):
+    day_index = int(payload.get("day_index", 1))
+    # If active session for this day exists, return it (resume)
+    active = await db.workout_sessions.find_one(
+        {"user_id": user["id"], "day_index": day_index, "status": "active"},
+        {"_id": 0}
+    )
+    if active:
+        return {"session": active, "resumed": True}
+
+    plan_id = user.get("current_plan_id")
+    if not plan_id:
+        raise HTTPException(status_code=400, detail="Kein aktiver Plan")
+
+    session = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "plan_id": plan_id,
+        "day_index": day_index,
+        "status": "active",
+        "current_exercise_index": 0,
+        "current_set_index": 0,
+        "logged_sets": [],
+        "started_at": now_iso(),
+        "completed_at": None,
+    }
+    await db.workout_sessions.insert_one(session)
+    session.pop("_id", None)
+    return {"session": session, "resumed": False}
+
+@api_router.get("/sessions/active")
+async def get_active_session(user: dict = Depends(get_current_user)):
+    s = await db.workout_sessions.find_one(
+        {"user_id": user["id"], "status": "active"}, {"_id": 0}
+    )
+    return {"session": s}
+
+@api_router.post("/sessions/log-set")
+async def log_set(payload: LogSetRequest, user: dict = Depends(get_current_user)):
+    session = await db.workout_sessions.find_one({"id": payload.session_id, "user_id": user["id"]}, {"_id": 0})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session nicht gefunden")
+    logged = session.get("logged_sets", [])
+    logged.append({
+        "exercise_index": payload.exercise_index,
+        "set_index": payload.set_index,
+        "reps": payload.reps,
+        "weight_kg": payload.weight_kg,
+        "completed_at": now_iso(),
+    })
+    await db.workout_sessions.update_one(
+        {"id": payload.session_id},
+        {"$set": {
+            "logged_sets": logged,
+            "current_exercise_index": payload.exercise_index,
+            "current_set_index": payload.set_index + 1,
+        }}
+    )
+    return {"ok": True, "logged_count": len(logged)}
+
+@api_router.post("/sessions/update-progress")
+async def update_progress(payload: dict, user: dict = Depends(get_current_user)):
+    """Save current exercise/set pointer (when user moves between exercises)."""
+    sid = payload.get("session_id")
+    s = await db.workout_sessions.find_one({"id": sid, "user_id": user["id"]}, {"_id": 0})
+    if not s:
+        raise HTTPException(status_code=404, detail="Session nicht gefunden")
+    await db.workout_sessions.update_one(
+        {"id": sid},
+        {"$set": {
+            "current_exercise_index": int(payload.get("exercise_index", 0)),
+            "current_set_index": int(payload.get("set_index", 0)),
+        }}
+    )
+    return {"ok": True}
+
+@api_router.post("/sessions/complete")
+async def complete_session(payload: dict, user: dict = Depends(get_current_user)):
+    sid = payload.get("session_id")
+    s = await db.workout_sessions.find_one({"id": sid, "user_id": user["id"]}, {"_id": 0})
+    if not s:
+        raise HTTPException(status_code=404, detail="Session nicht gefunden")
+    await db.workout_sessions.update_one(
+        {"id": sid},
+        {"$set": {"status": "completed", "completed_at": now_iso()}}
+    )
+    # Badge logic
+    badges = user.get("badges", [])
+    completed_count = await db.workout_sessions.count_documents({"user_id": user["id"], "status": "completed"})
+    new_badges = []
+    badge_def = [
+        (1, "first_workout", "Erste Einheit", "Erstes Training abgeschlossen"),
+        (5, "five_workouts", "5er Streak", "5 Trainings absolviert"),
+        (10, "ten_workouts", "Eisenwille", "10 Trainings absolviert"),
+        (25, "warrior", "Krieger", "25 Trainings absolviert"),
+        (50, "alpha", "Alpha", "50 Trainings - Du bist Alpha"),
+        (100, "legend", "Legende", "100 Trainings - Legende"),
+    ]
+    existing_ids = {b["id"] for b in badges}
+    for threshold, bid, title, desc in badge_def:
+        if completed_count >= threshold and bid not in existing_ids:
+            new_badges.append({"id": bid, "title": title, "description": desc, "earned_at": now_iso()})
+    if new_badges:
+        await db.users.update_one({"id": user["id"]}, {"$push": {"badges": {"$each": new_badges}}})
+    return {"ok": True, "new_badges": new_badges, "total_completed": completed_count}
+
+@api_router.get("/sessions/history")
+async def session_history(user: dict = Depends(get_current_user)):
+    sessions = await db.workout_sessions.find(
+        {"user_id": user["id"]}, {"_id": 0}
+    ).sort("started_at", -1).to_list(50)
+    return {"sessions": sessions}
+
+
+# ===== Stripe Payments =====
+@api_router.post("/payments/checkout")
+async def create_checkout(payload: CheckoutRequest, user: dict = Depends(get_current_user)):
+    if payload.plan not in PLANS:
+        raise HTTPException(status_code=400, detail="Ungültiger Plan")
+    p = PLANS[payload.plan]
+    origin = payload.origin_url.rstrip("/")
+    success_url = f"{origin}/payment-return?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{origin}/premium"
+
+    try:
+        session = stripe.checkout.Session.create(
+            mode="subscription",
+            payment_method_types=["card"],
+            customer_email=user["email"],
+            line_items=[{
+                "price_data": {
+                    "currency": p["currency"],
+                    "product_data": {"name": f"alpha-fit Premium - {p['label']}"},
+                    "recurring": {"interval": p["interval"], "interval_count": p["interval_count"]},
+                    "unit_amount": int(p["amount"] * 100),
+                },
+                "quantity": 1,
+            }],
+            subscription_data={"trial_period_days": TRIAL_DAYS, "metadata": {"user_id": user["id"], "plan": payload.plan}},
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={"user_id": user["id"], "plan": payload.plan},
+        )
+    except Exception as e:
+        logger.error(f"Stripe error: {e}")
+        raise HTTPException(status_code=500, detail=f"Stripe Fehler: {str(e)}")
+
+    await db.payment_transactions.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "user_email": user["email"],
+        "session_id": session.id,
+        "plan": payload.plan,
+        "amount": p["amount"],
+        "currency": p["currency"],
+        "status": "initiated",
+        "payment_status": "pending",
+        "created_at": now_iso(),
+    })
+    return {"url": session.url, "session_id": session.id}
+
+@api_router.get("/payments/status/{session_id}")
+async def payment_status(session_id: str, user: dict = Depends(get_current_user)):
+    tx = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaktion nicht gefunden")
+
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    payment_status_str = session.get("payment_status") or "unpaid"
+    status_str = session.get("status") or "open"
+
+    # idempotent update
+    if tx.get("payment_status") != "paid" and (payment_status_str in ("paid", "no_payment_required") or status_str == "complete"):
+        # activate premium
+        plan = PLANS.get(tx["plan"])
+        if plan:
+            until = datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS + plan["days"])
+            await db.users.update_one(
+                {"id": tx["user_id"]},
+                {"$set": {
+                    "is_premium": True,
+                    "premium_until": until.isoformat(),
+                    "trial_until": (datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)).isoformat(),
+                    "stripe_customer_id": session.get("customer"),
+                    "stripe_subscription_id": session.get("subscription"),
+                }}
+            )
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": {"status": status_str, "payment_status": "paid", "completed_at": now_iso()}}
+        )
+
+    return {
+        "status": status_str,
+        "payment_status": payment_status_str,
+        "amount_total": session.get("amount_total"),
+        "currency": session.get("currency"),
+    }
+
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    body = await request.body()
+    sig = request.headers.get("Stripe-Signature", "")
+    secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+    try:
+        if secret:
+            event = stripe.Webhook.construct_event(body, sig, secret)
+        else:
+            event = json.loads(body.decode())
+    except Exception as e:
+        logger.error(f"Webhook parse error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid payload")
+
+    etype = event.get("type") if isinstance(event, dict) else event["type"]
+    data_obj = event["data"]["object"] if isinstance(event, dict) else event.data.object
+
+    if etype == "checkout.session.completed":
+        sid = data_obj.get("id")
+        meta = data_obj.get("metadata") or {}
+        user_id = meta.get("user_id")
+        plan = meta.get("plan")
+        p = PLANS.get(plan or "")
+        if user_id and p:
+            until = datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS + p["days"])
+            await db.users.update_one(
+                {"id": user_id},
+                {"$set": {
+                    "is_premium": True,
+                    "premium_until": until.isoformat(),
+                    "trial_until": (datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)).isoformat(),
+                    "stripe_customer_id": data_obj.get("customer"),
+                    "stripe_subscription_id": data_obj.get("subscription"),
+                }}
+            )
+        await db.payment_transactions.update_one(
+            {"session_id": sid},
+            {"$set": {"payment_status": "paid", "status": "complete", "completed_at": now_iso()}}
+        )
+    return {"received": True}
+
+
+# ===== Admin =====
+@api_router.get("/admin/stats")
+async def admin_stats(admin: dict = Depends(require_admin)):
+    total_users = await db.users.count_documents({})
+    premium_users = await db.users.count_documents({"is_premium": True})
+
+    # revenue
+    now = datetime.now(timezone.utc)
+    today_start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc).isoformat()
+    month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc).isoformat()
+
+    paid_filter = {"payment_status": "paid"}
+    today_pipeline = [
+        {"$match": {**paid_filter, "completed_at": {"$gte": today_start}}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}, "count": {"$sum": 1}}}
+    ]
+    month_pipeline = [
+        {"$match": {**paid_filter, "completed_at": {"$gte": month_start}}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}, "count": {"$sum": 1}}}
+    ]
+    all_pipeline = [
+        {"$match": paid_filter},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}, "count": {"$sum": 1}}}
+    ]
+
+    today_agg = await db.payment_transactions.aggregate(today_pipeline).to_list(1)
+    month_agg = await db.payment_transactions.aggregate(month_pipeline).to_list(1)
+    all_agg = await db.payment_transactions.aggregate(all_pipeline).to_list(1)
+
+    # daily breakdown last 30 days
+    daily_pipeline = [
+        {"$match": paid_filter},
+        {"$group": {
+            "_id": {"$substr": ["$completed_at", 0, 10]},
+            "total": {"$sum": "$amount"},
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"_id": -1}},
+        {"$limit": 30}
+    ]
+    daily = await db.payment_transactions.aggregate(daily_pipeline).to_list(30)
+
+    return {
+        "total_users": total_users,
+        "premium_users": premium_users,
+        "revenue_today": today_agg[0]["total"] if today_agg else 0,
+        "revenue_today_count": today_agg[0]["count"] if today_agg else 0,
+        "revenue_month": month_agg[0]["total"] if month_agg else 0,
+        "revenue_month_count": month_agg[0]["count"] if month_agg else 0,
+        "revenue_total": all_agg[0]["total"] if all_agg else 0,
+        "revenue_total_count": all_agg[0]["count"] if all_agg else 0,
+        "daily_revenue": [{"date": d["_id"], "total": d["total"], "count": d["count"]} for d in daily],
+    }
+
+@api_router.get("/admin/members")
+async def admin_members(admin: dict = Depends(require_admin)):
+    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).sort("created_at", -1).to_list(500)
+    return {"members": [public_user(u) for u in users]}
+
+@api_router.delete("/admin/members/{user_id}")
+async def admin_delete_member(user_id: str, admin: dict = Depends(require_admin)):
+    if user_id == admin["id"]:
+        raise HTTPException(status_code=400, detail="Eigenes Konto kann nicht gelöscht werden")
+    await db.users.delete_one({"id": user_id})
+    await db.workout_sessions.delete_many({"user_id": user_id})
+    await db.training_plans.delete_many({"user_id": user_id})
+    await db.chat_messages.delete_many({"user_id": user_id})
+    return {"ok": True}
+
+@api_router.post("/admin/members/premium")
+async def admin_set_premium(payload: AdminPremiumRequest, admin: dict = Depends(require_admin)):
+    until = datetime.now(timezone.utc) + timedelta(days=payload.days)
+    await db.users.update_one(
+        {"id": payload.user_id},
+        {"$set": {"is_premium": True, "premium_until": until.isoformat()}}
+    )
+    return {"ok": True, "premium_until": until.isoformat()}
+
+@api_router.post("/admin/members/revoke-premium")
+async def admin_revoke_premium(payload: dict, admin: dict = Depends(require_admin)):
+    await db.users.update_one(
+        {"id": payload.get("user_id")},
+        {"$set": {"is_premium": False, "premium_until": None, "trial_until": None}}
+    )
+    return {"ok": True}
+
+
+# ===== Root =====
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"service": "alpha-fit", "status": "running"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
-
-# Include the router in the main app
+# Include router & CORS
 app.include_router(api_router)
-
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -76,13 +852,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
