@@ -2,28 +2,41 @@ import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import api from "../lib/api";
 import { toast } from "sonner";
-import { Trash2, Crown, Euro, Users, Calendar, TrendingUp, Loader2, Shield, X } from "lucide-react";
+import { Trash2, Crown, Euro, Users, Calendar, TrendingUp, Loader2, Shield, X, Activity, Circle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 
 export default function Admin() {
   const [stats, setStats] = useState(null);
   const [members, setMembers] = useState([]);
+  const [online, setOnline] = useState({ online: [], count: 0 });
   const [loading, setLoading] = useState(true);
   const [premiumModal, setPremiumModal] = useState(null);
   const [premiumDays, setPremiumDays] = useState(30);
 
   const load = async () => {
     setLoading(true);
-    const [{ data: s }, { data: m }] = await Promise.all([
+    const [{ data: s }, { data: m }, { data: o }] = await Promise.all([
       api.get("/admin/stats"),
       api.get("/admin/members"),
+      api.get("/admin/online"),
     ]);
     setStats(s);
     setMembers(m.members);
+    setOnline(o);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // Refresh online list every 30s
+    const id = setInterval(async () => {
+      try {
+        const { data: o } = await api.get("/admin/online");
+        setOnline(o);
+      } catch {}
+    }, 30000);
+    return () => clearInterval(id);
+  }, []);
 
   const deleteMember = async (id, name) => {
     if (!window.confirm(`Mitglied "${name}" wirklich löschen?`)) return;
@@ -72,10 +85,15 @@ export default function Admin() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <StatBlock icon={Activity} label="Online jetzt" value={online.count} sub="letzte 5 Min" testid="stat-online" highlight={online.count > 0} />
+        <StatBlock icon={Users} label="Mitglieder" value={stats.total_users} sub={`${stats.premium_users} Premium`} testid="stat-members" />
         <StatBlock icon={Euro} label="Heute Umsatz" value={`${(stats.revenue_today || 0).toFixed(2)} €`} sub={`${stats.revenue_today_count} Käufe`} testid="stat-revenue-today" />
         <StatBlock icon={Calendar} label="Monat Umsatz" value={`${(stats.revenue_month || 0).toFixed(2)} €`} sub={`${stats.revenue_month_count} Käufe`} testid="stat-revenue-month" />
-        <StatBlock icon={TrendingUp} label="Gesamt Umsatz" value={`${(stats.revenue_total || 0).toFixed(2)} €`} sub={`${stats.revenue_total_count} Käufe`} testid="stat-revenue-total" highlight />
-        <StatBlock icon={Users} label="Mitglieder" value={stats.total_users} sub={`${stats.premium_users} Premium`} testid="stat-members" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <StatBlock icon={TrendingUp} label="Gesamt Umsatz" value={`${(stats.revenue_total || 0).toFixed(2)} €`} sub={`${stats.revenue_total_count} Käufe insgesamt`} testid="stat-revenue-total" highlight />
+        <OnlineList online={online} />
       </div>
 
       {/* Daily revenue chart */}
@@ -113,7 +131,12 @@ export default function Admin() {
             <tbody>
               {members.map((m) => (
                 <tr key={m.id} className="border-b border-[#1A1A24] hover:bg-[#0A0A10] transition" data-testid={`member-row-${m.id}`}>
-                  <td className="py-3 px-2 font-teko text-lg tracking-wide">{m.name} {m.is_admin && <span className="text-[#FFD700] text-xs">★ADMIN</span>}</td>
+                  <td className="py-3 px-2 font-teko text-lg tracking-wide">
+                    <span className="inline-flex items-center gap-2">
+                      <Circle size={8} fill={m.is_online ? "#00FF7F" : "#404050"} className={m.is_online ? "text-[#00FF7F]" : "text-gray-600"} />
+                      {m.name} {m.is_admin && <span className="text-[#FFD700] text-xs">★ADMIN</span>}
+                    </span>
+                  </td>
                   <td className="py-3 px-2 text-gray-300">{m.email}</td>
                   <td className="py-3 px-2">
                     {m.is_premium ? (
@@ -173,6 +196,43 @@ function StatBlock({ icon: Icon, label, value, sub, highlight, testid }) {
       <div className="font-teko text-3xl chrome-text mt-2 tracking-wide">{value}</div>
       <div className="text-[10px] text-gray-500 uppercase tracking-[0.25em] font-chakra mt-1">{label}</div>
       {sub && <div className="text-[10px] text-[#00BFFF] font-chakra mt-1">{sub}</div>}
+    </div>
+  );
+}
+
+function OnlineList({ online }) {
+  return (
+    <div className="af-card p-4 clip-corner-tl-br" data-testid="online-list">
+      <div className="flex items-center justify-between mb-3">
+        <div className="font-teko text-xl chrome-text flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            {online.count > 0 && <span className="absolute inline-flex h-full w-full rounded-full bg-[#00FF7F] opacity-75 animate-ping"></span>}
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${online.count > 0 ? "bg-[#00FF7F]" : "bg-gray-600"}`}></span>
+          </span>
+          ONLINE JETZT
+        </div>
+        <span className="font-teko text-xl electric-text glow-text-soft" data-testid="online-count">{online.count}</span>
+      </div>
+      <div className="max-h-48 overflow-y-auto space-y-2">
+        {online.online.length === 0 ? (
+          <div className="text-gray-500 text-xs font-chakra py-2">Keiner aktiv gerade.</div>
+        ) : (
+          online.online.map((u) => (
+            <div key={u.id} className="flex items-center justify-between text-sm font-chakra py-1.5 border-b border-[#1A1A24]" data-testid={`online-${u.id}`}>
+              <div className="flex items-center gap-2 min-w-0">
+                <Circle size={8} fill="#00FF7F" className="text-[#00FF7F] flex-shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-white truncate">{u.name} {u.is_premium && <Crown size={10} className="inline text-[#FFD700]" />}</div>
+                  <div className="text-gray-500 text-xs truncate">{u.email}</div>
+                </div>
+              </div>
+              <div className="text-[10px] text-gray-500 font-chakra whitespace-nowrap flex-shrink-0 ml-2">
+                {u.minutes_ago === 0 ? "jetzt" : `vor ${u.minutes_ago}m`}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

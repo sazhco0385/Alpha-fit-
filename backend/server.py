@@ -228,6 +228,15 @@ async def login(payload: LoginRequest):
 async def me(user: dict = Depends(get_current_user)):
     return public_user(user)
 
+@api_router.post("/auth/heartbeat")
+async def heartbeat(user: dict = Depends(get_current_user)):
+    """User-Aktivität ping - jede Minute vom Frontend gesendet."""
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"last_active_at": now_iso()}}
+    )
+    return {"ok": True}
+
 
 # ===== Onboarding =====
 @api_router.post("/onboarding")
@@ -995,6 +1004,7 @@ async def admin_stats(admin: dict = Depends(require_admin)):
     return {
         "total_users": total_users,
         "premium_users": premium_users,
+        "online_users": await db.users.count_documents({"last_active_at": {"$gte": (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()}}),
         "revenue_today": today_agg[0]["total"] if today_agg else 0,
         "revenue_today_count": today_agg[0]["count"] if today_agg else 0,
         "revenue_month": month_agg[0]["total"] if month_agg else 0,
@@ -1007,7 +1017,55 @@ async def admin_stats(admin: dict = Depends(require_admin)):
 @api_router.get("/admin/members")
 async def admin_members(admin: dict = Depends(require_admin)):
     users = await db.users.find({}, {"_id": 0, "password_hash": 0}).sort("created_at", -1).to_list(500)
-    return {"members": [public_user(u) for u in users]}
+    # Add last_active_at to each
+    out = []
+    for u in users:
+        pub = public_user(u)
+        pub["last_active_at"] = u.get("last_active_at")
+        pub["is_online"] = is_recently_active(u.get("last_active_at"))
+        out.append(pub)
+    return {"members": out}
+
+@api_router.get("/admin/online")
+async def admin_online(admin: dict = Depends(require_admin)):
+    """Liste der User die in den letzten 5 Minuten aktiv waren."""
+    cutoff = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+    users = await db.users.find(
+        {"last_active_at": {"$gte": cutoff}},
+        {"_id": 0, "password_hash": 0}
+    ).sort("last_active_at", -1).to_list(200)
+    return {
+        "online": [
+            {
+                "id": u.get("id"),
+                "name": u.get("name"),
+                "email": u.get("email"),
+                "is_premium": is_premium_active(u),
+                "last_active_at": u.get("last_active_at"),
+                "minutes_ago": minutes_since(u.get("last_active_at")),
+            }
+            for u in users
+        ],
+        "count": len(users),
+    }
+
+def is_recently_active(last_active: Optional[str]) -> bool:
+    if not last_active:
+        return False
+    try:
+        dt = datetime.fromisoformat(last_active)
+        return (datetime.now(timezone.utc) - dt).total_seconds() < 300  # 5 min
+    except Exception:
+        return False
+
+def minutes_since(last_active: Optional[str]) -> int:
+    if not last_active:
+        return 9999
+    try:
+        dt = datetime.fromisoformat(last_active)
+        return int((datetime.now(timezone.utc) - dt).total_seconds() / 60)
+    except Exception:
+        return 9999
 
 @api_router.delete("/admin/members/{user_id}")
 async def admin_delete_member(user_id: str, admin: dict = Depends(require_admin)):

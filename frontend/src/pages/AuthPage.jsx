@@ -19,7 +19,7 @@ export default function AuthPage() {
       let user;
       if (mode === "login") user = await login(form.email, form.password);
       else user = await register(form.email, form.password, form.name);
-      toast.success(mode === "login" ? "Welcome back, Alpha." : "Account erstellt. Let's go.");
+      toast.success(mode === "login" ? "Willkommen zurück, Alpha." : "Account erstellt. Los geht's!");
       // Onboarding hat IMMER Vorrang - egal ob Admin oder normaler User
       if (!user.onboarding_completed) {
         navigate("/onboarding");

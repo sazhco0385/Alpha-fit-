@@ -31,6 +31,15 @@ export const AuthProvider = ({ children }) => {
     refresh();
   }, [refresh]);
 
+  // Heartbeat: ping every 60s while logged in
+  useEffect(() => {
+    if (!user) return;
+    const ping = () => { api.post("/auth/heartbeat").catch(() => {}); };
+    ping();
+    const id = setInterval(ping, 60000);
+    return () => clearInterval(id);
+  }, [user]);
+
   const login = async (email, password) => {
     const { data } = await api.post("/auth/login", { email, password });
     localStorage.setItem("af_token", data.token);

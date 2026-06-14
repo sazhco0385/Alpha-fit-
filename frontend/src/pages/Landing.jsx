@@ -41,7 +41,7 @@ export default function Landing() {
       <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-16 pb-16 sm:pb-24 grid md:grid-cols-2 gap-8 md:gap-12 items-center">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#00BFFF]/40 text-[#00BFFF] font-chakra text-[10px] sm:text-xs tracking-[0.3em] uppercase mb-4 sm:mb-6 glow-box" data-testid="hero-tag">
-            <Zap size={12} /> KI-POWERED FITNESS
+            <Zap size={12} /> KI-FITNESS COACH
           </div>
           <h1 className="font-teko text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-none tracking-wide uppercase">
             <span className="chrome-text block">Werde zum</span>
