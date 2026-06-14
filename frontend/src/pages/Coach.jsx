@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import Layout from "../components/Layout";
 import api from "../lib/api";
+import CoachInsights from "../components/CoachInsights";
 import { Send, Loader2, Brain, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -47,6 +48,9 @@ export default function Coach() {
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text tracking-wide">KI COACH</h1>
         <p className="text-gray-500 font-chakra text-[10px] sm:text-sm uppercase tracking-widest">Angetrieben von GPT-5.2 · Alpha Protokoll</p>
       </div>
+
+      {/* Proaktive Insights */}
+      <CoachInsights />
 
       <div className="af-card flex flex-col h-[65vh] sm:h-[70vh] clip-corner-tl-br" data-testid="coach-chat">
         <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import BadgeGlow from "../components/BadgeGlow";
+import CoachInsights from "../components/CoachInsights";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Dumbbell, Brain, TrendingUp, Crown, Play, Calendar, Flame, Award, RefreshCw, Loader2, Weight } from "lucide-react";
@@ -128,6 +129,9 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Alpha Coach Insights (compact) */}
+      <CoachInsights compact />
 
       {/* Stats Bento */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">

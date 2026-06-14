@@ -526,6 +526,245 @@ async def chat_history(user: dict = Depends(get_current_user)):
     msgs = await db.chat_messages.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", 1).to_list(200)
     return {"messages": msgs}
 
+@api_router.get("/coach/insights")
+async def coach_insights(user: dict = Depends(get_current_user)):
+    """Alpha Coach 2.0 - proaktive Wochen-Insights mit Stats & Empfehlungen."""
+    now = datetime.now(timezone.utc)
+    week_ago = (now - timedelta(days=7)).isoformat()
+    two_weeks_ago = (now - timedelta(days=14)).isoformat()
+
+    # This week's completed sessions
+    this_week = await db.workout_sessions.find(
+        {"user_id": user["id"], "status": "completed", "completed_at": {"$gte": week_ago}},
+        {"_id": 0}
+    ).to_list(50)
+    # Last week
+    last_week = await db.workout_sessions.find(
+        {"user_id": user["id"], "status": "completed",
+         "completed_at": {"$gte": two_weeks_ago, "$lt": week_ago}},
+        {"_id": 0}
+    ).to_list(50)
+
+    def volume(sessions):
+        return sum(
+            log.get("reps", 0) * log.get("weight_kg", 0)
+            for s in sessions for log in s.get("logged_sets", [])
+        )
+
+    this_vol = volume(this_week)
+    last_vol = volume(last_week)
+    vol_change_pct = None
+    if last_vol > 0:
+        vol_change_pct = round(((this_vol - last_vol) / last_vol) * 100, 1)
+
+    # Streak + total
+    streak = await calculate_streak(user["id"])
+    total_completed = await db.workout_sessions.count_documents({"user_id": user["id"], "status": "completed"})
+
+    # Top exercise progression recommendation
+    plan_id = user.get("current_plan_id")
+    plan = await db.training_plans.find_one({"id": plan_id}, {"_id": 0}) if plan_id else None
+
+    exercise_recs = []
+    if plan and this_week:
+        # Aggregate performance per exercise across this week
+        from collections import defaultdict
+        ex_perf = defaultdict(list)
+        for s in this_week:
+            day = next((d for d in plan["days"] if d["day_index"] == s.get("day_index")), None)
+            if not day:
+                continue
+            for log in s.get("logged_sets", []):
+                idx = log.get("exercise_index")
+                if 0 <= idx < len(day.get("exercises", [])):
+                    ex = day["exercises"][idx]
+                    ex_perf[ex["name"]].append({
+                        "target_reps": ex.get("reps", 0),
+                        "target_weight": ex.get("weight_kg", 0),
+                        "actual_reps": log.get("reps", 0),
+                        "actual_weight": log.get("weight_kg", 0),
+                    })
+        # For each, recommend progression
+        for name, logs in list(ex_perf.items())[:3]:
+            target_w = logs[0]["target_weight"]
+            target_r = logs[0]["target_reps"]
+            avg_reps = sum(l["actual_reps"] for l in logs) / len(logs)
+            last_w = logs[-1]["actual_weight"]
+            if avg_reps >= target_r and last_w >= target_w:
+                inc = 2.5 if last_w < 50 else 5.0
+                exercise_recs.append({
+                    "exercise": name,
+                    "current_weight": last_w,
+                    "recommended_weight": last_w + inc,
+                    "reason": f"Du hast {target_r} Whdh sauber geschafft.",
+                })
+
+    # Build insight messages
+    insights = []
+
+    # 1. Workout count
+    count = len(this_week)
+    if count > 0:
+        insights.append({
+            "type": "workouts",
+            "icon": "flame",
+            "title": f"{count} Workouts diese Woche",
+            "text": (
+                f"Du hast diese Woche {count} Training{'s' if count > 1 else ''} absolviert. "
+                + (f"Letzte Woche: {len(last_week)}. " if last_week else "")
+                + ("Solid Arbeit!" if count >= 3 else "Push mehr — Ziel sind 3+.")
+            ),
+        })
+    else:
+        insights.append({
+            "type": "workouts",
+            "icon": "alert",
+            "title": "0 Workouts diese Woche",
+            "text": "Du hast diese Woche noch nicht trainiert. Zeit für die nächste Einheit, Alpha.",
+        })
+
+    # 2. Volume change
+    if vol_change_pct is not None and last_vol > 0:
+        arrow = "⬆" if vol_change_pct > 0 else ("⬇" if vol_change_pct < 0 else "→")
+        insights.append({
+            "type": "volume",
+            "icon": "trending",
+            "title": f"Volumen {arrow} {abs(vol_change_pct)}%",
+            "text": (
+                f"Dein Trainings-Volumen ist um {abs(vol_change_pct)}% "
+                + ("gestiegen — exzellent!" if vol_change_pct > 0 else
+                   "gefallen. Push härter nächste Woche." if vol_change_pct < 0 else "stabil geblieben.")
+                + f" ({int(this_vol):,} kg vs. {int(last_vol):,} kg)"
+            ),
+        })
+    elif this_vol > 0:
+        insights.append({
+            "type": "volume",
+            "icon": "trending",
+            "title": f"{int(this_vol):,} kg Volumen",
+            "text": f"Du hast diese Woche {int(this_vol):,} kg insgesamt bewegt. Starker Start!",
+        })
+
+    # 3. Streak
+    if streak >= 3:
+        insights.append({
+            "type": "streak",
+            "icon": "fire",
+            "title": f"{streak}-Tage Streak 🔥",
+            "text": f"Du trainierst seit {streak} Tagen in Folge. Brich den Streak nicht!",
+        })
+
+    # 4. Exercise progression recommendations
+    for rec in exercise_recs:
+        insights.append({
+            "type": "progression",
+            "icon": "sparkles",
+            "title": f"Steigere {rec['exercise']}",
+            "text": f"{rec['reason']} Nächste Woche: **{rec['recommended_weight']} kg** (aktuell {rec['current_weight']} kg).",
+            "exercise": rec["exercise"],
+            "current_weight": rec["current_weight"],
+            "recommended_weight": rec["recommended_weight"],
+        })
+
+    # 5. STAGNATION detection - same weight on exercise for 3+ weeks
+    three_weeks_ago = (now - timedelta(days=21)).isoformat()
+    stagnation_sessions = await db.workout_sessions.find(
+        {"user_id": user["id"], "status": "completed", "completed_at": {"$gte": three_weeks_ago}},
+        {"_id": 0}
+    ).to_list(50)
+    if plan and len(stagnation_sessions) >= 4:
+        from collections import defaultdict
+        ex_weights = defaultdict(set)
+        for s in stagnation_sessions:
+            day = next((d for d in plan["days"] if d["day_index"] == s.get("day_index")), None)
+            if not day:
+                continue
+            for log in s.get("logged_sets", []):
+                idx = log.get("exercise_index")
+                if 0 <= idx < len(day.get("exercises", [])):
+                    ex_weights[day["exercises"][idx]["name"]].add(log.get("weight_kg", 0))
+        for name, weights in ex_weights.items():
+            # If user only used 1 weight across 3 weeks → stagnation
+            if len(weights) == 1 and list(weights)[0] > 0:
+                w = list(weights)[0]
+                # don't double-report exercises already in exercise_recs
+                if any(r["exercise"] == name for r in exercise_recs):
+                    continue
+                insights.append({
+                    "type": "stagnation",
+                    "icon": "alert",
+                    "title": f"Stagnation: {name}",
+                    "text": f"Du arbeitest seit 3+ Wochen mit {w} kg auf {name}. Zeit zu steigern oder Übung zu wechseln.",
+                })
+                break  # only show one stagnation alert
+
+    # 6. PROTEIN intake check (this week)
+    profile = user.get("profile") or {}
+    goals = calculate_nutrition_goals(profile)
+    target_protein = goals.get("protein_g", 0)
+    if target_protein > 0:
+        nutrition_pipeline = [
+            {"$match": {"user_id": user["id"], "date": {"$gte": (now - timedelta(days=7)).strftime("%Y-%m-%d")}}},
+            {"$group": {"_id": "$date", "protein": {"$sum": "$protein_g"}, "calories": {"$sum": "$calories"}}}
+        ]
+        nut_days = await db.nutrition_entries.aggregate(nutrition_pipeline).to_list(7)
+        if nut_days:
+            avg_protein = round(sum(d["protein"] for d in nut_days) / len(nut_days))
+            avg_cal = round(sum(d["calories"] for d in nut_days) / len(nut_days))
+            target_cal = goals.get("calories", 2000)
+            if avg_protein < target_protein * 0.85:
+                insights.append({
+                    "type": "nutrition_protein",
+                    "icon": "alert",
+                    "title": f"Protein-Defizit: {avg_protein}g/Tag",
+                    "text": f"Du erreichst diese Woche nur {avg_protein}g Protein pro Tag. Ziel sind {target_protein}g. Mehr Hähnchen, Quark, Whey.",
+                })
+            elif avg_protein >= target_protein:
+                insights.append({
+                    "type": "nutrition_protein",
+                    "icon": "sparkles",
+                    "title": f"Protein-Ziel erreicht: {avg_protein}g/Tag",
+                    "text": f"Du hittest dein Protein-Ziel von {target_protein}g. So baust du Muskeln.",
+                })
+            # Calorie balance feedback
+            goal_type = profile.get("goal", "")
+            if goal_type == "fat_loss" and avg_cal > target_cal * 1.1:
+                insights.append({
+                    "type": "nutrition_cal",
+                    "icon": "alert",
+                    "title": f"Zu viele Kalorien: {avg_cal}/Tag",
+                    "text": f"Dein Ziel ist Fettabbau, aber du isst {avg_cal} kcal/Tag (Ziel: {target_cal}). Reduziere um {avg_cal - target_cal} kcal.",
+                })
+            elif goal_type == "muscle_gain" and avg_cal < target_cal * 0.9:
+                insights.append({
+                    "type": "nutrition_cal",
+                    "icon": "alert",
+                    "title": f"Zu wenig Kalorien: {avg_cal}/Tag",
+                    "text": f"Für Muskelaufbau brauchst du {target_cal} kcal/Tag. Du isst nur {avg_cal}. Iss {target_cal - avg_cal} kcal mehr.",
+                })
+
+    # 7. Total milestone
+    if total_completed > 0 and total_completed % 10 == 0:
+        insights.append({
+            "type": "milestone",
+            "icon": "trophy",
+            "title": f"{total_completed} Workouts insgesamt",
+            "text": f"Krass — du hast {total_completed} Trainings absolviert. Das ist Disziplin.",
+        })
+
+    return {
+        "insights": insights,
+        "stats": {
+            "this_week_workouts": count,
+            "last_week_workouts": len(last_week),
+            "this_week_volume_kg": this_vol,
+            "last_week_volume_kg": last_vol,
+            "volume_change_pct": vol_change_pct,
+            "current_streak": streak,
+            "total_completed": total_completed,
+        },
+    }
+
 
 # ===== Training Plans =====
 @api_router.get("/plans/current")
