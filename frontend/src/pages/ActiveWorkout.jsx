@@ -191,11 +191,11 @@ export default function ActiveWorkout() {
         {resting ? (
           <div className="text-center py-6" data-testid="rest-timer-view">
             <div className="text-xs text-gray-500 uppercase tracking-[0.3em] font-chakra">PAUSE</div>
-            <div className="my-4 sm:my-6 relative inline-block">
-              <div className="font-teko text-[8rem] sm:text-9xl md:text-[180px] electric-text glow-text leading-none" data-testid="rest-countdown">
+            <div className="my-4 sm:my-6 relative inline-block max-w-full">
+              <div className="font-teko text-[6rem] sm:text-[10rem] md:text-[180px] electric-text glow-text leading-none whitespace-nowrap" data-testid="rest-countdown">
                 {restLeft}
               </div>
-              <div className="text-xl sm:text-2xl font-teko chrome-text tracking-widest">SEKUNDEN</div>
+              <div className="text-base sm:text-2xl font-teko chrome-text tracking-widest">SEKUNDEN</div>
             </div>
             <div className="flex justify-center gap-2 sm:gap-3 mt-6 sm:mt-8 flex-wrap">
               <button onClick={() => setRestPaused(!restPaused)} className="btn-outline flex items-center gap-2" data-testid="rest-pause-btn">
@@ -277,7 +277,7 @@ export default function ActiveWorkout() {
               </div>
 
               {/* Input controls */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <NumberStepper label="WIEDERHOLUNGEN" value={reps} onChange={setReps} step={1} testid="reps-input" />
                 <NumberStepper label="GEWICHT (KG)" value={weight} onChange={setWeight} step={2.5} testid="weight-input" />
               </div>
@@ -305,17 +305,18 @@ function NumberStepper({ label, value, onChange, step, testid }) {
   return (
     <div>
       <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-widest font-chakra mb-2">{label}</div>
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        <button onClick={() => onChange(Math.max(0, Number(value) - step))} className="w-11 h-11 sm:w-12 sm:h-12 border border-[#1A1A24] hover:border-[#00BFFF] active:bg-[#00BFFF]/10 font-teko text-xl sm:text-2xl text-[#00BFFF] transition flex-shrink-0 flex items-center justify-center" data-testid={`${testid}-minus`}>−</button>
+      <div className="flex items-stretch gap-2 h-12 sm:h-14">
+        <button onClick={() => onChange(Math.max(0, Number(value) - step))} className="w-12 sm:w-14 border border-[#1A1A24] hover:border-[#00BFFF] active:bg-[#00BFFF]/10 font-teko text-2xl text-[#00BFFF] transition flex-shrink-0 flex items-center justify-center" data-testid={`${testid}-minus`}>−</button>
         <input
           type="number"
           inputMode="decimal"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="af-input text-center font-teko text-xl sm:text-3xl flex-1 min-w-0 px-1 sm:px-4"
+          className="bg-[#0A0A10] border border-[#1A1A24] text-center font-chakra text-2xl text-white flex-1 min-w-0 outline-none focus:border-[#00BFFF] transition"
+          style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "20px", lineHeight: "1" }}
           data-testid={testid}
         />
-        <button onClick={() => onChange(Number(value) + step)} className="w-11 h-11 sm:w-12 sm:h-12 border border-[#1A1A24] hover:border-[#00BFFF] active:bg-[#00BFFF]/10 font-teko text-xl sm:text-2xl text-[#00BFFF] transition flex-shrink-0 flex items-center justify-center" data-testid={`${testid}-plus`}>+</button>
+        <button onClick={() => onChange(Number(value) + step)} className="w-12 sm:w-14 border border-[#1A1A24] hover:border-[#00BFFF] active:bg-[#00BFFF]/10 font-teko text-2xl text-[#00BFFF] transition flex-shrink-0 flex items-center justify-center" data-testid={`${testid}-plus`}>+</button>
       </div>
     </div>
   );

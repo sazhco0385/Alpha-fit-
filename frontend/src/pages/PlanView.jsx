@@ -59,11 +59,11 @@ export default function PlanView() {
         {plan?.days?.map((day) => (
           <div key={day.day_index} className="af-card p-4 sm:p-6 clip-corner-tl-br" data-testid={`plan-detail-day-${day.day_index}`}>
             <div className="flex items-center justify-between mb-4 sm:mb-5 flex-wrap gap-3">
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="text-[10px] sm:text-xs text-[#00BFFF] uppercase tracking-widest font-chakra">TAG {day.day_index}</div>
-                <div className="font-teko text-2xl sm:text-3xl chrome-text break-words">{day.name}</div>
+                <div className="font-teko text-xl sm:text-3xl chrome-text break-words leading-tight">{day.name}</div>
               </div>
-              <button onClick={() => startDay(day.day_index)} className="btn-primary flex items-center gap-2 text-sm" data-testid={`plan-start-${day.day_index}`}>
+              <button onClick={() => startDay(day.day_index)} className="btn-primary flex items-center gap-2 text-sm flex-shrink-0" data-testid={`plan-start-${day.day_index}`}>
                 <Play size={16} /> STARTEN
               </button>
             </div>

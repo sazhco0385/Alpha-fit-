@@ -596,12 +596,23 @@ async def complete_session(payload: dict, user: dict = Depends(get_current_user)
     completed_count = await db.workout_sessions.count_documents({"user_id": user["id"], "status": "completed"})
     new_badges = []
     badge_def = [
-        (1, "first_workout", "Erste Einheit", "Erstes Training abgeschlossen"),
+        (1, "first_workout", "Erstes Blut", "1 Training absolviert"),
+        (3, "warm_up", "Aufgewärmt", "3 Trainings absolviert"),
         (5, "five_workouts", "5er Streak", "5 Trainings absolviert"),
         (10, "ten_workouts", "Eisenwille", "10 Trainings absolviert"),
+        (15, "fifteen", "Stahlhart", "15 Trainings absolviert"),
         (25, "warrior", "Krieger", "25 Trainings absolviert"),
+        (40, "granite", "Granit", "40 Trainings absolviert"),
         (50, "alpha", "Alpha", "50 Trainings - Du bist Alpha"),
-        (100, "legend", "Legende", "100 Trainings - Legende"),
+        (75, "titan", "Titan", "75 Trainings absolviert"),
+        (100, "centurion", "Zenturio", "100 Trainings - Legende"),
+        (150, "spartan", "Spartaner", "150 Trainings absolviert"),
+        (200, "olympian", "Olympier", "200 Trainings absolviert"),
+        (300, "demigod", "Halbgott", "300 Trainings absolviert"),
+        (365, "year_warrior", "Jahres-Krieger", "365 Trainings - Ein Jahr Eisen"),
+        (500, "immortal", "Unsterblich", "500 Trainings absolviert"),
+        (750, "myth", "Mythos", "750 Trainings absolviert"),
+        (1000, "legend", "Legende", "1000 Trainings - Gott-Tier"),
     ]
     existing_ids = {b["id"] for b in badges}
     for threshold, bid, title, desc in badge_def:

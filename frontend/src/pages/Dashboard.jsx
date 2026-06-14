@@ -54,12 +54,23 @@ export default function Dashboard() {
   };
 
   const nextBadges = [
-    { id: "first_workout", title: "Erste Einheit", threshold: 1 },
-    { id: "five_workouts", title: "5er Streak", threshold: 5 },
-    { id: "ten_workouts", title: "Eisenwille", threshold: 10 },
-    { id: "warrior", title: "Krieger", threshold: 25 },
-    { id: "alpha", title: "Alpha", threshold: 50 },
-    { id: "legend", title: "Legende", threshold: 100 },
+    { id: "first_workout", title: "Erstes Blut", description: "1 Training", threshold: 1 },
+    { id: "warm_up", title: "Aufgewärmt", description: "3 Trainings", threshold: 3 },
+    { id: "five_workouts", title: "5er Streak", description: "5 Trainings", threshold: 5 },
+    { id: "ten_workouts", title: "Eisenwille", description: "10 Trainings", threshold: 10 },
+    { id: "fifteen", title: "Stahlhart", description: "15 Trainings", threshold: 15 },
+    { id: "warrior", title: "Krieger", description: "25 Trainings", threshold: 25 },
+    { id: "granite", title: "Granit", description: "40 Trainings", threshold: 40 },
+    { id: "alpha", title: "Alpha", description: "50 Trainings", threshold: 50 },
+    { id: "titan", title: "Titan", description: "75 Trainings", threshold: 75 },
+    { id: "centurion", title: "Zenturio", description: "100 Trainings", threshold: 100 },
+    { id: "spartan", title: "Spartaner", description: "150 Trainings", threshold: 150 },
+    { id: "olympian", title: "Olympier", description: "200 Trainings", threshold: 200 },
+    { id: "demigod", title: "Halbgott", description: "300 Trainings", threshold: 300 },
+    { id: "year_warrior", title: "Jahres-Krieger", description: "365 Trainings", threshold: 365 },
+    { id: "immortal", title: "Unsterblich", description: "500 Trainings", threshold: 500 },
+    { id: "myth", title: "Mythos", description: "750 Trainings", threshold: 750 },
+    { id: "legend", title: "Legende", description: "1000 Trainings", threshold: 1000 },
   ];
 
   return (
@@ -98,14 +109,14 @@ export default function Dashboard() {
 
       {/* Training Plan */}
       <section className="mb-6 sm:mb-8">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h2 className="font-teko text-2xl sm:text-3xl tracking-wide chrome-text">DEIN PLAN</h2>
+        <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+          <h2 className="font-teko text-2xl sm:text-3xl tracking-wide chrome-text whitespace-nowrap">DEIN PLAN</h2>
           <div className="flex gap-2 flex-wrap">
-            <button onClick={adjustPlan} disabled={regenerating} className="btn-outline text-xs sm:text-sm flex items-center gap-2" data-testid="adjust-plan-btn">
+            <button onClick={adjustPlan} disabled={regenerating} className="btn-outline text-xs flex items-center gap-1.5 whitespace-nowrap" data-testid="adjust-plan-btn">
               {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-              KI ANPASSEN
+              KI&nbsp;ANPASSEN
             </button>
-            <button onClick={() => navigate("/plan")} className="btn-outline text-xs sm:text-sm" data-testid="view-plan-btn">DETAILS</button>
+            <button onClick={() => navigate("/plan")} className="btn-outline text-xs whitespace-nowrap" data-testid="view-plan-btn">DETAILS</button>
           </div>
         </div>
 
@@ -115,12 +126,12 @@ export default function Dashboard() {
             <div className="text-gray-500 text-xs font-chakra mb-4">{plan.progression_notes}</div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {plan.days?.map((day) => (
-                <div key={day.day_index} className="af-card p-5 clip-corner-tl-br hover:glow-box transition" data-testid={`plan-day-${day.day_index}`}>
-                  <div className="flex items-center justify-between mb-3">
+                <div key={day.day_index} className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition" data-testid={`plan-day-${day.day_index}`}>
+                  <div className="flex items-center justify-between mb-3 gap-2">
                     <div className="text-xs text-gray-500 uppercase tracking-widest font-chakra">TAG {day.day_index}</div>
-                    <span className="text-[10px] text-[#00BFFF] border border-[#00BFFF]/50 px-2 py-0.5 font-chakra uppercase tracking-widest">{day.focus || ""}</span>
+                    {day.focus && <span className="text-[10px] text-[#00BFFF] border border-[#00BFFF]/50 px-2 py-0.5 font-chakra uppercase tracking-widest whitespace-nowrap">{day.focus}</span>}
                   </div>
-                  <div className="font-teko text-xl tracking-wide mb-3 chrome-text">{day.name}</div>
+                  <div className="font-teko text-lg sm:text-xl tracking-wide mb-3 chrome-text break-words leading-tight">{day.name}</div>
                   <div className="text-xs text-gray-400 font-chakra mb-4">{day.exercises?.length || 0} Übungen</div>
                   <button onClick={() => startDay(day.day_index)} className="btn-primary w-full flex items-center justify-center gap-2 text-sm" data-testid={`start-day-${day.day_index}`}>
                     <Play size={14} /> STARTEN

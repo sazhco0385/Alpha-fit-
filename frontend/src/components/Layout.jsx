@@ -8,7 +8,7 @@ export default function Layout({ children }) {
   const navigate = useNavigate();
 
   const navItems = [
-    { to: "/dashboard", icon: Home, label: "Home", testid: "nav-dashboard" },
+    { to: "/dashboard", icon: Home, label: "Start", testid: "nav-dashboard" },
     { to: "/plan", icon: Dumbbell, label: "Plan", testid: "nav-plan" },
     { to: "/coach", icon: Brain, label: "Coach", testid: "nav-coach" },
     { to: "/progress", icon: TrendingUp, label: "Stats", testid: "nav-progress" },
@@ -52,7 +52,7 @@ export default function Layout({ children }) {
       </div>
 
       {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 backdrop-blur-xl bg-black/90 border-t border-[#1A1A24] pb-[env(safe-area-inset-bottom)]" data-testid="bottom-nav">
+      <nav translate="no" className="notranslate fixed bottom-0 left-0 right-0 z-40 backdrop-blur-xl bg-black/90 border-t border-[#1A1A24] pb-[env(safe-area-inset-bottom)]" data-testid="bottom-nav">
         <div
           className="max-w-7xl mx-auto md:flex md:justify-center md:gap-12"
           style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
