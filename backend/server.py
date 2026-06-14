@@ -30,6 +30,7 @@ ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 
 stripe.api_key = STRIPE_API_KEY
+SUPPORT_EMAIL = "supportalphafit@gmail.com"
 
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
@@ -88,6 +89,11 @@ class CheckoutRequest(BaseModel):
 class AdminPremiumRequest(BaseModel):
     user_id: str
     days: int
+
+class SupportTicketRequest(BaseModel):
+    subject: str
+    message: str
+    category: Optional[str] = "general"  # general | billing | bug | feature | account
 
 
 # ===== Helpers =====
@@ -1061,6 +1067,60 @@ async def admin_activity(admin: dict = Depends(require_admin), limit: int = 50):
     """Live-Aktivitäts-Feed - die letzten Events."""
     events = await db.activity_events.find({}, {"_id": 0}).sort("created_at", -1).to_list(limit)
     return {"events": events}
+
+
+# ===== Support Tickets =====
+@api_router.post("/support/ticket")
+async def create_support_ticket(payload: SupportTicketRequest, user: dict = Depends(get_current_user)):
+    ticket = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "user_name": user.get("name"),
+        "user_email": user.get("email"),
+        "subject": payload.subject.strip()[:200],
+        "message": payload.message.strip()[:5000],
+        "category": payload.category or "general",
+        "status": "open",  # open | in_progress | resolved
+        "admin_reply": None,
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
+    }
+    await db.support_tickets.insert_one(ticket)
+    await log_activity(user["id"], user.get("name", ""), "support_ticket_created", {"subject": ticket["subject"], "category": ticket["category"]})
+    return {"ok": True, "ticket_id": ticket["id"], "support_email": SUPPORT_EMAIL}
+
+@api_router.get("/support/my-tickets")
+async def my_tickets(user: dict = Depends(get_current_user)):
+    tickets = await db.support_tickets.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(50)
+    return {"tickets": tickets, "support_email": SUPPORT_EMAIL}
+
+@api_router.get("/support/info")
+async def support_info():
+    return {"support_email": SUPPORT_EMAIL}
+
+@api_router.get("/admin/tickets")
+async def admin_tickets(admin: dict = Depends(require_admin), status: Optional[str] = None):
+    q = {}
+    if status:
+        q["status"] = status
+    tickets = await db.support_tickets.find(q, {"_id": 0}).sort("created_at", -1).to_list(200)
+    open_count = await db.support_tickets.count_documents({"status": "open"})
+    return {"tickets": tickets, "open_count": open_count}
+
+@api_router.post("/admin/tickets/{ticket_id}/respond")
+async def admin_respond_ticket(ticket_id: str, payload: dict, admin: dict = Depends(require_admin)):
+    reply = payload.get("reply", "").strip()
+    new_status = payload.get("status", "resolved")
+    await db.support_tickets.update_one(
+        {"id": ticket_id},
+        {"$set": {"admin_reply": reply, "status": new_status, "updated_at": now_iso(), "responded_by": admin.get("name")}}
+    )
+    return {"ok": True}
+
+@api_router.delete("/admin/tickets/{ticket_id}")
+async def admin_delete_ticket(ticket_id: str, admin: dict = Depends(require_admin)):
+    await db.support_tickets.delete_one({"id": ticket_id})
+    return {"ok": True}
 
 def is_recently_active(last_active: Optional[str]) -> bool:
     if not last_active:

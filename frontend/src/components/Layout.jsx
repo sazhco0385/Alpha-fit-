@@ -45,6 +45,7 @@ export default function Layout({ children }) {
       <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6 pb-32">{children}</main>
 
       <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 md:px-8 pb-28 pt-6 flex flex-wrap justify-center gap-3 sm:gap-6 text-[9px] sm:text-[10px] tracking-widest uppercase text-gray-600 font-chakra">
+        <NavLink to="/support" className="hover:text-[#00BFFF]" data-testid="layout-support-link">Support</NavLink>
         <NavLink to="/impressum" className="hover:text-[#00BFFF]" data-testid="layout-impressum-link">Impressum</NavLink>
         <NavLink to="/agb" className="hover:text-[#00BFFF]" data-testid="layout-agb-link">AGB</NavLink>
         <NavLink to="/datenschutz" className="hover:text-[#00BFFF]" data-testid="layout-datenschutz-link">Datenschutz</NavLink>

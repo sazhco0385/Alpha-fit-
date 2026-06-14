@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import api from "../lib/api";
 import { toast } from "sonner";
-import { Trash2, Crown, Euro, Users, Calendar, TrendingUp, Loader2, Shield, X, Activity, Circle, Zap, UserPlus, CheckCircle2, ShoppingCart, Sparkles, Play } from "lucide-react";
+import { Trash2, Crown, Euro, Users, Calendar, TrendingUp, Loader2, Shield, X, Activity, Circle, Zap, UserPlus, CheckCircle2, ShoppingCart, Sparkles, Play, MessageCircle, Send, Inbox, Clock } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 
 export default function Admin() {
@@ -13,37 +13,64 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [premiumModal, setPremiumModal] = useState(null);
   const [premiumDays, setPremiumDays] = useState(30);
+  const [tickets, setTickets] = useState({ tickets: [], open_count: 0 });
+  const [replyModal, setReplyModal] = useState(null);
+  const [replyText, setReplyText] = useState("");
 
   const load = async () => {
     setLoading(true);
-    const [{ data: s }, { data: m }, { data: o }, { data: a }] = await Promise.all([
+    const [{ data: s }, { data: m }, { data: o }, { data: a }, { data: t }] = await Promise.all([
       api.get("/admin/stats"),
       api.get("/admin/members"),
       api.get("/admin/online"),
       api.get("/admin/activity?limit=50"),
+      api.get("/admin/tickets"),
     ]);
     setStats(s);
     setMembers(m.members);
     setOnline(o);
     setActivity(a.events);
+    setTickets(t);
     setLoading(false);
   };
 
   useEffect(() => {
     load();
-    // Refresh online + activity every 15s
+    // Refresh online + activity + tickets every 15s
     const id = setInterval(async () => {
       try {
-        const [{ data: o }, { data: a }] = await Promise.all([
+        const [{ data: o }, { data: a }, { data: t }] = await Promise.all([
           api.get("/admin/online"),
           api.get("/admin/activity?limit=50"),
+          api.get("/admin/tickets"),
         ]);
         setOnline(o);
         setActivity(a.events);
+        setTickets(t);
       } catch {}
     }, 15000);
     return () => clearInterval(id);
   }, []);
+
+  const sendReply = async () => {
+    if (!replyModal || !replyText.trim()) return;
+    try {
+      await api.post(`/admin/tickets/${replyModal.id}/respond`, { reply: replyText, status: "resolved" });
+      toast.success("Antwort gespeichert & Ticket als gelöst markiert");
+      setReplyModal(null);
+      setReplyText("");
+      load();
+    } catch {
+      toast.error("Fehler");
+    }
+  };
+
+  const deleteTicket = async (id) => {
+    if (!window.confirm("Ticket löschen?")) return;
+    await api.delete(`/admin/tickets/${id}`);
+    toast.success("Gelöscht");
+    load();
+  };
 
   const deleteMember = async (id, name) => {
     if (!window.confirm(`Mitglied "${name}" wirklich löschen?`)) return;
@@ -105,6 +132,9 @@ export default function Admin() {
 
       {/* Live Activity Feed */}
       <ActivityFeed events={activity} />
+
+      {/* Support Tickets */}
+      <TicketsSection tickets={tickets} onReply={(t) => { setReplyModal(t); setReplyText(t.admin_reply || ""); }} onDelete={deleteTicket} />
 
       {/* Daily revenue chart */}
       <div className="af-card p-6 mb-8 clip-corner-tl-br">
@@ -195,7 +225,98 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      {/* Reply Modal */}
+      {replyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur p-4" onClick={() => setReplyModal(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="af-card p-6 max-w-lg w-full clip-corner-tl-br" data-testid="reply-modal">
+            <div className="font-teko text-3xl chrome-text mb-1">ANTWORT AN USER</div>
+            <div className="text-xs text-gray-500 font-chakra mb-3">{replyModal.user_name} · {replyModal.user_email}</div>
+            <div className="bg-[#0A0A10] border border-[#1A1A24] p-3 mb-4 max-h-32 overflow-y-auto">
+              <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra mb-1">ANFRAGE: {replyModal.subject}</div>
+              <div className="text-sm text-gray-300 font-chakra whitespace-pre-wrap">{replyModal.message}</div>
+            </div>
+            <label className="block text-xs text-gray-500 uppercase tracking-widest font-chakra mb-2">Deine Antwort</label>
+            <textarea
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              className="af-input min-h-[140px] resize-y"
+              placeholder="Antwort an den User..."
+              data-testid="reply-textarea"
+            />
+            <div className="flex gap-2 justify-end mt-4 flex-wrap">
+              <button onClick={() => setReplyModal(null)} className="btn-outline">ABBRECHEN</button>
+              <a href={`mailto:${replyModal.user_email}?subject=Re: ${encodeURIComponent(replyModal.subject)}&body=${encodeURIComponent(replyText)}`} className="btn-outline" data-testid="reply-via-email">PER EMAIL</a>
+              <button onClick={sendReply} className="btn-primary" data-testid="reply-save-btn">SPEICHERN & LÖSEN</button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
+  );
+}
+
+function TicketsSection({ tickets, onReply, onDelete }) {
+  const statusConfig = {
+    open: { color: "#FF9800", label: "OFFEN" },
+    in_progress: { color: "#00BFFF", label: "IN BEARBEITUNG" },
+    resolved: { color: "#00FF7F", label: "GELÖST" },
+  };
+  const catLabel = { general: "Allgemein", billing: "Zahlung", bug: "Bug", feature: "Feature", account: "Account" };
+  return (
+    <div className="af-card p-4 sm:p-6 clip-corner-tl-br mb-6 sm:mb-8" data-testid="admin-tickets">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="font-teko text-xl sm:text-2xl chrome-text flex items-center gap-2">
+          <Inbox size={20} className="text-[#00BFFF]" />
+          SUPPORT-ANFRAGEN
+        </div>
+        {tickets.open_count > 0 && (
+          <span className="font-teko text-base px-3 py-1 border border-[#FF9800] text-[#FF9800] tracking-widest" data-testid="open-tickets-count">
+            {tickets.open_count} OFFEN
+          </span>
+        )}
+      </div>
+      {tickets.tickets.length === 0 ? (
+        <div className="text-gray-500 text-sm font-chakra py-6 text-center">Noch keine Anfragen.</div>
+      ) : (
+        <div className="space-y-3 max-h-[500px] overflow-y-auto">
+          {tickets.tickets.map((t) => {
+            const s = statusConfig[t.status] || statusConfig.open;
+            return (
+              <div key={t.id} className="bg-[#0A0A10] border border-[#1A1A24] p-3 sm:p-4 hover:border-[#00BFFF]/40 transition" data-testid={`ticket-${t.id}`}>
+                <div className="flex items-start justify-between gap-2 mb-2 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-teko text-lg chrome-text break-words">{t.subject}</div>
+                    <div className="text-xs text-gray-500 font-chakra mt-1">
+                      <span className="text-[#00BFFF]">{t.user_name}</span> · {t.user_email} · <span className="text-gray-400">{catLabel[t.category] || t.category}</span>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-chakra uppercase tracking-widest flex-shrink-0" style={{ color: s.color, border: `1px solid ${s.color}` }}>
+                    <Clock size={10} /> {s.label}
+                  </span>
+                </div>
+                <div className="text-sm text-gray-300 font-chakra whitespace-pre-wrap mb-2">{t.message}</div>
+                <div className="text-[10px] text-gray-500 font-chakra mb-2">{t.created_at?.slice(0, 16).replace("T", " ")}</div>
+                {t.admin_reply && (
+                  <div className="mt-2 pt-2 border-t border-[#1A1A24]">
+                    <div className="text-[10px] text-[#00FF7F] uppercase tracking-widest font-chakra mb-1">DEINE ANTWORT</div>
+                    <div className="text-sm text-gray-200 font-chakra whitespace-pre-wrap">{t.admin_reply}</div>
+                  </div>
+                )}
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  <button onClick={() => onReply(t)} className="btn-outline text-xs flex items-center gap-1.5" data-testid={`ticket-reply-${t.id}`}>
+                    <Send size={12} /> ANTWORTEN
+                  </button>
+                  <button onClick={() => onDelete(t.id)} className="btn-outline text-xs flex items-center gap-1.5 border-red-500/50 text-red-400" data-testid={`ticket-delete-${t.id}`}>
+                    <Trash2 size={12} /> LÖSCHEN
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
