@@ -168,6 +168,123 @@ export function AGB() {
   );
 }
 
+export function Datenschutz() {
+  const navigate = useNavigate();
+  return (
+    <LegalShell title="DATENSCHUTZERKLÄRUNG" onBack={() => navigate(-1)}>
+      <Section title="1. Verantwortlicher">
+        <p>Verantwortlicher im Sinne der DSGVO ist:</p>
+        <p className="mt-2 font-bold chrome-text">{COMPANY.name}</p>
+        <p>Inhaber: {COMPANY.owner}</p>
+        <p>{COMPANY.street}</p>
+        <p>{COMPANY.city}</p>
+        <p>E-Mail: {COMPANY.email}</p>
+      </Section>
+
+      <Section title="2. Erhebung und Verarbeitung personenbezogener Daten">
+        <p>
+          Bei der Nutzung von alpha-fit verarbeiten wir folgende personenbezogene Daten:
+        </p>
+        <ul className="list-disc list-inside mt-2 space-y-1">
+          <li><strong>Account-Daten:</strong> Name, E-Mail-Adresse, Passwort (verschlüsselt mit bcrypt)</li>
+          <li><strong>Profil-Daten:</strong> Geschlecht, Alter, Größe, Gewicht, Trainingsziel, Erfahrungslevel, Equipment, Verletzungen</li>
+          <li><strong>Trainingsdaten:</strong> Trainingspläne, durchgeführte Übungen, Gewichte, Wiederholungen, Trainingsdauer, Fortschritt</li>
+          <li><strong>Zahlungsdaten:</strong> Werden ausschließlich von Stripe verarbeitet (siehe Punkt 5)</li>
+          <li><strong>Nutzungsdaten:</strong> IP-Adresse, Browser-Typ, Zugriffszeiten (zum Schutz vor Missbrauch)</li>
+        </ul>
+      </Section>
+
+      <Section title="3. Rechtsgrundlage der Verarbeitung">
+        <p>
+          Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) für die Bereitstellung der App-Funktionen,
+          Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse) für die Sicherheit und Optimierung sowie Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)
+          soweit du dieser ausdrücklich zugestimmt hast.
+        </p>
+      </Section>
+
+      <Section title="4. KI-gestützter Trainings-Coach (OpenAI / Emergent)">
+        <p>
+          Zur Erstellung und Anpassung deines Trainingsplans sowie für den Coach-Chat nutzen wir KI-Modelle (OpenAI GPT-5.2) über die
+          Emergent-Plattform als Vermittler. Hierbei werden folgende Daten an die KI übermittelt:
+        </p>
+        <ul className="list-disc list-inside mt-2 space-y-1">
+          <li>Dein Profil (Ziel, Erfahrung, Alter, Geschlecht, Größe, Gewicht, Tage/Woche, Equipment, Verletzungen)</li>
+          <li>Deine Trainings-Performance (Gewichte, Wiederholungen der letzten Sessions)</li>
+          <li>Inhalte, die du im Coach-Chat eingibst</li>
+        </ul>
+        <p className="mt-2">
+          Die Übermittlung erfolgt verschlüsselt. OpenAI und Emergent verarbeiten die Daten ausschließlich zur Erbringung der angeforderten
+          Leistung. Es findet keine Übermittlung deines vollen Namens oder deiner E-Mail an die KI statt. Anbieter:
+          OpenAI Ireland Ltd. (Dublin, Irland), Emergent (USA).
+        </p>
+      </Section>
+
+      <Section title="5. Zahlungsabwicklung über Stripe">
+        <p>
+          Für die Abwicklung der Premium-Mitgliedschaft nutzen wir Stripe Payments Europe, Ltd. (Dublin, Irland). Wir selbst speichern
+          keine Kreditkarten- oder Bankdaten. Die Daten werden ausschließlich an Stripe übermittelt und dort gemäß deren Datenschutzerklärung
+          verarbeitet:{" "}
+          <a href="https://stripe.com/de/privacy" target="_blank" rel="noreferrer" className="text-[#00BFFF] underline">
+            stripe.com/de/privacy
+          </a>.
+        </p>
+        <p className="mt-2">
+          Stripe ist zertifiziert nach dem EU-US Data Privacy Framework. Wir speichern lediglich eine Stripe-Customer-ID und
+          Zahlungsstatus (initiated, paid) zur Vertragsabwicklung.
+        </p>
+      </Section>
+
+      <Section title="6. Hosting & Speicherung">
+        <p>
+          Die App und alle Nutzerdaten werden auf Servern innerhalb der EU gehostet (verschlüsselte MongoDB-Datenbank). Die Speicherdauer
+          richtet sich nach dem Bestehen deines Accounts. Nach Kontolöschung werden alle personenbezogenen Daten innerhalb von 30 Tagen
+          unwiderruflich gelöscht, sofern keine gesetzlichen Aufbewahrungspflichten entgegenstehen (z.B. § 257 HGB für Rechnungsdaten:
+          10 Jahre).
+        </p>
+      </Section>
+
+      <Section title="7. Cookies & lokaler Speicher">
+        <p>
+          alpha-fit verwendet lediglich technisch notwendigen lokalen Speicher (localStorage) zur Aufbewahrung deines Login-Tokens.
+          Es werden keine Tracking-Cookies oder Werbe-Cookies gesetzt.
+        </p>
+      </Section>
+
+      <Section title="8. Deine Rechte (Art. 15-22 DSGVO)">
+        <p>Du hast das Recht auf:</p>
+        <ul className="list-disc list-inside mt-2 space-y-1">
+          <li><strong>Auskunft</strong> über die zu deiner Person gespeicherten Daten (Art. 15)</li>
+          <li><strong>Berichtigung</strong> unrichtiger Daten (Art. 16)</li>
+          <li><strong>Löschung</strong> deiner Daten ("Recht auf Vergessenwerden", Art. 17)</li>
+          <li><strong>Einschränkung der Verarbeitung</strong> (Art. 18)</li>
+          <li><strong>Datenübertragbarkeit</strong> in einem strukturierten Format (Art. 20)</li>
+          <li><strong>Widerspruch</strong> gegen die Verarbeitung (Art. 21)</li>
+          <li><strong>Beschwerde</strong> bei einer Datenschutz-Aufsichtsbehörde (Art. 77)</li>
+        </ul>
+        <p className="mt-2">
+          Zur Ausübung deiner Rechte wende dich an: {COMPANY.email}
+        </p>
+      </Section>
+
+      <Section title="9. Datensicherheit">
+        <p>
+          Wir nutzen HTTPS/TLS-Verschlüsselung für alle Datenübertragungen. Passwörter werden ausschließlich als bcrypt-Hash gespeichert.
+          JWT-Tokens sind signiert und haben eine begrenzte Gültigkeit von 30 Tagen.
+        </p>
+      </Section>
+
+      <Section title="10. Änderungen dieser Erklärung">
+        <p>
+          Wir behalten uns vor, diese Datenschutzerklärung anzupassen, um sie an geänderte Rechtslagen oder Funktionsänderungen anzupassen.
+          Die jeweils aktuelle Version ist in der App abrufbar.
+        </p>
+      </Section>
+
+      <p className="text-gray-500 text-xs font-chakra mt-8">Stand: Februar 2026</p>
+    </LegalShell>
+  );
+}
+
 function LegalShell({ title, children, onBack }) {
   return (
     <div className="min-h-screen bg-black text-white relative">

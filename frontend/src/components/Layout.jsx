@@ -49,6 +49,7 @@ export default function Layout({ children }) {
       <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 pb-24 pt-8 flex justify-center gap-6 text-[10px] tracking-widest uppercase text-gray-600 font-chakra">
         <NavLink to="/impressum" className="hover:text-[#00BFFF]" data-testid="layout-impressum-link">Impressum</NavLink>
         <NavLink to="/agb" className="hover:text-[#00BFFF]" data-testid="layout-agb-link">AGB</NavLink>
+        <NavLink to="/datenschutz" className="hover:text-[#00BFFF]" data-testid="layout-datenschutz-link">Datenschutz</NavLink>
         <span>© Sky-Networks UG</span>
       </div>
 

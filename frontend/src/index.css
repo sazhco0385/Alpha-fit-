@@ -181,6 +181,9 @@ h1, h2, h3, .heading {
 /* Selection */
 ::selection { background: rgba(0,191,255,0.4); color: white; }
 
+/* Hide Emergent badge */
+#emergent-badge { display: none !important; visibility: hidden !important; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: #05050A; }

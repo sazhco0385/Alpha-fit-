@@ -20,7 +20,14 @@ export default function AuthPage() {
       if (mode === "login") user = await login(form.email, form.password);
       else user = await register(form.email, form.password, form.name);
       toast.success(mode === "login" ? "Welcome back, Alpha." : "Account erstellt. Let's go.");
-      navigate(user.is_admin ? "/admin" : (user.onboarding_completed ? "/dashboard" : "/onboarding"));
+      // Onboarding hat IMMER Vorrang - egal ob Admin oder normaler User
+      if (!user.onboarding_completed) {
+        navigate("/onboarding");
+      } else if (user.is_admin) {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       toast.error(err?.response?.data?.detail || "Fehler");
     } finally {

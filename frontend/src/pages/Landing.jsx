@@ -110,6 +110,7 @@ export default function Landing() {
           <div className="flex gap-6">
             <Link to="/impressum" className="hover:text-[#00BFFF]" data-testid="footer-impressum">Impressum</Link>
             <Link to="/agb" className="hover:text-[#00BFFF]" data-testid="footer-agb">AGB</Link>
+            <Link to="/datenschutz" className="hover:text-[#00BFFF]" data-testid="footer-datenschutz">Datenschutz</Link>
           </div>
         </div>
       </footer>
