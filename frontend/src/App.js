@@ -17,6 +17,7 @@ import Admin from "./pages/Admin";
 import { Impressum, AGB, Datenschutz } from "./pages/Legal";
 import Support from "./pages/Support";
 import Nutrition from "./pages/Nutrition";
+import BodyScan from "./pages/BodyScan";
 import A2HSPrompt from "./components/A2HSPrompt";
 
 function App() {
@@ -56,6 +57,7 @@ function App() {
             <Route path="/datenschutz" element={<Datenschutz />} />
             <Route path="/support" element={<ProtectedRoute requireOnboarding={false}><Support /></ProtectedRoute>} />
             <Route path="/nutrition" element={<ProtectedRoute><Nutrition /></ProtectedRoute>} />
+            <Route path="/bodyscan" element={<ProtectedRoute><BodyScan /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>

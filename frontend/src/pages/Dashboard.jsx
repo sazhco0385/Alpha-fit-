@@ -5,7 +5,7 @@ import BadgeGlow from "../components/BadgeGlow";
 import CoachInsights from "../components/CoachInsights";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { Dumbbell, Brain, TrendingUp, Crown, Play, Calendar, Flame, Award, RefreshCw, Loader2, Weight } from "lucide-react";
+import { Dumbbell, Brain, TrendingUp, Crown, Play, Calendar, Flame, Award, RefreshCw, Loader2, Weight, Scan, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -180,6 +180,27 @@ export default function Dashboard() {
             <div className="text-gray-400 font-chakra">Plan wird generiert...</div>
           </div>
         )}
+      </section>
+
+      {/* Body Scan CTA */}
+      <section className="mb-6 sm:mb-8">
+        <button
+          onClick={() => navigate("/bodyscan")}
+          className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition w-full text-left flex items-center gap-4 group"
+          data-testid="dashboard-bodyscan-cta"
+        >
+          <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 flex items-center justify-center border border-[#00BFFF]/50 bg-[#00BFFF]/5 group-hover:bg-[#00BFFF]/10 transition">
+            <Scan size={26} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 10px rgba(0,191,255,0.6))" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-teko text-2xl sm:text-3xl chrome-text">AI BODY SCAN</h2>
+              <span className="text-[10px] text-[#00BFFF] border border-[#00BFFF]/50 px-2 py-0.5 font-chakra uppercase tracking-widest">PREMIUM</span>
+            </div>
+            <div className="text-xs sm:text-sm text-gray-400 font-chakra">Foto hochladen · KI analysiert Muskeln, Symmetrie & Schwachstellen</div>
+          </div>
+          <Sparkles size={20} className="text-[#00BFFF] flex-shrink-0" />
+        </button>
       </section>
 
       {/* Badges */}

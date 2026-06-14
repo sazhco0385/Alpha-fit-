@@ -99,6 +99,10 @@ class NutritionAnalyzeRequest(BaseModel):
     image_base64: str  # data URL or pure base64
     meal_type: Optional[str] = "snack"  # breakfast | lunch | dinner | snack
 
+class BodyScanRequest(BaseModel):
+    image_base64: str  # data URL or pure base64
+    notes: Optional[str] = ""
+
 class NutritionLogRequest(BaseModel):
     food_name: str
     portion_grams: float
@@ -1572,6 +1576,199 @@ def calculate_nutrition_goals(profile: dict) -> dict:
         "sugar_g": round(calories * 0.10 / 4),  # max 10% from sugar
         "sodium_mg": 2300,
     }
+
+
+# ===== Body Scan (AI Vision) =====
+def require_premium(user: dict) -> None:
+    if not is_premium_active(user):
+        raise HTTPException(status_code=403, detail="Premium erforderlich für AI Body Scan")
+
+@api_router.post("/bodyscan/analyze")
+async def analyze_body_scan(payload: BodyScanRequest, user: dict = Depends(get_current_user)):
+    """AI Vision Body Scan: Foto -> Muskelgruppen, Symmetrie, Körperfett, Schwachstellen, Empfehlungen.
+    Speichert NUR die Analyse, nicht das Foto (Datenschutz)."""
+    require_premium(user)
+    image_b64 = strip_base64_prefix(payload.image_base64)
+
+    profile = user.get("profile") or {}
+    goal = profile.get("goal", "general")
+    weight = profile.get("weight_kg", "?")
+    height = profile.get("height_cm", "?")
+    gender = profile.get("gender", "?")
+    age = profile.get("age", "?")
+
+    sys = (
+        "Du bist Alpha Body AI - ein Sportwissenschaftler und Physique-Coach. "
+        "Du analysierst Körperfotos OBJEKTIV und SACHLICH für Trainingszwecke. "
+        "Wichtig: Du gibst KEINE medizinische Diagnose, sondern eine Fitness-Einschätzung. "
+        "Du bist motivierend, ehrlich und konstruktiv. "
+        "Antworte AUSSCHLIESSLICH mit validem JSON, keine Erklärungen davor/danach, keine Markdown-Codeblöcke."
+    )
+
+    prompt = f"""Analysiere dieses Körperfoto für eine Fitness-Einschätzung.
+
+Nutzerkontext:
+- Geschlecht: {gender}
+- Alter: {age}
+- Größe: {height} cm
+- Gewicht: {weight} kg
+- Ziel: {goal}
+- Eigene Notiz: {payload.notes or "-"}
+
+Falls KEIN Körper auf dem Foto erkennbar ist (zu dunkel, kein Mensch, vollständig bekleidet ohne sichtbare Muskulatur), gib zurück: {{"error": "no_body_detected"}}.
+
+Sonst gib AUSSCHLIESSLICH dieses JSON zurück:
+{{
+  "overall_score": 72,
+  "body_fat_estimate": 16.5,
+  "body_fat_range": "15-18%",
+  "muscle_development": {{
+    "chest": 7,
+    "shoulders": 6,
+    "back": 5,
+    "arms": 7,
+    "core": 6,
+    "legs": 4,
+    "glutes": 5
+  }},
+  "symmetry_score": 8,
+  "symmetry_notes": "Leichte Asymmetrie zwischen linker und rechter Schulter, ansonsten gute Balance.",
+  "strengths": ["Gute Armentwicklung", "Definierte Brust", "Schlanke Taille"],
+  "weak_points": ["Beine unterentwickelt im Verhältnis zum Oberkörper", "Rückenbreite ausbaufähig"],
+  "posture_notes": "Schultern leicht nach vorne gerollt - mehr Rudern und Face Pulls einbauen.",
+  "recommendations": [
+    "Fokus auf Beintraining: 2x pro Woche Squats & RDLs",
+    "Mehr Volumen für Rücken (Klimmzüge, Rudern)",
+    "Posture-Übungen: Face Pulls, Band Pull-Aparts"
+  ],
+  "next_focus": "Beine & Rücken priorisieren",
+  "confidence": 0.75
+}}
+
+Skalen:
+- overall_score: 0-100 (Gesamteindruck Physique)
+- muscle_development: 1-10 pro Muskelgruppe
+- symmetry_score: 1-10
+- body_fat_estimate: Prozent als Zahl (z.B. 15.5)
+- confidence: 0-1 wie sicher die Einschätzung ist
+
+Sei ehrlich. Schmeichele nicht, aber demotiviere nicht. Werte sollen Trends zeigen, nicht absolute Wahrheit."""
+
+    chat = LlmChat(
+        api_key=EMERGENT_LLM_KEY,
+        session_id=f"bodyscan-{user['id']}-{uuid.uuid4()}",
+        system_message=sys,
+    ).with_model("openai", "gpt-5.2")
+
+    try:
+        img = ImageContent(image_base64=image_b64)
+        resp = await chat.send_message(UserMessage(text=prompt, file_contents=[img]))
+        text = resp if isinstance(resp, str) else str(resp)
+    except Exception as e:
+        logger.error(f"Body scan vision error: {e}")
+        raise HTTPException(status_code=500, detail=f"KI-Analyse fehlgeschlagen: {str(e)}")
+
+    data = parse_json_from_llm(text)
+    if not data:
+        raise HTTPException(status_code=500, detail="KI konnte die Analyse nicht generieren. Bitte erneut versuchen.")
+
+    if data.get("error") == "no_body_detected":
+        raise HTTPException(status_code=400, detail="Kein Körper auf dem Foto erkennbar. Bitte ein klares Foto in Sportkleidung hochladen.")
+
+    def _num(v, default=0.0):
+        try:
+            return float(v)
+        except Exception:
+            return default
+
+    def _int(v, default=0):
+        try:
+            return int(round(float(v)))
+        except Exception:
+            return default
+
+    def _list(v):
+        return [str(x)[:200] for x in v][:8] if isinstance(v, list) else []
+
+    md = data.get("muscle_development") or {}
+    if not isinstance(md, dict):
+        md = {}
+
+    muscle_groups = ["chest", "shoulders", "back", "arms", "core", "legs", "glutes"]
+    muscle_dev = {g: max(1, min(10, _int(md.get(g, 5), 5))) for g in muscle_groups}
+
+    scan_id = str(uuid.uuid4())
+    record = {
+        "id": scan_id,
+        "user_id": user["id"],
+        "overall_score": max(0, min(100, _int(data.get("overall_score", 50), 50))),
+        "body_fat_estimate": round(_num(data.get("body_fat_estimate", 0)), 1),
+        "body_fat_range": str(data.get("body_fat_range", ""))[:50],
+        "muscle_development": muscle_dev,
+        "symmetry_score": max(1, min(10, _int(data.get("symmetry_score", 5), 5))),
+        "symmetry_notes": str(data.get("symmetry_notes", ""))[:500],
+        "strengths": _list(data.get("strengths")),
+        "weak_points": _list(data.get("weak_points")),
+        "posture_notes": str(data.get("posture_notes", ""))[:500],
+        "recommendations": _list(data.get("recommendations")),
+        "next_focus": str(data.get("next_focus", ""))[:200],
+        "confidence": round(max(0.0, min(1.0, _num(data.get("confidence", 0.5), 0.5))), 2),
+        "notes": (payload.notes or "")[:500],
+        "created_at": now_iso(),
+        "weight_kg_at_scan": profile.get("weight_kg"),
+    }
+
+    # Vergleich zum vorherigen Scan
+    prev = await db.body_scans.find_one(
+        {"user_id": user["id"]}, {"_id": 0}, sort=[("created_at", -1)]
+    )
+    if prev:
+        record["delta_vs_previous"] = {
+            "overall_score": record["overall_score"] - int(prev.get("overall_score", 0) or 0),
+            "body_fat_estimate": round(record["body_fat_estimate"] - float(prev.get("body_fat_estimate", 0) or 0), 1),
+            "symmetry_score": record["symmetry_score"] - int(prev.get("symmetry_score", 0) or 0),
+            "muscle_development": {
+                g: record["muscle_development"][g] - int((prev.get("muscle_development") or {}).get(g, 0) or 0)
+                for g in muscle_groups
+            },
+            "previous_scan_id": prev.get("id"),
+            "previous_scan_date": prev.get("created_at"),
+        }
+    else:
+        record["delta_vs_previous"] = None
+
+    await db.body_scans.insert_one(record)
+    try:
+        await log_activity(user["id"], user.get("name") or "User", "body_scan", {"overall_score": record["overall_score"]})
+    except Exception:
+        pass
+
+    record.pop("_id", None)
+    return record
+
+@api_router.get("/bodyscan/history")
+async def bodyscan_history(user: dict = Depends(get_current_user), limit: int = 20):
+    require_premium(user)
+    scans = await db.body_scans.find(
+        {"user_id": user["id"]}, {"_id": 0}
+    ).sort("created_at", -1).to_list(min(max(limit, 1), 50))
+    return {"scans": scans}
+
+@api_router.get("/bodyscan/{scan_id}")
+async def bodyscan_detail(scan_id: str, user: dict = Depends(get_current_user)):
+    require_premium(user)
+    scan = await db.body_scans.find_one({"id": scan_id, "user_id": user["id"]}, {"_id": 0})
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan nicht gefunden")
+    return scan
+
+@api_router.delete("/bodyscan/{scan_id}")
+async def bodyscan_delete(scan_id: str, user: dict = Depends(get_current_user)):
+    require_premium(user)
+    res = await db.body_scans.delete_one({"id": scan_id, "user_id": user["id"]})
+    return {"ok": True, "deleted": res.deleted_count}
+
+
 
 def is_recently_active(last_active: Optional[str]) -> bool:
     if not last_active:
