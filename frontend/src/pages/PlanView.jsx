@@ -4,6 +4,7 @@ import Layout from "../components/Layout";
 import api from "../lib/api";
 import { Play, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { getExerciseImage } from "../lib/exerciseImages";
 
 export default function PlanView() {
   const navigate = useNavigate();
@@ -68,12 +69,17 @@ export default function PlanView() {
             </div>
             <div className="space-y-2">
               {day.exercises?.map((ex, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-[#0A0A10] border border-[#1A1A24] hover:border-[#00BFFF]/40 transition" data-testid={`exercise-${day.day_index}-${i}`}>
-                  <div>
-                    <div className="font-teko text-xl tracking-wide chrome-text">{ex.name}</div>
+                <div key={i} className="flex items-center gap-4 p-3 bg-[#0A0A10] border border-[#1A1A24] hover:border-[#00BFFF]/40 transition" data-testid={`exercise-${day.day_index}-${i}`}>
+                  <img
+                    src={getExerciseImage(ex.name, ex.target_muscle)}
+                    alt={ex.name}
+                    className="w-16 h-16 object-cover border border-[#1A1A24]"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-teko text-xl tracking-wide chrome-text truncate">{ex.name}</div>
                     <div className="text-xs text-gray-500 font-chakra uppercase tracking-widest">{ex.target_muscle}</div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex-shrink-0">
                     <div className="font-teko text-2xl electric-text glow-text-soft">{ex.sets} × {ex.reps}</div>
                     <div className="text-xs text-gray-400 font-chakra">{ex.weight_kg} kg · {ex.rest_seconds}s rest</div>
                   </div>

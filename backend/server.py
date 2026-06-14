@@ -618,6 +618,105 @@ async def session_history(user: dict = Depends(get_current_user)):
     ).sort("started_at", -1).to_list(50)
     return {"sessions": sessions}
 
+@api_router.get("/sessions/suggestion/{day_index}/{exercise_index}")
+async def progression_suggestion(day_index: int, exercise_index: int, user: dict = Depends(get_current_user)):
+    """KI-Progressions-Empfehlung für eine Übung basierend auf bisheriger Performance."""
+    plan_id = user.get("current_plan_id")
+    if not plan_id:
+        return {"has_history": False, "message": "Kein Plan aktiv"}
+    plan = await db.training_plans.find_one({"id": plan_id}, {"_id": 0})
+    if not plan:
+        return {"has_history": False, "message": "Plan nicht gefunden"}
+
+    day = next((d for d in plan["days"] if d["day_index"] == day_index), None)
+    if not day or exercise_index >= len(day.get("exercises", [])):
+        return {"has_history": False, "message": "Übung nicht gefunden"}
+
+    target_ex = day["exercises"][exercise_index]
+    target_reps = target_ex.get("reps", 0)
+    target_weight = target_ex.get("weight_kg", 0)
+
+    # Get last 3 completed sessions for this day
+    sessions = await db.workout_sessions.find(
+        {"user_id": user["id"], "day_index": day_index, "status": "completed"}, {"_id": 0}
+    ).sort("completed_at", -1).to_list(3)
+
+    if not sessions:
+        return {
+            "has_history": False,
+            "target_weight": target_weight,
+            "target_reps": target_reps,
+            "suggested_weight": target_weight,
+            "suggested_reps": target_reps,
+            "message": "Erstes Mal - Starte mit dem Zielgewicht.",
+            "delta_weight": 0,
+        }
+
+    # Collect logged sets for this exercise across sessions
+    history = []
+    for s in sessions:
+        for log in s.get("logged_sets", []):
+            if log.get("exercise_index") == exercise_index:
+                history.append({
+                    "reps": log.get("reps", 0),
+                    "weight_kg": log.get("weight_kg", 0),
+                    "completed_at": log.get("completed_at"),
+                })
+
+    if not history:
+        return {
+            "has_history": False,
+            "target_weight": target_weight,
+            "target_reps": target_reps,
+            "suggested_weight": target_weight,
+            "suggested_reps": target_reps,
+            "message": "Noch keine Daten für diese Übung.",
+            "delta_weight": 0,
+        }
+
+    # Last session performance (sets of last session only)
+    last_session = sessions[0]
+    last_sets = [log for log in last_session.get("logged_sets", []) if log.get("exercise_index") == exercise_index]
+    if not last_sets:
+        last_sets = history[:1]
+
+    avg_reps = sum(s["reps"] for s in last_sets) / len(last_sets)
+    last_weight = last_sets[-1].get("weight_kg", target_weight)
+
+    # Progression logic
+    if avg_reps >= target_reps:
+        # Hit all reps -> increase weight
+        increment = 2.5 if last_weight < 50 else 5.0
+        suggested_weight = last_weight + increment
+        suggested_reps = target_reps
+        msg = f"Letztes Mal: {int(avg_reps)} Whdh @ {last_weight}kg sauber. Steigere auf {suggested_weight}kg."
+        delta = increment
+    elif avg_reps >= target_reps - 2:
+        # Close to target -> keep weight, push reps
+        suggested_weight = last_weight
+        suggested_reps = target_reps
+        msg = f"Letztes Mal: {int(avg_reps)} Whdh @ {last_weight}kg. Heute auf {target_reps} pushen."
+        delta = 0
+    else:
+        # Undershoot -> reduce weight
+        decrement = 2.5
+        suggested_weight = max(0, last_weight - decrement)
+        suggested_reps = target_reps
+        msg = f"Letztes Mal: nur {int(avg_reps)} Whdh @ {last_weight}kg. Reduziere auf {suggested_weight}kg."
+        delta = -decrement
+
+    return {
+        "has_history": True,
+        "target_weight": target_weight,
+        "target_reps": target_reps,
+        "suggested_weight": suggested_weight,
+        "suggested_reps": suggested_reps,
+        "last_weight": last_weight,
+        "last_avg_reps": round(avg_reps, 1),
+        "message": msg,
+        "delta_weight": delta,
+    }
+
 
 # ===== Stripe Payments =====
 @api_router.post("/payments/checkout")

@@ -105,8 +105,12 @@ export default function Landing() {
       </section>
 
       <footer className="relative z-10 border-t border-[#1A1A24] py-8 mt-16">
-        <div className="max-w-7xl mx-auto px-6 text-center text-gray-600 font-chakra text-xs tracking-widest uppercase">
-          © 2026 alpha-fit · Werde Alpha
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-gray-600 font-chakra text-xs tracking-widest uppercase">
+          <div>© 2026 Sky-Networks UG · alpha-fit</div>
+          <div className="flex gap-6">
+            <Link to="/impressum" className="hover:text-[#00BFFF]" data-testid="footer-impressum">Impressum</Link>
+            <Link to="/agb" className="hover:text-[#00BFFF]" data-testid="footer-agb">AGB</Link>
+          </div>
         </div>
       </footer>
     </div>

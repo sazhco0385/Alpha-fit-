@@ -14,6 +14,7 @@ import Progress from "./pages/Progress";
 import Premium from "./pages/Premium";
 import PaymentReturn from "./pages/PaymentReturn";
 import Admin from "./pages/Admin";
+import { Impressum, AGB } from "./pages/Legal";
 
 function App() {
   return (
@@ -46,6 +47,8 @@ function App() {
             <Route path="/premium" element={<ProtectedRoute><Premium /></ProtectedRoute>} />
             <Route path="/payment-return" element={<ProtectedRoute><PaymentReturn /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requireOnboarding={false} adminOnly><Admin /></ProtectedRoute>} />
+            <Route path="/impressum" element={<Impressum />} />
+            <Route path="/agb" element={<AGB />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>

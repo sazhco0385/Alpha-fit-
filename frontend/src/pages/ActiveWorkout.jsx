@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../lib/api";
-import { Check, X, Pause, Play, ChevronRight, Loader2, Flame, Trophy } from "lucide-react";
+import { Check, X, Pause, Play, ChevronRight, Loader2, Flame, Trophy, TrendingUp, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { getExerciseImage } from "../lib/exerciseImages";
 
 export default function ActiveWorkout() {
   const { sessionId } = useParams();
@@ -21,6 +22,7 @@ export default function ActiveWorkout() {
   const [finishing, setFinishing] = useState(false);
   const [done, setDone] = useState(false);
   const [newBadges, setNewBadges] = useState([]);
+  const [suggestion, setSuggestion] = useState(null);
   const restRef = useRef(null);
 
   // Load session & plan
@@ -58,13 +60,20 @@ export default function ActiveWorkout() {
     })();
   }, [sessionId, navigate]);
 
-  // when exercise changes, set default reps/weight
+  // when exercise changes, set default reps/weight + fetch suggestion
   useEffect(() => {
     if (day?.exercises?.[exIdx]) {
       setReps(day.exercises[exIdx].reps);
       setWeight(day.exercises[exIdx].weight_kg);
     }
-  }, [exIdx, day]);
+    // Fetch AI suggestion
+    if (session && day?.exercises?.[exIdx]) {
+      setSuggestion(null);
+      api.get(`/sessions/suggestion/${session.day_index}/${exIdx}`)
+        .then(({ data }) => setSuggestion(data))
+        .catch(() => setSuggestion(null));
+    }
+  }, [exIdx, day, session]);
 
   // Rest timer
   useEffect(() => {
@@ -204,13 +213,52 @@ export default function ActiveWorkout() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Exercise card */}
-            <div className="text-center">
-              <div className="text-xs text-gray-500 uppercase tracking-[0.3em] font-chakra">ÜBUNG {exIdx + 1}</div>
-              <h1 className="font-teko text-5xl md:text-7xl mt-2 chrome-text tracking-wide" data-testid="exercise-name">{exercise.name}</h1>
-              <div className="text-[#00BFFF] font-chakra uppercase tracking-widest text-sm mt-2">{exercise.target_muscle}</div>
-              {exercise.notes && <div className="text-gray-500 text-sm mt-2 italic font-chakra">"{exercise.notes}"</div>}
+            {/* Exercise image */}
+            <div className="relative w-full aspect-[16/8] overflow-hidden af-card clip-corner-tl-br" data-testid="exercise-image">
+              <img
+                src={getExerciseImage(exercise.name, exercise.target_muscle)}
+                alt={exercise.name}
+                className="w-full h-full object-cover opacity-80"
+              />
+              <div className="absolute inset-0" style={{
+                background: "linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.95) 100%)",
+              }} />
+              <div className="absolute bottom-3 left-4 right-4">
+                <div className="text-[10px] text-[#00BFFF] uppercase tracking-[0.3em] font-chakra">ÜBUNG {exIdx + 1} / {totalExercises}</div>
+                <div className="font-teko text-4xl md:text-5xl chrome-text leading-none mt-1" data-testid="exercise-name">{exercise.name}</div>
+                <div className="text-[#00BFFF] font-chakra uppercase tracking-widest text-xs mt-1">{exercise.target_muscle}</div>
+              </div>
             </div>
+
+            {exercise.notes && <div className="text-gray-500 text-sm italic font-chakra text-center">"{exercise.notes}"</div>}
+
+            {/* KI Progression Suggestion */}
+            {suggestion && (
+              <div className="af-card p-4 clip-corner-tl-br border-[#00BFFF]/40 glow-box" data-testid="progression-suggestion">
+                <div className="flex items-start gap-3">
+                  <Sparkles size={20} className="text-[#00E5FF] mt-0.5 flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(0,229,255,0.8))" }} />
+                  <div className="flex-1">
+                    <div className="text-[10px] text-[#00BFFF] uppercase tracking-[0.3em] font-chakra">KI EMPFEHLUNG</div>
+                    <div className="font-chakra text-sm mt-1 text-gray-200">{suggestion.message}</div>
+                    {suggestion.has_history && (
+                      <button
+                        onClick={() => {
+                          setWeight(suggestion.suggested_weight);
+                          setReps(suggestion.suggested_reps);
+                          toast.success("KI Empfehlung übernommen");
+                        }}
+                        className="mt-2 text-xs text-[#00E5FF] hover:text-white font-chakra uppercase tracking-widest flex items-center gap-1"
+                        data-testid="apply-suggestion-btn"
+                      >
+                        <TrendingUp size={12} /> ÜBERNEHMEN ({suggestion.suggested_weight}kg × {suggestion.suggested_reps})
+                        {suggestion.delta_weight > 0 && <span className="text-[#00FF7F]"> +{suggestion.delta_weight}kg</span>}
+                        {suggestion.delta_weight < 0 && <span className="text-yellow-500"> {suggestion.delta_weight}kg</span>}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="af-card p-6 clip-corner-tl-br">
               <div className="grid grid-cols-3 text-center gap-2 mb-6">

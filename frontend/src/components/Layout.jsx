@@ -46,6 +46,12 @@ export default function Layout({ children }) {
 
       <main className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-6 pb-28">{children}</main>
 
+      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 pb-24 pt-8 flex justify-center gap-6 text-[10px] tracking-widest uppercase text-gray-600 font-chakra">
+        <NavLink to="/impressum" className="hover:text-[#00BFFF]" data-testid="layout-impressum-link">Impressum</NavLink>
+        <NavLink to="/agb" className="hover:text-[#00BFFF]" data-testid="layout-agb-link">AGB</NavLink>
+        <span>© Sky-Networks UG</span>
+      </div>
+
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 backdrop-blur-xl bg-black/85 border-t border-[#1A1A24]" data-testid="bottom-nav">
         <div className="max-w-7xl mx-auto grid grid-cols-6 md:flex md:justify-center md:gap-12">
