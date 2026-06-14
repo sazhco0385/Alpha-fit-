@@ -16,6 +16,7 @@ import PaymentReturn from "./pages/PaymentReturn";
 import Admin from "./pages/Admin";
 import { Impressum, AGB, Datenschutz } from "./pages/Legal";
 import Support from "./pages/Support";
+import Nutrition from "./pages/Nutrition";
 import A2HSPrompt from "./components/A2HSPrompt";
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
             <Route path="/agb" element={<AGB />} />
             <Route path="/datenschutz" element={<Datenschutz />} />
             <Route path="/support" element={<ProtectedRoute requireOnboarding={false}><Support /></ProtectedRoute>} />
+            <Route path="/nutrition" element={<ProtectedRoute><Nutrition /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, Dumbbell, Brain, TrendingUp, Crown, Shield, LogOut } from "lucide-react";
+import { Home, Dumbbell, Brain, TrendingUp, Crown, Shield, LogOut, Apple } from "lucide-react";
 import Logo from "./Logo";
 import { useAuth } from "../lib/auth";
 
@@ -10,6 +10,7 @@ export default function Layout({ children }) {
   const navItems = [
     { to: "/dashboard", icon: Home, label: "Start", testid: "nav-dashboard" },
     { to: "/plan", icon: Dumbbell, label: "Plan", testid: "nav-plan" },
+    { to: "/nutrition", icon: Apple, label: "Food", testid: "nav-nutrition" },
     { to: "/coach", icon: Brain, label: "Coach", testid: "nav-coach" },
     { to: "/progress", icon: TrendingUp, label: "Stats", testid: "nav-progress" },
     { to: "/premium", icon: Crown, label: "Pro", testid: "nav-premium" },
