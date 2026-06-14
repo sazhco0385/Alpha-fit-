@@ -166,20 +166,20 @@ export default function ActiveWorkout() {
       <div className="absolute inset-0 bg-radial-blue" />
 
       {/* Top bar */}
-      <div className="relative z-10 p-4 md:p-6 flex items-center justify-between">
-        <button onClick={() => navigate("/dashboard")} className="text-gray-400 hover:text-[#00BFFF] font-chakra uppercase tracking-widest text-xs" data-testid="workout-exit-btn">
-          <X size={20} className="inline mr-1" /> PAUSE
+      <div className="relative z-10 p-3 sm:p-6 flex items-center justify-between gap-2">
+        <button onClick={() => navigate("/dashboard")} className="text-gray-400 hover:text-[#00BFFF] font-chakra uppercase tracking-widest text-xs flex-shrink-0" data-testid="workout-exit-btn">
+          <X size={18} className="inline mr-1" /> <span className="hidden sm:inline">PAUSE</span>
         </button>
-        <div className="font-teko text-2xl tracking-widest chrome-text">
+        <div className="font-teko text-base sm:text-2xl tracking-widest chrome-text text-center min-w-0 truncate">
           TAG {day.day_index} · <span className="electric-text glow-text-soft">{day.name}</span>
         </div>
-        <div className="text-xs text-gray-500 font-chakra tracking-widest">
+        <div className="text-xs text-gray-500 font-chakra tracking-widest flex-shrink-0">
           {exIdx + 1}/{totalExercises}
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="relative z-10 h-[3px] bg-[#0A0A10] mx-4">
+      <div className="relative z-10 h-[3px] bg-[#0A0A10] mx-3 sm:mx-4">
         <div className="h-full transition-all duration-500" style={{
           width: `${overallProgress}%`,
           background: "linear-gradient(90deg, #00E5FF, #00BFFF)",
@@ -187,17 +187,17 @@ export default function ActiveWorkout() {
         }} />
       </div>
 
-      <main className="relative z-10 max-w-3xl mx-auto px-4 py-6 md:py-12">
+      <main className="relative z-10 max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-12">
         {resting ? (
-          <div className="text-center py-8" data-testid="rest-timer-view">
+          <div className="text-center py-6" data-testid="rest-timer-view">
             <div className="text-xs text-gray-500 uppercase tracking-[0.3em] font-chakra">PAUSE</div>
-            <div className="my-6 relative inline-block">
-              <div className="font-teko text-9xl md:text-[180px] electric-text glow-text leading-none" data-testid="rest-countdown">
+            <div className="my-4 sm:my-6 relative inline-block">
+              <div className="font-teko text-[8rem] sm:text-9xl md:text-[180px] electric-text glow-text leading-none" data-testid="rest-countdown">
                 {restLeft}
               </div>
-              <div className="text-2xl font-teko chrome-text tracking-widest">SEKUNDEN</div>
+              <div className="text-xl sm:text-2xl font-teko chrome-text tracking-widest">SEKUNDEN</div>
             </div>
-            <div className="flex justify-center gap-3 mt-8">
+            <div className="flex justify-center gap-2 sm:gap-3 mt-6 sm:mt-8 flex-wrap">
               <button onClick={() => setRestPaused(!restPaused)} className="btn-outline flex items-center gap-2" data-testid="rest-pause-btn">
                 {restPaused ? <Play size={16} /> : <Pause size={16} />}
                 {restPaused ? "WEITER" : "PAUSE"}
@@ -214,7 +214,7 @@ export default function ActiveWorkout() {
         ) : (
           <div className="space-y-6">
             {/* Exercise image */}
-            <div className="relative w-full aspect-[16/8] overflow-hidden af-card clip-corner-tl-br" data-testid="exercise-image">
+            <div className="relative w-full aspect-[16/9] sm:aspect-[16/8] overflow-hidden af-card clip-corner-tl-br" data-testid="exercise-image">
               <img
                 src={getExerciseImage(exercise.name, exercise.target_muscle)}
                 alt={exercise.name}
@@ -223,23 +223,23 @@ export default function ActiveWorkout() {
               <div className="absolute inset-0" style={{
                 background: "linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.95) 100%)",
               }} />
-              <div className="absolute bottom-3 left-4 right-4">
-                <div className="text-[10px] text-[#00BFFF] uppercase tracking-[0.3em] font-chakra">ÜBUNG {exIdx + 1} / {totalExercises}</div>
-                <div className="font-teko text-4xl md:text-5xl chrome-text leading-none mt-1" data-testid="exercise-name">{exercise.name}</div>
-                <div className="text-[#00BFFF] font-chakra uppercase tracking-widest text-xs mt-1">{exercise.target_muscle}</div>
+              <div className="absolute bottom-2 left-3 right-3 sm:bottom-3 sm:left-4 sm:right-4">
+                <div className="text-[9px] sm:text-[10px] text-[#00BFFF] uppercase tracking-[0.3em] font-chakra">ÜBUNG {exIdx + 1} / {totalExercises}</div>
+                <div className="font-teko text-2xl sm:text-4xl md:text-5xl chrome-text leading-none mt-1 break-words" data-testid="exercise-name">{exercise.name}</div>
+                <div className="text-[#00BFFF] font-chakra uppercase tracking-widest text-[10px] sm:text-xs mt-1">{exercise.target_muscle}</div>
               </div>
             </div>
 
-            {exercise.notes && <div className="text-gray-500 text-sm italic font-chakra text-center">"{exercise.notes}"</div>}
+            {exercise.notes && <div className="text-gray-500 text-xs sm:text-sm italic font-chakra text-center px-2">"{exercise.notes}"</div>}
 
             {/* KI Progression Suggestion */}
             {suggestion && (
-              <div className="af-card p-4 clip-corner-tl-br border-[#00BFFF]/40 glow-box" data-testid="progression-suggestion">
-                <div className="flex items-start gap-3">
-                  <Sparkles size={20} className="text-[#00E5FF] mt-0.5 flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(0,229,255,0.8))" }} />
-                  <div className="flex-1">
-                    <div className="text-[10px] text-[#00BFFF] uppercase tracking-[0.3em] font-chakra">KI EMPFEHLUNG</div>
-                    <div className="font-chakra text-sm mt-1 text-gray-200">{suggestion.message}</div>
+              <div className="af-card p-3 sm:p-4 clip-corner-tl-br border-[#00BFFF]/40 glow-box" data-testid="progression-suggestion">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <Sparkles size={18} className="text-[#00E5FF] mt-0.5 flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(0,229,255,0.8))" }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[9px] sm:text-[10px] text-[#00BFFF] uppercase tracking-[0.3em] font-chakra">KI EMPFEHLUNG</div>
+                    <div className="font-chakra text-xs sm:text-sm mt-1 text-gray-200">{suggestion.message}</div>
                     {suggestion.has_history && (
                       <button
                         onClick={() => {
@@ -247,7 +247,7 @@ export default function ActiveWorkout() {
                           setReps(suggestion.suggested_reps);
                           toast.success("KI Empfehlung übernommen");
                         }}
-                        className="mt-2 text-xs text-[#00E5FF] hover:text-white font-chakra uppercase tracking-widest flex items-center gap-1"
+                        className="mt-2 text-[10px] sm:text-xs text-[#00E5FF] hover:text-white font-chakra uppercase tracking-widest inline-flex items-center gap-1 flex-wrap"
                         data-testid="apply-suggestion-btn"
                       >
                         <TrendingUp size={12} /> ÜBERNEHMEN ({suggestion.suggested_weight}kg × {suggestion.suggested_reps})
@@ -260,30 +260,30 @@ export default function ActiveWorkout() {
               </div>
             )}
 
-            <div className="af-card p-6 clip-corner-tl-br">
-              <div className="grid grid-cols-3 text-center gap-2 mb-6">
+            <div className="af-card p-4 sm:p-6 clip-corner-tl-br">
+              <div className="grid grid-cols-3 text-center gap-2 mb-5 sm:mb-6">
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest font-chakra">SATZ</div>
-                  <div className="font-teko text-4xl electric-text glow-text-soft mt-1" data-testid="current-set">{setIdx + 1}/{totalSets}</div>
+                  <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-widest font-chakra">SATZ</div>
+                  <div className="font-teko text-3xl sm:text-4xl electric-text glow-text-soft mt-1" data-testid="current-set">{setIdx + 1}/{totalSets}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest font-chakra">ZIEL WHDH.</div>
-                  <div className="font-teko text-4xl chrome-text mt-1">{exercise.reps}</div>
+                  <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-widest font-chakra">ZIEL WHDH.</div>
+                  <div className="font-teko text-3xl sm:text-4xl chrome-text mt-1">{exercise.reps}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest font-chakra">PAUSE</div>
-                  <div className="font-teko text-4xl chrome-text mt-1">{exercise.rest_seconds}s</div>
+                  <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-widest font-chakra">PAUSE</div>
+                  <div className="font-teko text-3xl sm:text-4xl chrome-text mt-1">{exercise.rest_seconds}s</div>
                 </div>
               </div>
 
               {/* Input controls */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <NumberStepper label="WIEDERHOLUNGEN" value={reps} onChange={setReps} step={1} testid="reps-input" />
                 <NumberStepper label="GEWICHT (KG)" value={weight} onChange={setWeight} step={2.5} testid="weight-input" />
               </div>
 
-              <button onClick={completeSet} disabled={finishing} className="btn-primary w-full mt-6 text-xl flex items-center justify-center gap-2" data-testid="complete-set-btn">
-                {finishing ? <Loader2 size={20} className="animate-spin" /> : <Check size={22} />}
+              <button onClick={completeSet} disabled={finishing} className="btn-primary w-full mt-5 sm:mt-6 text-base sm:text-xl flex items-center justify-center gap-2" data-testid="complete-set-btn">
+                {finishing ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} />}
                 SATZ ABSCHLIESSEN
               </button>
             </div>
@@ -304,17 +304,17 @@ export default function ActiveWorkout() {
 function NumberStepper({ label, value, onChange, step, testid }) {
   return (
     <div>
-      <div className="text-xs text-gray-500 uppercase tracking-widest font-chakra mb-2">{label}</div>
-      <div className="flex items-center gap-2">
-        <button onClick={() => onChange(Math.max(0, Number(value) - step))} className="w-12 h-12 border border-[#1A1A24] hover:border-[#00BFFF] font-teko text-2xl text-[#00BFFF] transition" data-testid={`${testid}-minus`}>-</button>
+      <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-widest font-chakra mb-2">{label}</div>
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        <button onClick={() => onChange(Math.max(0, Number(value) - step))} className="w-10 h-10 sm:w-12 sm:h-12 border border-[#1A1A24] hover:border-[#00BFFF] font-teko text-xl sm:text-2xl text-[#00BFFF] transition flex-shrink-0" data-testid={`${testid}-minus`}>-</button>
         <input
           type="number"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="af-input text-center font-teko text-3xl flex-1"
+          className="af-input text-center font-teko text-xl sm:text-3xl flex-1 min-w-0 px-1 sm:px-4"
           data-testid={testid}
         />
-        <button onClick={() => onChange(Number(value) + step)} className="w-12 h-12 border border-[#1A1A24] hover:border-[#00BFFF] font-teko text-2xl text-[#00BFFF] transition" data-testid={`${testid}-plus`}>+</button>
+        <button onClick={() => onChange(Number(value) + step)} className="w-10 h-10 sm:w-12 sm:h-12 border border-[#1A1A24] hover:border-[#00BFFF] font-teko text-xl sm:text-2xl text-[#00BFFF] transition flex-shrink-0" data-testid={`${testid}-plus`}>+</button>
       </div>
     </div>
   );

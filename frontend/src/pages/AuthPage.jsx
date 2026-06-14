@@ -36,18 +36,18 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center relative overflow-hidden p-6">
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center relative overflow-hidden p-4 sm:p-6">
       <div className="absolute inset-0 bg-grid opacity-40" />
       <div className="absolute inset-0 bg-radial-blue" />
 
-      <Link to="/" className="absolute top-6 left-6 z-10" data-testid="back-to-home"><Logo size={36} /></Link>
+      <Link to="/" className="absolute top-4 left-4 sm:top-6 sm:left-6 z-10" data-testid="back-to-home"><Logo size={32} /></Link>
 
-      <div className="relative z-10 w-full max-w-md af-card p-8 clip-corner-tl-br" data-testid="auth-card">
+      <div className="relative z-10 w-full max-w-md af-card p-6 sm:p-8 clip-corner-tl-br mt-16 sm:mt-0" data-testid="auth-card">
         <div className="text-center mb-6">
-          <h1 className="font-teko text-5xl chrome-text">
+          <h1 className="font-teko text-3xl sm:text-5xl chrome-text">
             {mode === "login" ? "LOGIN" : "REGISTRIEREN"}
           </h1>
-          <p className="text-gray-500 font-chakra text-sm mt-2 tracking-wider uppercase">
+          <p className="text-gray-500 font-chakra text-xs sm:text-sm mt-2 tracking-wider uppercase">
             {mode === "login" ? "Komm zurück, Alpha." : "Tritt dem Alpha-Protokoll bei."}
           </p>
         </div>

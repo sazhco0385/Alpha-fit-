@@ -47,7 +47,10 @@
     color: var(--af-text);
     font-family: 'Chakra Petch', sans-serif;
     min-height: 100vh;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
+  img, video { max-width: 100%; height: auto; }
 }
 
 /* Typography */
@@ -133,11 +136,16 @@ h1, h2, h3, .heading {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 700;
-  padding: 0.75rem 1.5rem;
+  padding: 0.65rem 1.1rem;
   border: none;
   transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+@media (min-width: 768px) {
+  .btn-primary { padding: 0.75rem 1.5rem; font-size: 1rem; }
 }
 .btn-primary:hover {
   box-shadow: 0 0 30px rgba(0,229,255,0.8), 0 0 60px rgba(0,191,255,0.3);
@@ -153,8 +161,13 @@ h1, h2, h3, .heading {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 600;
-  padding: 0.7rem 1.4rem;
+  padding: 0.6rem 1rem;
   transition: all 0.25s ease;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+@media (min-width: 768px) {
+  .btn-outline { padding: 0.7rem 1.4rem; font-size: 1rem; }
 }
 .btn-outline:hover {
   background: rgba(0,191,255,0.1);

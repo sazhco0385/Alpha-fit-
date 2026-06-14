@@ -65,21 +65,21 @@ export default function Dashboard() {
   return (
     <Layout>
       {/* Hero greeting */}
-      <div className="mb-8" data-testid="dashboard-hero">
-        <div className="text-xs text-gray-500 font-chakra uppercase tracking-[0.3em]">WILLKOMMEN ZURÜCK</div>
-        <h1 className="font-teko text-5xl md:text-6xl tracking-wide chrome-text mt-1">
+      <div className="mb-6 sm:mb-8" data-testid="dashboard-hero">
+        <div className="text-[10px] sm:text-xs text-gray-500 font-chakra uppercase tracking-[0.3em]">WILLKOMMEN ZURÜCK</div>
+        <h1 className="font-teko text-4xl sm:text-5xl md:text-6xl tracking-wide chrome-text mt-1 break-words">
           ALPHA <span className="electric-text glow-text">{user?.name?.toUpperCase()}</span>
         </h1>
       </div>
 
       {/* Resume Banner */}
       {activeSession && (
-        <div className="af-card p-5 mb-6 tracing-border clip-corner-tl-br relative" data-testid="resume-banner">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="af-card p-4 sm:p-5 mb-5 sm:mb-6 tracing-border clip-corner-tl-br relative" data-testid="resume-banner">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <div className="text-xs text-[#00BFFF] uppercase tracking-widest font-chakra">TRAINING LÄUFT</div>
-              <div className="font-teko text-3xl mt-1 chrome-text">Setze dein Training fort</div>
-              <div className="text-gray-500 text-sm font-chakra">Tag {activeSession.day_index} · {activeSession.logged_sets?.length || 0} Sätze geloggt</div>
+              <div className="text-[10px] sm:text-xs text-[#00BFFF] uppercase tracking-widest font-chakra">TRAINING LÄUFT</div>
+              <div className="font-teko text-2xl sm:text-3xl mt-1 chrome-text">Setze dein Training fort</div>
+              <div className="text-gray-500 text-xs sm:text-sm font-chakra">Tag {activeSession.day_index} · {activeSession.logged_sets?.length || 0} Sätze geloggt</div>
             </div>
             <button onClick={() => navigate(`/workout/${activeSession.id}`)} className="btn-primary flex items-center gap-2" data-testid="resume-workout-btn">
               <Play size={18} /> FORTSETZEN
@@ -89,7 +89,7 @@ export default function Dashboard() {
       )}
 
       {/* Stats Bento */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatCard icon={Flame} label="Workouts" value={completedCount} testid="stat-workouts" />
         <StatCard icon={Award} label="Badges" value={user?.badges?.length || 0} testid="stat-badges" />
         <StatCard icon={Calendar} label="Plan Version" value={plan?.version || 0} testid="stat-version" />
@@ -97,15 +97,15 @@ export default function Dashboard() {
       </div>
 
       {/* Training Plan */}
-      <section className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-teko text-3xl tracking-wide chrome-text">DEIN PLAN</h2>
-          <div className="flex gap-2">
-            <button onClick={adjustPlan} disabled={regenerating} className="btn-outline text-sm flex items-center gap-2" data-testid="adjust-plan-btn">
+      <section className="mb-6 sm:mb-8">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <h2 className="font-teko text-2xl sm:text-3xl tracking-wide chrome-text">DEIN PLAN</h2>
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={adjustPlan} disabled={regenerating} className="btn-outline text-xs sm:text-sm flex items-center gap-2" data-testid="adjust-plan-btn">
               {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
               KI ANPASSEN
             </button>
-            <button onClick={() => navigate("/plan")} className="btn-outline text-sm" data-testid="view-plan-btn">DETAILS</button>
+            <button onClick={() => navigate("/plan")} className="btn-outline text-xs sm:text-sm" data-testid="view-plan-btn">DETAILS</button>
           </div>
         </div>
 
@@ -139,8 +139,8 @@ export default function Dashboard() {
 
       {/* Badges */}
       <section>
-        <h2 className="font-teko text-3xl tracking-wide chrome-text mb-4">BADGES</h2>
-        <div className="flex flex-wrap gap-6 af-card p-6">
+        <h2 className="font-teko text-2xl sm:text-3xl tracking-wide chrome-text mb-4">BADGES</h2>
+        <div className="flex flex-wrap gap-4 sm:gap-6 af-card p-4 sm:p-6 justify-center sm:justify-start">
           {nextBadges.map((b) => {
             const earned = user?.badges?.find((ub) => ub.id === b.id);
             return <BadgeGlow key={b.id} badge={earned || b} locked={!earned} />;

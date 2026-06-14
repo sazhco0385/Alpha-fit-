@@ -41,21 +41,21 @@ export default function Premium() {
 
   return (
     <Layout>
-      <div className="text-center mb-10">
-        <Crown size={48} className="mx-auto text-[#FFD700]" style={{ filter: "drop-shadow(0 0 16px rgba(255,215,0,0.8))" }} />
-        <h1 className="font-teko text-6xl mt-3 chrome-text">ALPHA <span className="electric-text glow-text">PREMIUM</span></h1>
-        <p className="text-gray-400 font-chakra mt-2">7 Tage kostenlos. Jederzeit kündbar. Werde alpha.</p>
+      <div className="text-center mb-8 sm:mb-10">
+        <Crown size={40} className="mx-auto text-[#FFD700]" style={{ filter: "drop-shadow(0 0 16px rgba(255,215,0,0.8))" }} />
+        <h1 className="font-teko text-4xl sm:text-6xl mt-3 chrome-text">ALPHA <span className="electric-text glow-text">PREMIUM</span></h1>
+        <p className="text-gray-400 font-chakra mt-2 text-sm sm:text-base">7 Tage kostenlos. Jederzeit kündbar. Werde alpha.</p>
       </div>
 
       {user?.is_premium && (
         <div className="af-card p-4 mb-6 text-center border-[#00BFFF] glow-box" data-testid="already-premium">
           <Crown size={20} className="inline text-[#00BFFF] mr-2" />
-          <span className="font-teko text-xl tracking-widest">DU BIST PREMIUM MITGLIED</span>
+          <span className="font-teko text-lg sm:text-xl tracking-widest">DU BIST PREMIUM MITGLIED</span>
           <div className="text-xs text-gray-500 font-chakra mt-1">Aktiv bis: {user.premium_until?.slice(0, 10)}</div>
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-10 sm:mb-12">
         {PLANS.map((p) => (
           <div
             key={p.key}
@@ -70,7 +70,7 @@ export default function Premium() {
             )}
             <div className="text-xs text-gray-500 uppercase tracking-widest font-chakra">{p.label}</div>
             <div className="mt-4">
-              <span className="font-teko text-6xl chrome-text">{p.price}</span>
+              <span className="font-teko text-5xl sm:text-6xl chrome-text">{p.price}</span>
               <span className="text-gray-500 font-chakra ml-2 text-sm">{p.interval}</span>
             </div>
             <div className="text-[#00BFFF] font-chakra text-sm mt-1">{p.desc}</div>

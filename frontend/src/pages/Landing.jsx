@@ -30,51 +30,51 @@ export default function Landing() {
       />
 
       {/* Top */}
-      <header className="relative z-20 max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-        <Logo size={42} />
+      <header className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center justify-between">
+        <Logo size={36} />
         <div className="flex gap-3">
           <Link to="/auth" className="btn-outline text-sm" data-testid="header-login-btn">Login</Link>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-24 grid md:grid-cols-2 gap-12 items-center">
+      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-16 pb-16 sm:pb-24 grid md:grid-cols-2 gap-8 md:gap-12 items-center">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#00BFFF]/40 text-[#00BFFF] font-chakra text-xs tracking-[0.3em] uppercase mb-6 glow-box" data-testid="hero-tag">
+          <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#00BFFF]/40 text-[#00BFFF] font-chakra text-[10px] sm:text-xs tracking-[0.3em] uppercase mb-4 sm:mb-6 glow-box" data-testid="hero-tag">
             <Zap size={12} /> KI-POWERED FITNESS
           </div>
-          <h1 className="font-teko text-6xl md:text-8xl font-bold leading-none tracking-wide uppercase">
+          <h1 className="font-teko text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-none tracking-wide uppercase">
             <span className="chrome-text block">Werde zum</span>
             <span className="electric-text glow-text block">Alpha.</span>
           </h1>
-          <p className="mt-6 text-gray-400 text-lg max-w-md font-chakra leading-relaxed">
+          <p className="mt-4 sm:mt-6 text-gray-400 text-base sm:text-lg max-w-md font-chakra leading-relaxed">
             Dein KI-Coach erstellt, optimiert und passt deinen Trainingsplan automatisch an –
             jedes Gewicht, jede Wiederholung. <span className="text-[#00BFFF]">7 Tage gratis.</span>
           </p>
-          <div className="mt-10 flex gap-4 flex-wrap">
-            <button onClick={handleStart} className="btn-primary text-lg flex items-center gap-2" data-testid="hero-cta-start">
+          <div className="mt-6 sm:mt-10 flex gap-3 flex-wrap">
+            <button onClick={handleStart} className="btn-primary text-base sm:text-lg flex items-center gap-2" data-testid="hero-cta-start">
               JETZT STARTEN <ChevronRight size={20} />
             </button>
-            <Link to="/auth" className="btn-outline text-lg" data-testid="hero-cta-login">Login</Link>
+            <Link to="/auth" className="btn-outline text-base sm:text-lg" data-testid="hero-cta-login">Login</Link>
           </div>
-          <div className="mt-12 flex flex-wrap gap-8 text-sm text-gray-500 font-chakra">
-            <div><span className="text-[#00BFFF] font-bold text-lg">∞</span> Anpassungen</div>
-            <div><span className="text-[#00BFFF] font-bold text-lg">24/7</span> KI-Coach</div>
-            <div><span className="text-[#00BFFF] font-bold text-lg">100%</span> Personalisiert</div>
+          <div className="mt-8 sm:mt-12 flex flex-wrap gap-4 sm:gap-8 text-xs sm:text-sm text-gray-500 font-chakra">
+            <div><span className="text-[#00BFFF] font-bold text-base sm:text-lg">∞</span> Anpassungen</div>
+            <div><span className="text-[#00BFFF] font-bold text-base sm:text-lg">24/7</span> KI-Coach</div>
+            <div><span className="text-[#00BFFF] font-bold text-base sm:text-lg">100%</span> Personalisiert</div>
           </div>
         </div>
 
         {/* Right Visual */}
-        <div className="relative">
-          <div className="relative w-full max-w-md mx-auto aspect-square">
+        <div className="relative order-first md:order-last">
+          <div className="relative w-full max-w-xs sm:max-w-md mx-auto aspect-square">
             <div className="absolute inset-0 hex-shield pulse-glow" style={{
               background: "linear-gradient(180deg, #00E5FF, #0066CC)",
             }} />
             <div className="absolute inset-[4px] hex-shield bg-black flex items-center justify-center">
               <div className="text-center">
-                <Zap size={120} className="mx-auto text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 30px rgba(0,229,255,1))" }} />
-                <div className="mt-4 font-teko text-5xl tracking-widest chrome-text">ALPHA</div>
-                <div className="font-teko text-3xl electric-text glow-text">PROTOKOLL</div>
+                <Zap size={80} className="mx-auto text-[#00BFFF] md:w-[120px] md:h-[120px]" style={{ filter: "drop-shadow(0 0 30px rgba(0,229,255,1))" }} />
+                <div className="mt-4 font-teko text-3xl sm:text-5xl tracking-widest chrome-text">ALPHA</div>
+                <div className="font-teko text-2xl sm:text-3xl electric-text glow-text">PROTOKOLL</div>
               </div>
             </div>
           </div>
@@ -82,7 +82,7 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section className="relative z-10 max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-3 gap-6">
+      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         {[
           { icon: Brain, title: "KI-COACH", desc: "GPT-5.2 erstellt deinen Plan. Passt sich automatisch an deinen Fortschritt an." },
           { icon: Dumbbell, title: "AUTO-PROGRESSION", desc: "Gewichte & Wiederholungen werden dynamisch optimiert. Du musst nicht denken." },

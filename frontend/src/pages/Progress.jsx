@@ -33,9 +33,9 @@ export default function Progress() {
 
   return (
     <Layout>
-      <h1 className="font-teko text-5xl chrome-text mb-6">PROGRESS</h1>
+      <h1 className="font-teko text-3xl sm:text-5xl chrome-text mb-6">PROGRESS</h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <Stat icon={Calendar} label="Workouts" value={completed.length} testid="prog-workouts" />
         <Stat icon={Dumbbell} label="Sätze gesamt" value={totalSets} testid="prog-sets" />
         <Stat icon={TrendingUp} label="Volumen (kg)" value={Math.round(totalVolume).toLocaleString()} testid="prog-volume" />
@@ -61,12 +61,12 @@ export default function Progress() {
       </div>
 
       {/* Badges */}
-      <div className="af-card p-6 clip-corner-tl-br">
-        <div className="font-teko text-2xl chrome-text mb-4">DEINE BADGES</div>
+      <div className="af-card p-4 sm:p-6 clip-corner-tl-br">
+        <div className="font-teko text-xl sm:text-2xl chrome-text mb-4">DEINE BADGES</div>
         {user?.badges?.length === 0 || !user?.badges ? (
-          <div className="text-gray-500 font-chakra">Noch keine Badges. Absolviere dein erstes Training!</div>
+          <div className="text-gray-500 font-chakra text-sm">Noch keine Badges. Absolviere dein erstes Training!</div>
         ) : (
-          <div className="flex flex-wrap gap-6" data-testid="badges-earned">
+          <div className="flex flex-wrap gap-4 sm:gap-6 justify-center sm:justify-start" data-testid="badges-earned">
             {user.badges.map((b) => <BadgeGlow key={b.id} badge={b} />)}
           </div>
         )}

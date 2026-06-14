@@ -65,13 +65,13 @@ export default function Admin() {
 
   return (
     <Layout>
-      <div className="flex items-center gap-3 mb-6">
-        <Shield size={32} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
-        <h1 className="font-teko text-5xl chrome-text">ADMIN CONTROL</h1>
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
+        <Shield size={28} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
+        <h1 className="font-teko text-3xl sm:text-5xl chrome-text">ADMIN CONTROL</h1>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatBlock icon={Euro} label="Heute Umsatz" value={`${(stats.revenue_today || 0).toFixed(2)} €`} sub={`${stats.revenue_today_count} Käufe`} testid="stat-revenue-today" />
         <StatBlock icon={Calendar} label="Monat Umsatz" value={`${(stats.revenue_month || 0).toFixed(2)} €`} sub={`${stats.revenue_month_count} Käufe`} testid="stat-revenue-month" />
         <StatBlock icon={TrendingUp} label="Gesamt Umsatz" value={`${(stats.revenue_total || 0).toFixed(2)} €`} sub={`${stats.revenue_total_count} Käufe`} testid="stat-revenue-total" highlight />
@@ -97,10 +97,10 @@ export default function Admin() {
       </div>
 
       {/* Members */}
-      <div className="af-card p-6 clip-corner-tl-br">
-        <div className="font-teko text-2xl chrome-text mb-4">MITGLIEDER ({members.length})</div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm font-chakra">
+      <div className="af-card p-4 sm:p-6 clip-corner-tl-br">
+        <div className="font-teko text-xl sm:text-2xl chrome-text mb-4">MITGLIEDER ({members.length})</div>
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <table className="w-full text-xs sm:text-sm font-chakra min-w-[600px]">
             <thead>
               <tr className="text-gray-500 uppercase tracking-widest text-xs border-b border-[#1A1A24]">
                 <th className="text-left py-3 px-2">Name</th>

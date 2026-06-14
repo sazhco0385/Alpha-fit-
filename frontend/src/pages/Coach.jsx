@@ -44,12 +44,12 @@ export default function Coach() {
   return (
     <Layout>
       <div className="mb-6">
-        <h1 className="font-teko text-5xl chrome-text tracking-wide">KI COACH</h1>
-        <p className="text-gray-500 font-chakra text-sm uppercase tracking-widest">Powered by GPT-5.2 · Alpha Protocol</p>
+        <h1 className="font-teko text-3xl sm:text-5xl chrome-text tracking-wide">KI COACH</h1>
+        <p className="text-gray-500 font-chakra text-[10px] sm:text-sm uppercase tracking-widest">Powered by GPT-5.2 · Alpha Protocol</p>
       </div>
 
-      <div className="af-card flex flex-col h-[70vh] clip-corner-tl-br" data-testid="coach-chat">
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+      <div className="af-card flex flex-col h-[65vh] sm:h-[70vh] clip-corner-tl-br" data-testid="coach-chat">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
           {messages.length === 0 && (
             <div className="text-center text-gray-500 py-12 font-chakra">
               <Brain size={48} className="mx-auto text-[#00BFFF] mb-4" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
@@ -72,7 +72,7 @@ export default function Coach() {
                   </div>
                 </div>
               )}
-              <div className={`max-w-[75%] p-3 font-chakra text-sm whitespace-pre-wrap ${
+              <div className={`max-w-[85%] sm:max-w-[75%] p-2.5 sm:p-3 font-chakra text-xs sm:text-sm whitespace-pre-wrap break-words ${
                 m.role === "user"
                   ? "border border-[#00BFFF] glow-box bg-[#001a2a] text-white"
                   : "bg-[#0A0A10] border border-[#1A1A24] chrome-text"
@@ -95,17 +95,17 @@ export default function Coach() {
           <div ref={endRef} />
         </div>
 
-        <div className="border-t border-[#1A1A24] p-4 flex gap-3">
+        <div className="border-t border-[#1A1A24] p-3 sm:p-4 flex gap-2 sm:gap-3">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
             placeholder="Nachricht an Alpha Coach..."
-            className="af-input flex-1"
+            className="af-input flex-1 min-w-0 text-sm sm:text-base"
             data-testid="coach-input"
           />
-          <button onClick={send} disabled={loading || !input.trim()} className="btn-primary flex items-center gap-2" data-testid="coach-send-btn">
-            <Send size={16} /> SEND
+          <button onClick={send} disabled={loading || !input.trim()} className="btn-primary flex items-center gap-1 sm:gap-2 text-sm flex-shrink-0" data-testid="coach-send-btn">
+            <Send size={14} /> <span className="hidden sm:inline">SEND</span>
           </button>
         </div>
       </div>

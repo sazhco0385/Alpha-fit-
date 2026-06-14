@@ -113,33 +113,33 @@ export default function Onboarding() {
         />
       </div>
 
-      <main className="relative z-10 flex-1 flex items-center justify-center p-6">
+      <main className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-2xl" data-testid={`onboarding-step-${current.key}`}>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 hex-shield flex items-center justify-center" style={{
+          <div className="flex items-start sm:items-center gap-3 mb-5 sm:mb-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 hex-shield flex items-center justify-center flex-shrink-0 relative" style={{
               background: "linear-gradient(180deg, #00E5FF, #1E90FF)",
             }}>
-              <div className="absolute w-10 h-10 hex-shield bg-black flex items-center justify-center">
-                <Icon size={20} className="text-[#00BFFF]" />
+              <div className="absolute inset-[2px] hex-shield bg-black flex items-center justify-center">
+                <Icon size={18} className="text-[#00BFFF]" />
               </div>
             </div>
-            <h2 className="font-teko text-4xl md:text-5xl tracking-wide chrome-text">{current.label}</h2>
+            <h2 className="font-teko text-2xl sm:text-4xl md:text-5xl tracking-wide chrome-text leading-tight">{current.label}</h2>
           </div>
 
           {current.options && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 sm:mt-6">
               {current.options.map((opt) => (
                 <button
                   key={opt.v}
                   onClick={() => setValue(opt.v)}
-                  className={`af-card p-5 text-left transition-all clip-corner-tl-br ${
+                  className={`af-card p-4 sm:p-5 text-left transition-all clip-corner-tl-br ${
                     data[current.key] === opt.v
                       ? "border-[#00BFFF] glow-box-intense"
                       : "hover:border-[#00BFFF]/50"
                   }`}
                   data-testid={`onboarding-option-${opt.v}`}
                 >
-                  <span className="font-teko text-xl tracking-wide">{opt.l}</span>
+                  <span className="font-teko text-lg sm:text-xl tracking-wide">{opt.l}</span>
                 </button>
               ))}
             </div>
@@ -149,7 +149,7 @@ export default function Onboarding() {
             <div className="mt-6">
               <input
                 type={current.input}
-                className="af-input text-2xl font-teko"
+                className="af-input text-xl sm:text-2xl font-teko"
                 placeholder={current.placeholder}
                 value={data[current.key] || ""}
                 onChange={(e) => setValue(e.target.value)}
@@ -160,19 +160,19 @@ export default function Onboarding() {
             </div>
           )}
 
-          <div className="mt-10 flex items-center justify-between">
+          <div className="mt-8 sm:mt-10 flex items-center justify-between gap-2">
             <button
               onClick={back}
               disabled={step === 0}
-              className="btn-outline flex items-center gap-2 disabled:opacity-30"
+              className="btn-outline flex items-center gap-1 sm:gap-2 disabled:opacity-30 text-sm"
               data-testid="onboarding-back-btn"
             >
-              <ChevronLeft size={18} /> ZURÜCK
+              <ChevronLeft size={16} /> ZURÜCK
             </button>
-            <button onClick={next} disabled={loading} className="btn-primary flex items-center gap-2" data-testid="onboarding-next-btn">
+            <button onClick={next} disabled={loading} className="btn-primary flex items-center gap-1 sm:gap-2 text-sm" data-testid="onboarding-next-btn">
               {loading && <Loader2 size={16} className="animate-spin" />}
               {step === STEPS.length - 1 ? "PLAN GENERIEREN" : "WEITER"}
-              <ChevronRight size={18} />
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>

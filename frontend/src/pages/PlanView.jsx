@@ -43,45 +43,45 @@ export default function PlanView() {
 
   return (
     <Layout>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div>
-          <div className="text-xs text-gray-500 font-chakra uppercase tracking-widest">TRAININGSPLAN V{plan?.version || 1}</div>
-          <h1 className="font-teko text-5xl chrome-text mt-1">{plan?.name || "Plan"}</h1>
-          <p className="text-gray-500 font-chakra mt-2 max-w-2xl">{plan?.progression_notes}</p>
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
+        <div className="min-w-0">
+          <div className="text-[10px] sm:text-xs text-gray-500 font-chakra uppercase tracking-widest">TRAININGSPLAN V{plan?.version || 1}</div>
+          <h1 className="font-teko text-3xl sm:text-5xl chrome-text mt-1 break-words">{plan?.name || "Plan"}</h1>
+          <p className="text-gray-500 font-chakra mt-2 max-w-2xl text-sm">{plan?.progression_notes}</p>
         </div>
-        <button onClick={adjust} disabled={adjusting} className="btn-outline flex items-center gap-2" data-testid="plan-adjust-btn">
+        <button onClick={adjust} disabled={adjusting} className="btn-outline flex items-center gap-2 text-xs sm:text-sm" data-testid="plan-adjust-btn">
           {adjusting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
           KI ANPASSEN
         </button>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {plan?.days?.map((day) => (
-          <div key={day.day_index} className="af-card p-6 clip-corner-tl-br" data-testid={`plan-detail-day-${day.day_index}`}>
-            <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-              <div>
-                <div className="text-xs text-[#00BFFF] uppercase tracking-widest font-chakra">TAG {day.day_index}</div>
-                <div className="font-teko text-3xl chrome-text">{day.name}</div>
+          <div key={day.day_index} className="af-card p-4 sm:p-6 clip-corner-tl-br" data-testid={`plan-detail-day-${day.day_index}`}>
+            <div className="flex items-center justify-between mb-4 sm:mb-5 flex-wrap gap-3">
+              <div className="min-w-0">
+                <div className="text-[10px] sm:text-xs text-[#00BFFF] uppercase tracking-widest font-chakra">TAG {day.day_index}</div>
+                <div className="font-teko text-2xl sm:text-3xl chrome-text break-words">{day.name}</div>
               </div>
-              <button onClick={() => startDay(day.day_index)} className="btn-primary flex items-center gap-2" data-testid={`plan-start-${day.day_index}`}>
+              <button onClick={() => startDay(day.day_index)} className="btn-primary flex items-center gap-2 text-sm" data-testid={`plan-start-${day.day_index}`}>
                 <Play size={16} /> STARTEN
               </button>
             </div>
             <div className="space-y-2">
               {day.exercises?.map((ex, i) => (
-                <div key={i} className="flex items-center gap-4 p-3 bg-[#0A0A10] border border-[#1A1A24] hover:border-[#00BFFF]/40 transition" data-testid={`exercise-${day.day_index}-${i}`}>
+                <div key={i} className="flex items-center gap-3 sm:gap-4 p-2 sm:p-3 bg-[#0A0A10] border border-[#1A1A24] hover:border-[#00BFFF]/40 transition" data-testid={`exercise-${day.day_index}-${i}`}>
                   <img
                     src={getExerciseImage(ex.name, ex.target_muscle)}
                     alt={ex.name}
-                    className="w-16 h-16 object-cover border border-[#1A1A24]"
+                    className="w-12 h-12 sm:w-16 sm:h-16 object-cover border border-[#1A1A24] flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="font-teko text-xl tracking-wide chrome-text truncate">{ex.name}</div>
-                    <div className="text-xs text-gray-500 font-chakra uppercase tracking-widest">{ex.target_muscle}</div>
+                    <div className="font-teko text-base sm:text-xl tracking-wide chrome-text truncate">{ex.name}</div>
+                    <div className="text-[10px] sm:text-xs text-gray-500 font-chakra uppercase tracking-widest truncate">{ex.target_muscle}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="font-teko text-2xl electric-text glow-text-soft">{ex.sets} × {ex.reps}</div>
-                    <div className="text-xs text-gray-400 font-chakra">{ex.weight_kg} kg · {ex.rest_seconds}s rest</div>
+                    <div className="font-teko text-lg sm:text-2xl electric-text glow-text-soft whitespace-nowrap">{ex.sets} × {ex.reps}</div>
+                    <div className="text-[10px] sm:text-xs text-gray-400 font-chakra whitespace-nowrap">{ex.weight_kg}kg · {ex.rest_seconds}s</div>
                   </div>
                 </div>
               ))}
