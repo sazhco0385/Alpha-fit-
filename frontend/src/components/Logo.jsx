@@ -1,6 +1,5 @@
 export default function Logo({ size = 40, withText = true, square = false }) {
-  // For "square" usage (favicons/big hero), show the full logo image
-  // For inline usage, we show the logo image scaled - the black square outer rim blends with our black app background
+  // For "square" usage (favicons/big hero), show the full logo image (with text)
   if (square) {
     return (
       <img
@@ -14,13 +13,13 @@ export default function Logo({ size = 40, withText = true, square = false }) {
   return (
     <div className="flex items-center gap-2" data-testid="alphafit-logo">
       <img
-        src="/alphafit-logo.png"
+        src="/alphafit-helmet.png"
         alt="alpha-fit"
         style={{
           width: size,
           height: size,
           objectFit: "contain",
-          filter: "drop-shadow(0 0 8px rgba(0,191,255,0.6))",
+          filter: "drop-shadow(0 0 10px rgba(0,191,255,0.55))",
         }}
       />
       {withText && (
