@@ -19,6 +19,7 @@ import Support from "./pages/Support";
 import Nutrition from "./pages/Nutrition";
 import BodyScan from "./pages/BodyScan";
 import A2HSPrompt from "./components/A2HSPrompt";
+import SplashScreen from "./components/SplashScreen";
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
             }}
           />
           <A2HSPrompt />
+          <SplashScreen />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<AuthPage />} />
