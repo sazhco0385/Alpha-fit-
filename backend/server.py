@@ -1870,6 +1870,29 @@ async def bodyscan_delete(scan_id: str, user: dict = Depends(get_current_user)):
     res = await db.body_scans.delete_one({"id": scan_id, "user_id": user["id"]})
     return {"ok": True, "deleted": res.deleted_count}
 
+@api_router.get("/profile/weight-trend")
+async def profile_weight_trend(user: dict = Depends(get_current_user)):
+    """Weight history from body scans + delta vs earliest. Free for all users."""
+    profile = user.get("profile") or {}
+    current = profile.get("weight_kg")
+    scans = await db.body_scans.find(
+        {"user_id": user["id"], "weight_kg_at_scan": {"$ne": None}},
+        {"_id": 0, "weight_kg_at_scan": 1, "created_at": 1},
+    ).sort("created_at", 1).to_list(50)
+    points = [
+        {"date": s["created_at"], "weight_kg": s["weight_kg_at_scan"]}
+        for s in scans if s.get("weight_kg_at_scan")
+    ]
+    earliest = points[0]["weight_kg"] if points else None
+    delta = None
+    if current is not None and earliest is not None:
+        try:
+            delta = round(float(current) - float(earliest), 1)
+        except Exception:
+            delta = None
+    return {"current_kg": current, "earliest_kg": earliest, "delta_kg": delta, "points": points}
+
+
 
 
 def is_recently_active(last_active: Optional[str]) -> bool:

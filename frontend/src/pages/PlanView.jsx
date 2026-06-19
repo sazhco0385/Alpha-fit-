@@ -70,7 +70,7 @@ export default function PlanView() {
         <div className="min-w-0">
           <div className="text-[10px] sm:text-xs text-gray-500 font-chakra uppercase tracking-widest">TRAININGSPLAN V{plan?.version || 1}</div>
           <h1 className="font-teko text-3xl sm:text-5xl chrome-text mt-1 break-words">{plan?.name || "Plan"}</h1>
-          <p className="text-gray-500 font-chakra mt-2 max-w-2xl text-sm">{plan?.progression_notes}</p>
+          <p className="prose-af font-chakra mt-2 max-w-2xl">{plan?.progression_notes}</p>
         </div>
         <button onClick={adjust} disabled={adjusting} className="btn-outline flex items-center gap-2 text-xs sm:text-sm" data-testid="plan-adjust-btn">
           {adjusting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}

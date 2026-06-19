@@ -2,8 +2,18 @@ import { useEffect, useState, useRef } from "react";
 import Layout from "../components/Layout";
 import api from "../lib/api";
 import CoachInsights from "../components/CoachInsights";
-import { Send, Loader2, Brain, User as UserIcon } from "lucide-react";
+import { Send, Brain, Dumbbell, Apple, Flame, Target, Heart, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+
+const QUICK_REPLIES = [
+  { icon: Dumbbell, text: "Mein Plan ist zu schwer", testid: "qr-too-hard" },
+  { icon: Dumbbell, text: "Mein Plan ist zu leicht", testid: "qr-too-easy" },
+  { icon: Apple,    text: "Was esse ich für Muskelaufbau?", testid: "qr-nutrition" },
+  { icon: Flame,    text: "Mehr Cardio einbauen",          testid: "qr-cardio" },
+  { icon: Target,   text: "Wie kann ich Brust besser trainieren?", testid: "qr-chest" },
+  { icon: Heart,    text: "Gib mir Motivation.",            testid: "qr-motivation" },
+  { icon: RefreshCw, text: "Empfehlung für Rest-Day",       testid: "qr-rest" },
+];
 
 export default function Coach() {
   const [messages, setMessages] = useState([]);
@@ -24,11 +34,11 @@ export default function Coach() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loading]);
 
-  const send = async () => {
-    if (!input.trim() || loading) return;
-    const text = input.trim();
+  const send = async (override) => {
+    const text = (override ?? input).trim();
+    if (!text || loading) return;
     setInput("");
     setMessages((prev) => [...prev, { role: "user", text }]);
     setLoading(true);
@@ -44,62 +54,80 @@ export default function Coach() {
 
   return (
     <Layout>
-      <div className="mb-6">
+      <div className="mb-5 sm:mb-6">
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text tracking-wide">KI COACH</h1>
-        <p className="text-gray-500 font-chakra text-[10px] sm:text-sm uppercase tracking-widest">Angetrieben von GPT-5.2 · Alpha Protokoll</p>
+        <p className="text-body-muted font-chakra text-[10px] sm:text-sm uppercase tracking-widest">
+          Angetrieben von GPT-5.2 · Alpha Protokoll
+        </p>
       </div>
 
       {/* Proaktive Insights */}
       <CoachInsights />
 
-      <div className="af-card flex flex-col h-[65vh] sm:h-[70vh] clip-corner-tl-br" data-testid="coach-chat">
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
+      <div className="af-card flex flex-col h-[68vh] sm:h-[72vh] clip-corner-tl-br" data-testid="coach-chat">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4">
           {messages.length === 0 && (
-            <div className="text-center text-gray-500 py-12 font-chakra">
-              <Brain size={48} className="mx-auto text-[#00BFFF] mb-4" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
-              Frag deinen Alpha Coach alles.
-              <div className="mt-4 flex flex-wrap gap-2 justify-center max-w-md mx-auto">
-                {["Wie kann ich Brust besser trainieren?", "Was esse ich für Muskelaufbau?", "Gib mir Motivation."].map((q) => (
-                  <button key={q} onClick={() => setInput(q)} className="text-xs px-3 py-1 border border-[#00BFFF]/30 hover:border-[#00BFFF] transition text-[#00BFFF] font-chakra" data-testid={`coach-suggestion-${q.slice(0,10)}`}>
-                    {q}
+            <div className="text-center py-8 sm:py-12 font-chakra">
+              <div className="relative inline-block mb-4">
+                <div className="absolute inset-0 rounded-full blur-2xl opacity-60" style={{ background: "radial-gradient(circle, rgba(0,191,255,0.5), transparent 70%)" }} />
+                <img
+                  src="/alphafit-helmet.png"
+                  alt="Alpha Coach"
+                  className="relative w-20 h-20 mx-auto"
+                  style={{ filter: "drop-shadow(0 0 14px rgba(0,191,255,0.7))" }}
+                />
+              </div>
+              <div className="font-teko text-2xl sm:text-3xl chrome-text">ALPHA COACH BEREIT</div>
+              <p className="text-body text-sm sm:text-base mt-2 max-w-md mx-auto leading-relaxed">
+                Frag mich alles zu Training, Ernährung oder Motivation. Ich kenne deinen Plan & deine Fortschritte.
+              </p>
+
+              {/* Quick reply cards */}
+              <div className="mt-6 grid sm:grid-cols-2 gap-2 sm:gap-3 max-w-xl mx-auto" data-testid="coach-quick-replies">
+                {QUICK_REPLIES.map(({ icon: Icon, text, testid }) => (
+                  <button
+                    key={text}
+                    onClick={() => send(text)}
+                    className="group flex items-center gap-3 p-3 border border-[#1A1A24] hover:border-[#00BFFF]/60 hover:bg-[#001a2a]/40 transition text-left"
+                    data-testid={testid}
+                  >
+                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-[#00BFFF]/30 group-hover:border-[#00BFFF] transition" style={{ borderRadius: "8px" }}>
+                      <Icon size={14} className="text-[#00BFFF]" />
+                    </div>
+                    <span className="text-sm text-body font-chakra group-hover:text-white transition">{text}</span>
                   </button>
                 ))}
               </div>
             </div>
           )}
+
           {messages.map((m, i) => (
-            <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              {m.role === "ai" && (
-                <div className="w-8 h-8 hex-shield flex-shrink-0 flex items-center justify-center" style={{ background: "linear-gradient(180deg, #00E5FF, #1E90FF)" }}>
-                  <div className="absolute w-7 h-7 hex-shield bg-black flex items-center justify-center">
-                    <Brain size={14} className="text-[#00BFFF]" />
-                  </div>
-                </div>
-              )}
-              <div className={`max-w-[85%] sm:max-w-[75%] p-2.5 sm:p-3 font-chakra text-xs sm:text-sm whitespace-pre-wrap break-words ${
-                m.role === "user"
-                  ? "border border-[#00BFFF] glow-box bg-[#001a2a] text-white"
-                  : "bg-[#0A0A10] border border-[#1A1A24] chrome-text"
-              }`} data-testid={`coach-msg-${i}`}>
-                {m.text}
-              </div>
-              {m.role === "user" && (
-                <div className="w-8 h-8 rounded-full bg-[#0A0A10] border border-[#1A1A24] flex items-center justify-center flex-shrink-0">
-                  <UserIcon size={14} className="text-gray-400" />
-                </div>
-              )}
-            </div>
+            <ChatMessage key={i} role={m.role} text={m.text} index={i} />
           ))}
-          {loading && (
-            <div className="flex gap-3">
-              <Loader2 size={20} className="animate-spin text-[#00BFFF]" />
-              <span className="text-gray-500 font-chakra text-sm">Alpha Coach denkt nach...</span>
-            </div>
-          )}
+
+          {loading && <TypingBubble />}
           <div ref={endRef} />
         </div>
 
-        <div className="border-t border-[#1A1A24] p-3 sm:p-4 flex gap-2 sm:gap-3">
+        {/* Quick replies as chips when chat is active */}
+        {messages.length > 0 && !loading && (
+          <div className="border-t border-[#1A1A24] px-3 sm:px-4 py-2 flex gap-2 overflow-x-auto scrollbar-thin" data-testid="coach-quick-chips">
+            {QUICK_REPLIES.slice(0, 4).map(({ text, testid }) => (
+              <button
+                key={text}
+                onClick={() => send(text)}
+                className="flex-shrink-0 text-xs px-3 py-1.5 border border-[#00BFFF]/30 hover:border-[#00BFFF] hover:bg-[#001a2a]/40 transition text-[#00BFFF] font-chakra whitespace-nowrap"
+                data-testid={`chip-${testid}`}
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Input */}
+        <div className="border-t border-[#1A1A24] p-3 sm:p-4 flex gap-2 sm:gap-3 items-center">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -108,11 +136,66 @@ export default function Coach() {
             className="af-input flex-1 min-w-0 text-sm sm:text-base"
             data-testid="coach-input"
           />
-          <button onClick={send} disabled={loading || !input.trim()} className="btn-primary flex items-center gap-1 sm:gap-2 text-sm flex-shrink-0" data-testid="coach-send-btn">
+          <button
+            onClick={() => send()}
+            disabled={loading || !input.trim()}
+            className="btn-primary flex items-center gap-1 sm:gap-2 text-sm flex-shrink-0"
+            data-testid="coach-send-btn"
+            aria-label="Senden"
+          >
             <Send size={14} /> <span className="hidden sm:inline">SEND</span>
           </button>
         </div>
       </div>
     </Layout>
+  );
+}
+
+function ChatMessage({ role, text, index }) {
+  if (role === "user") {
+    return (
+      <div className="flex gap-2 sm:gap-3 justify-end" data-testid={`coach-msg-${index}`}>
+        <div className="max-w-[82%] sm:max-w-[70%] coach-bubble-user font-chakra text-sm whitespace-pre-wrap break-words">
+          {text}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex gap-2 sm:gap-3 justify-start" data-testid={`coach-msg-${index}`}>
+      <div className="relative w-8 h-8 flex-shrink-0">
+        <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(circle, rgba(0,191,255,0.5), transparent 70%)", filter: "blur(6px)" }} />
+        <img
+          src="/alphafit-helmet.png"
+          alt="Alpha Coach"
+          className="relative w-8 h-8 object-contain"
+          style={{ filter: "drop-shadow(0 0 6px rgba(0,191,255,0.6))" }}
+        />
+      </div>
+      <div className="max-w-[82%] sm:max-w-[70%] coach-bubble-ai font-chakra text-sm whitespace-pre-wrap break-words">
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function TypingBubble() {
+  return (
+    <div className="flex gap-2 sm:gap-3 justify-start" data-testid="coach-typing">
+      <div className="relative w-8 h-8 flex-shrink-0">
+        <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(circle, rgba(0,191,255,0.5), transparent 70%)", filter: "blur(6px)" }} />
+        <img
+          src="/alphafit-helmet.png"
+          alt="Alpha Coach"
+          className="relative w-8 h-8 object-contain"
+          style={{ filter: "drop-shadow(0 0 6px rgba(0,191,255,0.6))" }}
+        />
+      </div>
+      <div className="coach-bubble-ai flex items-center gap-2 min-w-[80px]">
+        <span className="coach-typing-dot" />
+        <span className="coach-typing-dot" />
+        <span className="coach-typing-dot" />
+      </div>
+    </div>
   );
 }

@@ -13,9 +13,14 @@
   --af-primary-2: #1E90FF;
   --af-accent: #00E5FF;
   --af-text: #FFFFFF;
-  --af-text-muted: #9090A0;
+  --af-text-muted: #B8B8C8;
+  --af-text-subtle: #8888A0;
   --af-danger: #FF3B30;
   --af-success: #00FF7F;
+  /* Royal Gold for Premium */
+  --af-gold: #C9A04E;
+  --af-gold-bright: #E0B968;
+  --af-gold-deep: #8E6E2C;
 }
 
 @layer base {
@@ -241,3 +246,113 @@ h1, h2, h3, .heading {
   pointer-events: none;
   z-index: -1;
 }
+
+/* ===== Royal Gold (Premium) ===== */
+.gold-text {
+  color: var(--af-gold);
+  text-shadow: 0 0 14px rgba(201, 160, 78, 0.55);
+}
+.gold-text-soft { color: var(--af-gold); }
+.gold-chrome {
+  background: linear-gradient(180deg, #E8C76E 0%, #C9A04E 45%, #8E6E2C 55%, #E0B968 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gold-border { border: 1px solid rgba(201,160,78,0.55); }
+.gold-glow-box {
+  box-shadow:
+    0 0 28px rgba(201,160,78,0.28),
+    inset 0 0 0 1px rgba(201,160,78,0.35);
+}
+.gold-glow-box-intense {
+  box-shadow:
+    0 0 42px rgba(201,160,78,0.45),
+    0 0 90px rgba(201,160,78,0.18),
+    inset 0 0 0 1px rgba(224,185,104,0.6);
+}
+.btn-gold {
+  background: linear-gradient(180deg, #E8C76E 0%, #C9A04E 50%, #8E6E2C 100%);
+  color: #1A1208;
+  font-family: 'Teko', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  padding: 0.65rem 1.1rem;
+  border: none;
+  transition: all 0.25s ease;
+  font-size: 0.95rem;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+@media (min-width: 768px) {
+  .btn-gold { padding: 0.75rem 1.5rem; font-size: 1rem; }
+}
+.btn-gold:hover {
+  box-shadow: 0 0 30px rgba(224,185,104,0.7), 0 0 60px rgba(201,160,78,0.3);
+  transform: translateY(-1px);
+}
+.btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
+@keyframes gold-pulse-glow {
+  0%, 100% { box-shadow: 0 0 22px rgba(201,160,78,0.35), inset 0 0 0 1px rgba(201,160,78,0.4); }
+  50%      { box-shadow: 0 0 38px rgba(224,185,104,0.6), inset 0 0 0 1px rgba(224,185,104,0.65); }
+}
+.gold-pulse { animation: gold-pulse-glow 3s ease-in-out infinite; }
+
+/* ===== Readability boosts ===== */
+/* Brighter muted body text */
+.text-body { color: #D2D2DE; }
+.text-body-muted { color: #B8B8C8; }
+/* Plan-note / paragraph readability */
+.prose-af {
+  color: #D2D2DE;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+@media (min-width: 768px) {
+  .prose-af { font-size: 1rem; line-height: 1.65; }
+}
+
+/* ===== Coach Chat ===== */
+.coach-bubble-user {
+  background: linear-gradient(180deg, #00BFFF 0%, #1E90FF 100%);
+  color: #001423;
+  font-weight: 500;
+  border-radius: 18px 18px 6px 18px;
+  padding: 0.65rem 0.95rem;
+  box-shadow: 0 4px 14px -4px rgba(0,191,255,0.55);
+}
+.coach-bubble-ai {
+  background: linear-gradient(180deg, #0B0B14 0%, #050509 100%);
+  color: #E3E3EE;
+  border: 1px solid rgba(0,191,255,0.18);
+  border-radius: 18px 18px 18px 6px;
+  padding: 0.7rem 1rem;
+  position: relative;
+}
+.coach-bubble-ai::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,191,255,0.04), transparent 60%);
+}
+@keyframes coach-typing {
+  0%   { opacity: 0.25; transform: translateY(0); }
+  30%  { opacity: 1;    transform: translateY(-3px); }
+  60%  { opacity: 0.25; transform: translateY(0); }
+  100% { opacity: 0.25; transform: translateY(0); }
+}
+.coach-typing-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #00BFFF;
+  display: inline-block;
+  animation: coach-typing 1.2s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(0,191,255,0.7);
+}
+.coach-typing-dot:nth-child(2) { animation-delay: 0.18s; }
+.coach-typing-dot:nth-child(3) { animation-delay: 0.36s; }

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import BadgeGlow from "../components/BadgeGlow";
 import CoachInsights from "../components/CoachInsights";
+import DailySummary from "../components/DailySummary";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Dumbbell, Brain, TrendingUp, Crown, Play, Calendar, Flame, Award, RefreshCw, Loader2, Weight, Scan, Sparkles } from "lucide-react";
@@ -143,12 +144,15 @@ export default function Dashboard() {
       {/* Alpha Coach Insights (compact) */}
       <CoachInsights compact />
 
+      {/* Daily Summary (motivation, calories, weight, next workout) */}
+      <DailySummary plan={plan} sessions={sessions} />
+
       {/* Stats Bento */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatCard icon={Flame} label="Workouts" value={stats.total_completed} testid="stat-workouts" />
         <StatCard icon={Calendar} label="Streak (Tage)" value={stats.current_streak} highlight={stats.current_streak >= 3} testid="stat-streak" />
         <StatCard icon={Weight} label="Volumen (kg)" value={formatVolume(stats.total_volume_kg)} testid="stat-volume" />
-        <StatCard icon={Crown} label="Status" value={user?.is_premium ? "PREMIUM" : "FREE"} highlight={user?.is_premium} testid="stat-status" />
+        <StatCard icon={Crown} label="Status" value={user?.is_premium ? "PREMIUM" : "FREE"} highlight={user?.is_premium} gold={user?.is_premium} testid="stat-status" />
       </div>
 
       {/* Training Plan */}
@@ -167,7 +171,7 @@ export default function Dashboard() {
         {plan ? (
           <div>
             <div className="text-[#00BFFF] font-teko text-xl mb-1 glow-text-soft">{plan.name}</div>
-            <div className="text-gray-500 text-xs font-chakra mb-4">{plan.progression_notes}</div>
+            <div className="text-body-muted text-sm sm:text-base font-chakra mb-4 leading-relaxed">{plan.progression_notes}</div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {plan.days?.map((day) => (
                 <div key={day.day_index} className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition" data-testid={`plan-day-${day.day_index}`}>
@@ -227,12 +231,17 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, highlight, testid }) {
+function StatCard({ icon: Icon, label, value, highlight, gold, testid }) {
+  const iconColor = gold ? "text-[#E0B968]" : "text-[#00BFFF]";
+  const boxClass = gold
+    ? "gold-glow-box gold-border"
+    : highlight ? "glow-box border-[#00BFFF]" : "";
+  const valueClass = gold ? "gold-chrome" : "chrome-text";
   return (
-    <div className={`af-card p-4 clip-corner-tl-br ${highlight ? "glow-box border-[#00BFFF]" : ""}`} data-testid={testid}>
-      <Icon size={18} className="text-[#00BFFF]" />
-      <div className="font-teko text-3xl mt-2 tracking-wide chrome-text">{value}</div>
-      <div className="text-[10px] text-gray-500 uppercase tracking-[0.25em] font-chakra mt-1">{label}</div>
+    <div className={`af-card p-4 clip-corner-tl-br ${boxClass}`} data-testid={testid}>
+      <Icon size={18} className={iconColor} />
+      <div className={`font-teko text-3xl mt-2 tracking-wide ${valueClass}`}>{value}</div>
+      <div className="text-[10px] text-body-muted uppercase tracking-[0.25em] font-chakra mt-1">{label}</div>
     </div>
   );
 }

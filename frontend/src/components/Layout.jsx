@@ -32,7 +32,7 @@ export default function Layout({ children }) {
           </button>
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {user?.is_premium && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 border border-[#00BFFF] text-[#00BFFF] font-teko tracking-widest text-xs sm:text-sm glow-box" data-testid="premium-badge">
+              <span className="inline-flex items-center gap-1 px-2 py-1 gold-border gold-text-soft font-teko tracking-widest text-xs sm:text-sm gold-glow-box" data-testid="premium-badge">
                 <Crown size={12} /> <span className="hidden sm:inline">PREMIUM</span><span className="sm:hidden">PRO</span>
               </span>
             )}
