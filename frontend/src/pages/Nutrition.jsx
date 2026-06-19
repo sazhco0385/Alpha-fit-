@@ -246,6 +246,12 @@ function fileToBase64(file) {
 function EditEntryModal({ initial, title, subtitle, onSave, onClose, showComponents }) {
   const [form, setForm] = useState(initial);
 
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   const num = (k) => (
     <input
       type="number"
@@ -259,8 +265,8 @@ function EditEntryModal({ initial, title, subtitle, onSave, onClose, showCompone
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur p-3 overflow-y-auto" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="af-card p-5 max-w-lg w-full clip-corner-tl-br my-4" data-testid="edit-entry-modal">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/90 backdrop-blur-md p-0 sm:p-4 overflow-y-auto" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border-t-2 sm:border border-[#00BFFF]/40 sm:border-[#1A1A24] p-5 sm:p-6 max-w-lg w-full h-full sm:h-auto overflow-y-auto sm:clip-corner-tl-br sm:my-4 rounded-t-2xl sm:rounded-none" data-testid="edit-entry-modal">
         <div className="flex items-start justify-between mb-3 gap-2">
           <div className="min-w-0">
             <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra">{title}</div>

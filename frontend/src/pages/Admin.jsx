@@ -212,8 +212,8 @@ export default function Admin() {
 
       {/* Premium modal */}
       {premiumModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur p-4" onClick={() => setPremiumModal(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="af-card p-6 max-w-md w-full clip-corner-tl-br" data-testid="premium-modal">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4" onClick={() => setPremiumModal(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border border-[#00BFFF]/40 p-6 max-w-md w-full clip-corner-tl-br" data-testid="premium-modal">
             <div className="font-teko text-3xl chrome-text mb-2">PREMIUM FREISCHALTEN</div>
             <div className="text-gray-500 font-chakra text-sm mb-4">{premiumModal.name} · {premiumModal.email}</div>
             <label className="block text-xs text-gray-500 uppercase tracking-widest font-chakra mb-2">Tage</label>
@@ -228,8 +228,8 @@ export default function Admin() {
 
       {/* Reply Modal */}
       {replyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur p-4" onClick={() => setReplyModal(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="af-card p-6 max-w-lg w-full clip-corner-tl-br" data-testid="reply-modal">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4" onClick={() => setReplyModal(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border border-[#00BFFF]/40 p-6 max-w-lg w-full clip-corner-tl-br" data-testid="reply-modal">
             <div className="font-teko text-3xl chrome-text mb-1">ANTWORT AN USER</div>
             <div className="text-xs text-gray-500 font-chakra mb-3">{replyModal.user_name} · {replyModal.user_email}</div>
             <div className="bg-[#0A0A10] border border-[#1A1A24] p-3 mb-4 max-h-32 overflow-y-auto">
