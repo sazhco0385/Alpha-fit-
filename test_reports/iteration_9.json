@@ -1,0 +1,37 @@
+{
+  "summary": "Iter 9 — Full regression sweep after PlanView mobile layout fix + Phase 1+2+3 router refactor + Plan-Editor + Email/Notification/Win-back features. Backend: 35/35 pytest tests PASSED on the external preview URL (test_iter9_regression.py) covering auth (login/wrong-pw/me/heartbeat/bad-token), plans (get/suggestions/edit-bumps-version+source='user_edited'/validation), sessions/start, notifications/preferences (nested email+push schema confirmed), all 6 email templates via Resend (welcome/payment_success/trial_ending/streak_reminder/weekly_summary/winback) — each returned a Resend ID with no provider failures, admin (stats/members/non-admin-blocked-403), premium gates (bodyscan/formcheck history OK for admin, analyze blocked for fresh free user with proper status), nutrition (today/history), support (ticket create + my-tickets), coach/insights (200), payments/checkout (200 with origin_url), push/subscription. Frontend Playwright on /plan @ 390x844 viewport (critical mobile fix verification): plan title with slash 'TEST_iter9 / Slash Plan' renders as single line (height=38px, width=366/390px, overflowWrap=anywhere, wordBreak=normal) — NO per-character wrapping, NO horizontal overflow (scrollW=390). BEARBEITEN + KI ANPASSEN buttons stack on their OWN row BELOW the title on mobile (title bottom=130, buttons y=174, same-row-with-each-other=True, both fit in 391px). On desktop 1920x1080: same buttons render to the RIGHT of the title (title.x=352 w=899, edit-btn.x=1263, same-row=True). Edit mode: plan-edit-name input color rgb(255,255,255) (white, no chrome-text invisibility regression), plan-edit-notes, day-name-edit-1, add-exercise-btn-1, plan-save-btn, plan-cancel-btn all present and clickable; cancel reverts cleanly. Bottom-nav has 7 items (Start/Plan/Food/Coach/Stats/Pro/Admin). All 16 public routes return 200 (/, /landing, /legal/{impressum,agb,datenschutz,widerruf}, /auth, /plan, /coach, /bodyscan, /formcheck, /nutrition, /settings, /premium, /admin, /support).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/notifications/preferences PUT", "issue": "Schema is nested {email:{...}, push:{...}} not flat. Test had to be adjusted to match. Worth documenting in OpenAPI for downstream consumers (already noted in iter 8 minor)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter9_regression.py",
+    "/app/test_reports/pytest/iter9.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PlanView.jsx mobile fix is solid: outer flex-wrap container + child 'min-w-0 w-full sm:w-auto sm:flex-1' for the title block + 'w-full sm:w-auto' on the button row produces correct stacking on mobile and same-row on desktop. The h1 uses style={{wordBreak:'normal', overflowWrap:'anywhere'}} which correctly handles tokens like 'Alpha Upper/Lower 4x/Woche V2' — wraps at the slash if needed but does not per-char break.",
+    "Backend plan editor PUT correctly persists name+notes+days+source='user_edited' and bumps version (verified GET round-trip).",
+    "All 6 Resend templates working — LLM-budget caveat in user notes did NOT impact emails (separate provider).",
+    "Coach/insights returned 200 on this run — the LLM-budget cap mentioned in iter7/iter8 context may be replenished or insights endpoint uses cached/no-LLM path.",
+    "Server.py was 1090 lines in iter8 — recommended dispatcher extraction still pending but is a refactor item not a bug.",
+    "Notifications preferences nested-object schema {email:{...}, push:{...}} is the authoritative contract — settings get returns same shape. Worth a comment in /app/backend/routers/push.py (or wherever the endpoint lives) clarifying the schema for future agents."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter9_regression.py (NEW — 35 tests)"
+  ],
+  "success_rate": {"backend": "100% (35/35)", "frontend": "100% — mobile layout fix verified; edit mode + cancel + all data-testids present; desktop layout correct; bottom-nav intact"},
+  "test_credentials": "Admin sazhco0385@gmail.com / Bellakiki1 (auto-premium). Fresh free user: TEST_iter9_<uuid>@phase2qa.io / Test1234! (one-shot per pytest session, not auto-cleaned).",
+  "seed_data_creation": "Test artifacts: (a) admin's current_plan_id was OVERWRITTEN by the edit-bumps-version test — admin now has 'TEST_iter9 / Slash Plan' v(N+1) with 1 day and 1 exercise (Squat 3x5-8 @120s rest). Main agent should regenerate admin's plan via /api/coach/generate-plan to restore a multi-day demo plan before further UI demo. (b) 1 fresh free user per test run. (c) 6 email_log entries (one per template). (d) 1 support ticket subject='TEST_iter9'.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression tests across iterations: test_iter9_regression.py (35), test_iter8_features.py (26), test_phase2_routers.py (42), test_refactor_routers.py (19), test_new_features_v5.py (14). Run all: pytest /app/backend/tests/ -v. Key API contract reminders: GET /api/plans/current returns {plan: {...}} (nested), GET /api/plans/exercise-suggestions returns {groups: [{muscle, exercises}, ...]}, POST /api/sessions/start returns {resumed, session: {...}}, GET/PUT /api/notifications/preferences uses nested {email:{...}, push:{...}}, POST /api/payments/checkout requires both 'plan' and 'origin_url'. Mobile PlanView layout fix is fully verified at 390x844 (title with slash wraps at word boundary, buttons stack below). No outstanding bugs. Admin plan was overwritten by edit-test — regenerate before user-facing demos.",
+  "rca of the issue": "No product bugs found. Initial 7 test failures in test_iter9_regression.py were ALL test-side assertion mistakes (wrong schema assumptions about response shape — fixed by checking actual response, then re-running 35/35 green). The MOBILE LAYOUT BUG that triggered this sweep is FULLY FIXED — verified via Playwright: title with slash character does not break per-character (overflowWrap=anywhere + wordBreak=normal + leading-tight), button row 'flex gap-2 flex-wrap w-full sm:w-auto' correctly takes own row on mobile (<sm) and inline-right on desktop (>=sm), title container 'min-w-0 w-full sm:w-auto sm:flex-1' allows shrinking on mobile. No horizontal scroll, no overflow, no clipping."
+}
