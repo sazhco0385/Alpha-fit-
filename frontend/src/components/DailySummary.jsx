@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Flame, Apple, Scale, Calendar, Quote, TrendingDown, TrendingUp, Minus, Play } from "lucide-react";
+import { Flame, Apple, Scale, Calendar, Quote, TrendingDown, TrendingUp, Minus, Play, Loader2 } from "lucide-react";
 import api from "../lib/api";
 import { getDailyQuote } from "../lib/quotes";
+import { toast } from "sonner";
 
 /**
  * Dashboard summary panel: shows daily motivation quote, calories vs goal,
@@ -12,6 +13,7 @@ export default function DailySummary({ plan, sessions }) {
   const navigate = useNavigate();
   const [nutrition, setNutrition] = useState(null);
   const [weight, setWeight] = useState(null);
+  const [startingDay, setStartingDay] = useState(false);
   const quote = getDailyQuote();
 
   useEffect(() => {
@@ -29,6 +31,18 @@ export default function DailySummary({ plan, sessions }) {
 
   const nextDay = computeNextDay(plan, sessions);
 
+  const startNextDay = async () => {
+    if (!nextDay || startingDay) return;
+    setStartingDay(true);
+    try {
+      const { data } = await api.post("/sessions/start", { day_index: nextDay.day_index });
+      navigate(`/workout/${data.session.id}`);
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "Workout konnte nicht gestartet werden");
+      setStartingDay(false);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8" data-testid="daily-summary">
       {/* Daily Quote */}
@@ -39,7 +53,7 @@ export default function DailySummary({ plan, sessions }) {
         <div className="relative">
           <div className="text-[10px] text-[#00BFFF] uppercase tracking-[0.3em] font-chakra mb-2">SPRUCH DES TAGES</div>
           <p className="font-teko text-lg sm:text-xl text-white leading-tight tracking-wide" style={{ textShadow: "0 0 12px rgba(0,191,255,0.25)" }}>
-            „{quote.text}"
+            „{quote.text}“
           </p>
           <div className="text-[10px] text-gray-500 uppercase tracking-[0.25em] font-chakra mt-3">— {quote.author}</div>
         </div>
@@ -111,8 +125,9 @@ export default function DailySummary({ plan, sessions }) {
 
       {/* Next Workout */}
       <button
-        onClick={() => nextDay && navigate("/plan")}
-        className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition text-left"
+        onClick={startNextDay}
+        disabled={!nextDay || startingDay}
+        className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition text-left disabled:opacity-60"
         data-testid="summary-next-workout"
       >
         <div className="flex items-center gap-2 mb-2">
@@ -128,7 +143,9 @@ export default function DailySummary({ plan, sessions }) {
               <Flame size={12} /> TAG {nextDay.day_index} · {nextDay.exercises?.length || 0} Übungen
             </div>
             <div className="text-[10px] text-gray-400 font-chakra mt-2 flex items-center gap-1">
-              <Play size={10} /> Tippen zum Starten
+              {startingDay
+                ? <><Loader2 size={10} className="animate-spin" /> Starte Workout...</>
+                : <><Play size={10} /> Tippen zum Starten</>}
             </div>
           </>
         ) : (
