@@ -84,6 +84,19 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **Testing**: 18/18 backend pytest tests pass (iter 10), incl. friend-only invite guard, accept→standings update, lazy-resolve with poked end_at, 403-for-outsider; frontend Playwright E2E for create/tabs/detail/cancel all green
 - **UX tweak**: `GET /challenges` "completed" tab now includes `cancelled` status too (last 14d) so users keep context after a creator cancels
 
+## Implemented (2026-02-15) - Friends Phase C (Leaderboards)
+- **New router** `routers/leaderboard.py` (~180 lines): single flexible endpoint `GET /api/leaderboard`
+  - Query params: `metric` (workouts|volume|streak), `period` (7d|30d|all, ignored for streak), `scope` (friends|global), `limit` (1-100, default 50)
+  - Returns `{metric, metric_label, period, scope, rows:[{rank,user_id,name,is_premium,value,is_self}], you:{rank,value,...}, generated_at}`
+  - `you` field **always** populated even when user not in top-N (rank=null in that case)
+- **Mongo aggregations** for performance: `$match → $group ($sum 1)` for workouts, `$unwind logged_sets → $group ($multiply reps weight)` for volume
+- **Streak global** pre-filters candidates to users with workout in last 7d (bounds to 200), then calls `calculate_streak` per candidate
+- **New page** `/leaderboard` (`pages/Leaderboard.jsx`): scope toggle (Freunde/Global), 3 metric pills (Workouts/Volumen/Streak), 3 period chips (7T/30T/All - hidden for Streak), ranked list with Gold/Silver/Bronze medals for top-3, plain rank for 4+, current user row with cyan border + 'DU' badge, value progress-bar overlay, sticky 'Dein Rang' pill when not in top-N
+- **Friends page** now shows TWO CTAs side-by-side: CHALLENGES (Swords, cyan) + RANGLISTE (Trophy, gold)
+- **Testing**: 17/18 pytest passing (1 skipped due to unrelated helper endpoint absence), all frontend Playwright E2E green (iter 11)
+
+
+
 
 
 ## Implemented (2026-02-15) - Email Unsubscribe Landing

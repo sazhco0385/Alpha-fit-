@@ -66,7 +66,7 @@ export default function Leaderboard() {
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text flex items-center gap-2">
           <Trophy className="text-[#00BFFF]" size={28} /> RANGLISTE
         </h1>
-        <p className="prose-af font-chakra text-sm mt-1">Vergleiche dich. Domiere deine Crew.</p>
+        <p className="prose-af font-chakra text-sm mt-1">Vergleiche dich. Dominiere deine Crew.</p>
       </div>
 
       {/* Scope toggle */}
