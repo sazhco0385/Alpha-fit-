@@ -1056,6 +1056,9 @@ async def complete_session(payload: dict, user: dict = Depends(get_current_user)
     if new_badges:
         await db.users.update_one({"id": user["id"]}, {"$push": {"badges": {"$each": new_badges}}})
 
+    # ===== Auto Plan-Anpassung (nach kompletter Trainingswoche) =====
+    await _maybe_trigger_auto_plan_adjust(user)
+
     return {
         "ok": True,
         "new_badges": new_badges,
@@ -1063,6 +1066,91 @@ async def complete_session(payload: dict, user: dict = Depends(get_current_user)
         "current_streak": streak,
         "total_volume_kg": total_volume,
     }
+
+
+async def _maybe_trigger_auto_plan_adjust(user: dict) -> None:
+    """Wenn der User in den letzten 7 Tagen jeden Plan-Tag mindestens 1× abgeschlossen hat
+    UND die letzte Auto-Anpassung mind. 6 Tage her ist → starte einen Plan-Adjust Job im Hintergrund.
+    Sendet bei Erfolg einen Push 'Plan wurde angepasst'."""
+    try:
+        plan_id = user.get("current_plan_id")
+        if not plan_id:
+            return
+        plan = await db.training_plans.find_one({"id": plan_id}, {"_id": 0})
+        if not plan or not plan.get("days"):
+            return
+
+        last_auto = user.get("last_auto_adjust_at")
+        if last_auto:
+            try:
+                last_dt = datetime.fromisoformat(str(last_auto).replace("Z", "+00:00"))
+                if (datetime.now(timezone.utc) - last_dt).days < 6:
+                    return
+            except Exception:
+                pass
+
+        week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+        recent = await db.workout_sessions.find(
+            {"user_id": user["id"], "status": "completed", "completed_at": {"$gte": week_ago}},
+            {"_id": 0, "day_index": 1},
+        ).to_list(200)
+        done_indices = {s.get("day_index") for s in recent if s.get("day_index") is not None}
+        plan_indices = {d.get("day_index") for d in plan["days"] if d.get("day_index") is not None}
+        if not plan_indices or not plan_indices.issubset(done_indices):
+            return  # not all days completed yet this cycle
+
+        # Avoid spawning a duplicate job
+        existing = await db.plan_adjust_jobs.find_one(
+            {"user_id": user["id"], "status": "pending"}, {"_id": 0}
+        )
+        if existing:
+            return
+
+        job_id = str(uuid.uuid4())
+        await db.plan_adjust_jobs.insert_one({
+            "id": job_id,
+            "user_id": user["id"],
+            "status": "pending",
+            "created_at": now_iso(),
+            "plan_id": plan_id,
+            "source": "auto_weekly",
+        })
+        await db.users.update_one(
+            {"id": user["id"]},
+            {"$set": {"last_auto_adjust_at": now_iso()}}
+        )
+        asyncio.create_task(_run_auto_adjust_then_notify(job_id, user, plan))
+    except Exception as e:
+        logger.error(f"_maybe_trigger_auto_plan_adjust error: {e}")
+
+
+async def _run_auto_adjust_then_notify(job_id: str, user: dict, plan: dict) -> None:
+    """Background: same as _run_adjust_job + sends push notification on success."""
+    try:
+        new_plan = await asyncio.wait_for(_perform_plan_adjust(user, plan), timeout=180)
+        await db.plan_adjust_jobs.update_one(
+            {"id": job_id},
+            {"$set": {"status": "done", "plan": new_plan, "finished_at": now_iso()}},
+        )
+        # Push notification to all subs of this user
+        subs = await db.push_subscriptions.find({"user_id": user["id"]}, {"_id": 0}).to_list(10)
+        for s in subs:
+            _send_web_push(
+                s,
+                title="🛡️ Plan automatisch angepasst",
+                body=f"Du hast eine Woche durchgezogen. Coach hat dir '{new_plan.get('name','dein Plan')}' gebaut.",
+                url="/plan",
+                tag="auto-plan-adjust",
+            )
+    except asyncio.TimeoutError:
+        await db.plan_adjust_jobs.update_one(
+            {"id": job_id}, {"$set": {"status": "error", "error": "Timeout", "finished_at": now_iso()}},
+        )
+    except Exception as e:
+        logger.error(f"auto-adjust job {job_id} failed: {e}")
+        await db.plan_adjust_jobs.update_one(
+            {"id": job_id}, {"$set": {"status": "error", "error": "Auto-Anpassung fehlgeschlagen", "finished_at": now_iso()}},
+        )
 
 async def calculate_streak(user_id: str) -> int:
     """Berechnet die aktuelle Streak (konsekutive Tage mit abgeschlossenem Training)."""

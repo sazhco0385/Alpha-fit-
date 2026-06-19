@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import api from "../lib/api";
-import { Play, Loader2, RefreshCw } from "lucide-react";
+import { Play, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { getExerciseImage } from "../lib/exerciseImages";
 
@@ -77,6 +77,21 @@ export default function PlanView() {
           {adjusting ? `ANPASSEN... ${adjustElapsed}s` : "KI ANPASSEN"}
         </button>
       </div>
+
+      {plan?.source === "auto_weekly" && (
+        <div className="af-card p-4 sm:p-5 mb-5 border-[#00BFFF] glow-box" data-testid="plan-auto-banner">
+          <div className="flex items-start gap-3">
+            <Sparkles size={20} className="text-[#00BFFF] flex-shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.7))" }} />
+            <div>
+              <div className="font-teko text-xl sm:text-2xl chrome-text">AUTOMATISCH ANGEPASST</div>
+              <p className="prose-af font-chakra text-sm mt-1">
+                Du hast eine komplette Woche durchgezogen — Coach hat deinen Plan automatisch
+                an deine Performance angepasst. <strong className="text-[#00BFFF]">Werde alpha.</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-5 sm:space-y-6">
         {plan?.days?.map((day) => (
