@@ -48,13 +48,22 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - Email notifications (trial ending, payment success)
 - Push notifications for workout reminders
 
+## Implemented (2026-02-15) - Backend Modular Refactor (Phase 1)
+- Extracted 3 APIRouters from server.py monolith:
+  - `/app/backend/routers/formcheck.py` (FormCheck Vision endpoints)
+  - `/app/backend/routers/payments.py` (Stripe checkout / status / webhook)
+  - `/app/backend/routers/push.py` (Web Push HTTP endpoints; shared `_send_web_push` + `push_dispatcher_loop` remain in server.py)
+- Deferred-import pattern: router modules `from server import …` and are imported at the BOTTOM of server.py to avoid circular imports. Documented inline.
+- server.py: 2502 → 2201 lines.
+- Regression: 33/33 backend tests pass (iteration_6.json). Zero behavior change. No duplicate route registrations.
+
 ## P1 Backlog
 - Body measurements tracking (weight log over time, link to body scans)
 - Exercise video demos
 - Custom plan editor
 - Rate-limit /api/bodyscan/analyze (expensive Vision call)
 - DB index on body_scans (user_id, created_at)
-- Refactor server.py monolith (1849 lines) into routers/
+- Refactor server.py monolith — Phase 1 DONE (formcheck/payments/push extracted, server.py 2201 lines). Phase 2 backlog: extract /coach/*, /nutrition/*, /sessions/*, /bodyscan/*, /admin/* into routers.
 
 ## P2 Backlog
 - Social: friends, challenges, leaderboards

@@ -2174,8 +2174,11 @@ async def root():
 
 
 # ===== Include modular routers (extracted from server.py) =====
-# Imports happen here at the bottom, AFTER all top-level definitions are ready,
-# to allow router modules to `from server import ...` without circular import issues.
+# IMPORTANT: These imports MUST stay at the bottom of server.py, AFTER all top-level
+# definitions (db, models, helpers, get_current_user, _send_web_push, etc.).
+# Router files do `from server import ...` — placing the imports here makes the
+# server module fully populated by the time the router files load, avoiding
+# circular-import errors. Do not move these to the top of the file.
 from routers import formcheck as _formcheck_router  # noqa: E402
 from routers import payments as _payments_router  # noqa: E402
 from routers import push as _push_router  # noqa: E402
