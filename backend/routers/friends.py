@@ -7,10 +7,42 @@ from datetime import datetime, timezone
 import uuid
 import logging
 
-from server import db, get_current_user, now_iso, log_activity
+from server import db, get_current_user, now_iso, log_activity, _send_web_push
 
 logger = logging.getLogger("alphafit")
 router = APIRouter()
+
+
+async def _push_friend_request(to_user_id: str, from_name: str) -> None:
+    """Send a push notification to recipient when a friend request is sent.
+    Respects push prefs (treats this as workout_reminder-class fallback if no specific flag)."""
+    try:
+        subs = await db.push_subscriptions.find({"user_id": to_user_id}, {"_id": 0}).to_list(10)
+        for s in subs:
+            _send_web_push(
+                s,
+                title="Neue Freundschaftsanfrage 👋",
+                body=f"{from_name} möchte dein Freund werden",
+                url="/friends",
+                tag="friend_request",
+            )
+    except Exception as e:
+        logger.error(f"push friend_request failed for {to_user_id}: {e}")
+
+
+async def _push_friend_accepted(to_user_id: str, friend_name: str) -> None:
+    try:
+        subs = await db.push_subscriptions.find({"user_id": to_user_id}, {"_id": 0}).to_list(10)
+        for s in subs:
+            _send_web_push(
+                s,
+                title="Freundschaftsanfrage angenommen 🤝",
+                body=f"Du und {friend_name} seid jetzt Freunde",
+                url="/friends",
+                tag="friend_accepted",
+            )
+    except Exception as e:
+        logger.error(f"push friend_accepted failed for {to_user_id}: {e}")
 
 
 # ===== Schemas =====
@@ -103,6 +135,9 @@ async def friends_send_request(payload: FriendRequestCreate, user: dict = Depend
     }
     await db.friendships.insert_one(fr)
     await log_activity(user["id"], user.get("name", ""), "friend_request_sent", {"to": target.get("name")})
+    # Fire-and-forget push to recipient
+    import asyncio as _aio
+    _aio.create_task(_push_friend_request(payload.to_user_id, user.get("name") or "Jemand"))
     fr.pop("_id", None)
     return {"ok": True, "friendship": fr}
 
@@ -117,6 +152,9 @@ async def friends_accept(payload: FriendActionRequest, user: dict = Depends(get_
         {"$set": {"status": "accepted", "accepted_at": now_iso()}},
     )
     await log_activity(user["id"], user.get("name", ""), "friend_accepted", {"with": fr.get("from_user_name")})
+    # Notify the original requester
+    import asyncio as _aio
+    _aio.create_task(_push_friend_accepted(fr["from_user_id"], user.get("name") or "Jemand"))
     return {"ok": True}
 
 
