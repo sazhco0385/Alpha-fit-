@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import api from "../lib/api";
-import { Search, UserPlus, Users, Check, X, Loader2, Flame, Crown, Trash2, Swords, ChevronRight } from "lucide-react";
+import { Search, UserPlus, Users, Check, X, Loader2, Flame, Crown, Trash2, Swords, ChevronRight, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Friends() {
@@ -127,21 +127,37 @@ export default function Friends() {
         <p className="prose-af font-chakra text-sm mt-1">Train zusammen. Tracke zusammen. Sieg zusammen.</p>
       </div>
 
-      {/* Challenges CTA */}
-      <button
-        onClick={() => navigate("/challenges")}
-        className="w-full af-card p-3 mb-4 flex items-center gap-3 hover:border-[#00BFFF]/60 group transition"
-        data-testid="goto-challenges-cta"
-      >
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#00BFFF]/30 to-[#1A1A24] flex items-center justify-center flex-shrink-0">
-          <Swords size={20} className="text-[#00BFFF]" />
-        </div>
-        <div className="flex-1 min-w-0 text-left">
-          <div className="font-teko text-lg chrome-text leading-tight">CHALLENGES</div>
-          <div className="text-xs text-gray-400 font-chakra">Stell dich. Hetz die Crew. Gewinne.</div>
-        </div>
-        <ChevronRight size={18} className="text-gray-500 group-hover:text-[#00BFFF] flex-shrink-0" />
-      </button>
+      {/* Challenges + Leaderboard CTAs */}
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <button
+          onClick={() => navigate("/challenges")}
+          className="af-card p-3 flex items-center gap-2 hover:border-[#00BFFF]/60 group transition text-left"
+          data-testid="goto-challenges-cta"
+        >
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#00BFFF]/30 to-[#1A1A24] flex items-center justify-center flex-shrink-0">
+            <Swords size={18} className="text-[#00BFFF]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-teko text-base chrome-text leading-tight">CHALLENGES</div>
+            <div className="text-[10px] text-gray-400 font-chakra leading-tight">Hetz die Crew</div>
+          </div>
+          <ChevronRight size={14} className="text-gray-500 group-hover:text-[#00BFFF] flex-shrink-0" />
+        </button>
+        <button
+          onClick={() => navigate("/leaderboard")}
+          className="af-card p-3 flex items-center gap-2 hover:border-[#00BFFF]/60 group transition text-left"
+          data-testid="goto-leaderboard-cta"
+        >
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FFD700]/30 to-[#1A1A24] flex items-center justify-center flex-shrink-0">
+            <Trophy size={18} className="text-[#FFD700]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-teko text-base chrome-text leading-tight">RANGLISTE</div>
+            <div className="text-[10px] text-gray-400 font-chakra leading-tight">Wer ist oben?</div>
+          </div>
+          <ChevronRight size={14} className="text-gray-500 group-hover:text-[#00BFFF] flex-shrink-0" />
+        </button>
+      </div>
 
       {/* Search bar */}
       <div className="af-card p-4 mb-5" data-testid="friends-search-card">
