@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import api from "../lib/api";
@@ -11,6 +11,8 @@ export default function PlanView() {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [adjusting, setAdjusting] = useState(false);
+  const [adjustElapsed, setAdjustElapsed] = useState(0);
+  const elapsedTimerRef = useRef(null);
 
   const load = async () => {
     setLoading(true);
@@ -20,17 +22,38 @@ export default function PlanView() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => () => { if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current); }, []);
 
   const adjust = async () => {
     setAdjusting(true);
+    setAdjustElapsed(0);
+    const started = Date.now();
+    elapsedTimerRef.current = setInterval(() => {
+      setAdjustElapsed(Math.floor((Date.now() - started) / 1000));
+    }, 1000);
     try {
-      const { data } = await api.post("/coach/adjust-plan");
-      setPlan(data.plan);
+      const { data: startData } = await api.post("/coach/adjust-plan/start");
+      const jobId = startData.job_id;
+      // Poll up to ~3 minutes
+      const maxAttempts = 90; // 90 * 2s = 180s
+      let result = null;
+      for (let i = 0; i < maxAttempts; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const { data: st } = await api.get(`/coach/adjust-plan/status/${jobId}`);
+        if (st.status === "done") { result = st; break; }
+        if (st.status === "error") {
+          throw new Error(st.error || "KI-Anpassung fehlgeschlagen");
+        }
+      }
+      if (!result) throw new Error("Zeitüberschreitung - bitte erneut versuchen");
+      setPlan(result.plan);
       toast.success("Plan angepasst!");
     } catch (err) {
-      toast.error(err?.response?.data?.detail || "Fehler");
+      toast.error(err?.response?.data?.detail || err?.message || "Fehler");
     } finally {
+      if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null; }
       setAdjusting(false);
+      setAdjustElapsed(0);
     }
   };
 
@@ -51,7 +74,7 @@ export default function PlanView() {
         </div>
         <button onClick={adjust} disabled={adjusting} className="btn-outline flex items-center gap-2 text-xs sm:text-sm" data-testid="plan-adjust-btn">
           {adjusting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-          KI ANPASSEN
+          {adjusting ? `ANPASSEN... ${adjustElapsed}s` : "KI ANPASSEN"}
         </button>
       </div>
 

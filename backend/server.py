@@ -7,6 +7,7 @@ import os
 import json
 import logging
 import uuid
+import asyncio
 import bcrypt
 import jwt
 import stripe
@@ -447,14 +448,23 @@ async def coach_generate(user: dict = Depends(get_current_user)):
 
 @api_router.post("/coach/adjust-plan")
 async def coach_adjust(user: dict = Depends(get_current_user)):
-    """Adjust plan based on recent workout performance."""
+    """Synchronous adjust (kept for backward compat). Hard 60s timeout to avoid Cloudflare 524.
+    Frontend should use /coach/adjust-plan/start + /coach/adjust-plan/status/{job_id}."""
     plan_id = user.get("current_plan_id")
     if not plan_id:
         raise HTTPException(status_code=400, detail="Kein aktiver Plan")
     plan = await db.training_plans.find_one({"id": plan_id}, {"_id": 0})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan nicht gefunden")
+    try:
+        new_plan = await asyncio.wait_for(_perform_plan_adjust(user, plan), timeout=60)
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail="KI antwortet zu langsam - bitte erneut versuchen")
+    return {"plan": new_plan}
 
+
+async def _perform_plan_adjust(user: dict, plan: dict) -> dict:
+    """Core LLM-driven plan adjustment. Returns the saved new plan dict."""
     # gather last 10 completed sessions
     sessions = await db.workout_sessions.find(
         {"user_id": user["id"], "status": "completed"}, {"_id": 0}
@@ -469,11 +479,33 @@ async def coach_adjust(user: dict = Depends(get_current_user)):
             ex_idx = log["exercise_index"]
             if ex_idx < len(day["exercises"]):
                 ex = day["exercises"][ex_idx]
-                perf_summary.append(f"{ex['name']}: Soll {ex['sets']}x{ex['reps']}@{ex['weight_kg']}kg, Ist {log['reps']} Whdh @ {log['weight_kg']}kg")
+                perf_summary.append(
+                    f"{ex['name']}: Soll {ex['sets']}x{ex['reps']}@{ex['weight_kg']}kg, Ist {log['reps']} Whdh @ {log['weight_kg']}kg"
+                )
 
-    perf_text = "\n".join(perf_summary[-30:]) or "Noch keine Daten."
+    perf_text = "\n".join(perf_summary[-20:]) or "Noch keine Daten."
+
+    # Shrink plan payload (only essential fields per exercise)
+    slim_days = []
+    for d in plan.get("days", []):
+        slim_days.append({
+            "day_index": d.get("day_index"),
+            "name": d.get("name"),
+            "exercises": [
+                {
+                    "name": ex.get("name"),
+                    "target_muscle": ex.get("target_muscle"),
+                    "sets": ex.get("sets"),
+                    "reps": ex.get("reps"),
+                    "weight_kg": ex.get("weight_kg"),
+                    "rest_sec": ex.get("rest_sec", 90),
+                }
+                for ex in (d.get("exercises") or [])
+            ],
+        })
+
     prompt = f"""
-Hier der aktuelle Trainingsplan (JSON): {json.dumps(plan['days'])}
+Aktueller Trainingsplan (JSON): {json.dumps(slim_days)}
 
 Performance der letzten Einheiten:
 {perf_text}
@@ -509,7 +541,77 @@ Gib NUR JSON zurück im Format:
     await db.training_plans.insert_one(new_plan)
     new_plan.pop("_id", None)
     await db.users.update_one({"id": user["id"]}, {"$set": {"current_plan_id": new_plan["id"]}})
-    return {"plan": new_plan}
+    return new_plan
+
+
+async def _run_adjust_job(job_id: str, user: dict, plan: dict) -> None:
+    """Background worker: performs adjust then writes result back to the job document."""
+    try:
+        new_plan = await asyncio.wait_for(_perform_plan_adjust(user, plan), timeout=180)
+        await db.plan_adjust_jobs.update_one(
+            {"id": job_id},
+            {"$set": {
+                "status": "done",
+                "plan": new_plan,
+                "finished_at": now_iso(),
+            }},
+        )
+    except asyncio.TimeoutError:
+        await db.plan_adjust_jobs.update_one(
+            {"id": job_id},
+            {"$set": {"status": "error", "error": "KI hat zu lange gebraucht. Bitte erneut versuchen.", "finished_at": now_iso()}},
+        )
+    except HTTPException as he:
+        await db.plan_adjust_jobs.update_one(
+            {"id": job_id},
+            {"$set": {"status": "error", "error": he.detail, "finished_at": now_iso()}},
+        )
+    except Exception as e:
+        logger.error(f"adjust job {job_id} failed: {e}")
+        await db.plan_adjust_jobs.update_one(
+            {"id": job_id},
+            {"$set": {"status": "error", "error": "KI-Anpassung fehlgeschlagen", "finished_at": now_iso()}},
+        )
+
+
+@api_router.post("/coach/adjust-plan/start")
+async def coach_adjust_start(user: dict = Depends(get_current_user)):
+    """Start an async plan-adjust job. Returns instantly with a job_id; poll /status/{job_id}."""
+    plan_id = user.get("current_plan_id")
+    if not plan_id:
+        raise HTTPException(status_code=400, detail="Kein aktiver Plan")
+    plan = await db.training_plans.find_one({"id": plan_id}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan nicht gefunden")
+
+    # If a job is already running for this user, return it instead of starting another
+    existing = await db.plan_adjust_jobs.find_one(
+        {"user_id": user["id"], "status": "pending"}, {"_id": 0}
+    )
+    if existing:
+        return {"job_id": existing["id"], "status": "pending"}
+
+    job_id = str(uuid.uuid4())
+    await db.plan_adjust_jobs.insert_one({
+        "id": job_id,
+        "user_id": user["id"],
+        "status": "pending",
+        "created_at": now_iso(),
+        "plan_id": plan_id,
+    })
+    # Fire-and-forget background task
+    asyncio.create_task(_run_adjust_job(job_id, user, plan))
+    return {"job_id": job_id, "status": "pending"}
+
+
+@api_router.get("/coach/adjust-plan/status/{job_id}")
+async def coach_adjust_status(job_id: str, user: dict = Depends(get_current_user)):
+    job = await db.plan_adjust_jobs.find_one({"id": job_id, "user_id": user["id"]}, {"_id": 0})
+    if not job:
+        raise HTTPException(status_code=404, detail="Job nicht gefunden")
+    return job
+
+
 
 @api_router.post("/coach/chat")
 async def coach_chat(msg: ChatMessage, user: dict = Depends(get_current_user)):

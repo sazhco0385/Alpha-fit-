@@ -44,12 +44,22 @@ export default function Dashboard() {
   const adjustPlan = async () => {
     setRegenerating(true);
     try {
-      const { data } = await api.post("/coach/adjust-plan");
-      setPlan(data.plan);
+      const { data: startData } = await api.post("/coach/adjust-plan/start");
+      const jobId = startData.job_id;
+      const maxAttempts = 90;
+      let result = null;
+      for (let i = 0; i < maxAttempts; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const { data: st } = await api.get(`/coach/adjust-plan/status/${jobId}`);
+        if (st.status === "done") { result = st; break; }
+        if (st.status === "error") throw new Error(st.error || "KI-Anpassung fehlgeschlagen");
+      }
+      if (!result) throw new Error("Zeitüberschreitung - bitte erneut versuchen");
+      setPlan(result.plan);
       toast.success("Plan wurde von KI angepasst!");
       await refresh();
     } catch (err) {
-      toast.error(err?.response?.data?.detail || "Fehler");
+      toast.error(err?.response?.data?.detail || err?.message || "Fehler");
     } finally {
       setRegenerating(false);
     }
