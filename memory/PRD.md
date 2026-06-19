@@ -48,6 +48,13 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - Email notifications (trial ending, payment success)
 - Push notifications for workout reminders
 
+## Implemented (2026-02-15) - Backend Modular Refactor (Phase 2)
+- Extracted 6 additional APIRouters: `nutrition`, `bodyscan`, `sessions`, `coach`, `admin`, `support`.
+- `server.py` shrunk further: 2201 → **855 lines** (down 61.2% from original 2502 monolith).
+- Total: **9 modular routers** in `/app/backend/routers/` (~1900 LOC), `server.py` keeps shared helpers (`build_coach_system`, `call_llm`, `generate_ai_plan`, `_perform_plan_adjust`, `_run_adjust_job`, `calculate_nutrition_goals`, `_send_web_push`, `push_dispatcher_loop`, gate helpers, log_activity, etc.).
+- Router load order: `sessions` must load before `coach` because `coach.py` imports `calculate_streak` from `routers.sessions`. Documented inline.
+- Regression: **75/75 tests pass** (iteration_7.json — 42 phase2 + 19 refactor + 14 v5). Zero behavior change. No duplicate route registrations. Pre-existing budget exhaustion on Vision/LLM endpoints is environmental, not code-related.
+
 ## Implemented (2026-02-15) - Backend Modular Refactor (Phase 1)
 - Extracted 3 APIRouters from server.py monolith:
   - `/app/backend/routers/formcheck.py` (FormCheck Vision endpoints)
