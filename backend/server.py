@@ -1311,136 +1311,7 @@ async def progression_suggestion(day_index: int, exercise_index: int, user: dict
 
 
 # ===== Stripe Payments =====
-@api_router.post("/payments/checkout")
-async def create_checkout(payload: CheckoutRequest, user: dict = Depends(get_current_user)):
-    if payload.plan not in PLANS:
-        raise HTTPException(status_code=400, detail="Ungültiger Plan")
-    p = PLANS[payload.plan]
-    origin = payload.origin_url.rstrip("/")
-    success_url = f"{origin}/payment-return?session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{origin}/premium"
-
-    try:
-        session = stripe.checkout.Session.create(
-            mode="subscription",
-            payment_method_types=["card"],
-            customer_email=user["email"],
-            line_items=[{
-                "price_data": {
-                    "currency": p["currency"],
-                    "product_data": {"name": f"alpha-fit Premium - {p['label']}"},
-                    "recurring": {"interval": p["interval"], "interval_count": p["interval_count"]},
-                    "unit_amount": int(p["amount"] * 100),
-                },
-                "quantity": 1,
-            }],
-            subscription_data={"trial_period_days": TRIAL_DAYS, "metadata": {"user_id": user["id"], "plan": payload.plan}},
-            success_url=success_url,
-            cancel_url=cancel_url,
-            metadata={"user_id": user["id"], "plan": payload.plan},
-        )
-    except Exception as e:
-        logger.error(f"Stripe error: {e}")
-        raise HTTPException(status_code=500, detail=f"Stripe Fehler: {str(e)}")
-
-    await db.payment_transactions.insert_one({
-        "id": str(uuid.uuid4()),
-        "user_id": user["id"],
-        "user_email": user["email"],
-        "session_id": session.id,
-        "plan": payload.plan,
-        "amount": p["amount"],
-        "currency": p["currency"],
-        "status": "initiated",
-        "payment_status": "pending",
-        "created_at": now_iso(),
-    })
-    await log_activity(user["id"], user.get("name", ""), "checkout_started", {"plan": payload.plan, "amount": p["amount"]})
-    return {"url": session.url, "session_id": session.id}
-
-@api_router.get("/payments/status/{session_id}")
-async def payment_status(session_id: str, user: dict = Depends(get_current_user)):
-    tx = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
-    if not tx:
-        raise HTTPException(status_code=404, detail="Transaktion nicht gefunden")
-
-    try:
-        session = stripe.checkout.Session.retrieve(session_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    payment_status_str = session.get("payment_status") or "unpaid"
-    status_str = session.get("status") or "open"
-
-    # idempotent update
-    if tx.get("payment_status") != "paid" and (payment_status_str in ("paid", "no_payment_required") or status_str == "complete"):
-        # activate premium
-        plan = PLANS.get(tx["plan"])
-        if plan:
-            until = datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS + plan["days"])
-            await db.users.update_one(
-                {"id": tx["user_id"]},
-                {"$set": {
-                    "is_premium": True,
-                    "premium_until": until.isoformat(),
-                    "trial_until": (datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)).isoformat(),
-                    "stripe_customer_id": session.get("customer"),
-                    "stripe_subscription_id": session.get("subscription"),
-                }}
-            )
-        await db.payment_transactions.update_one(
-            {"session_id": session_id},
-            {"$set": {"status": status_str, "payment_status": "paid", "completed_at": now_iso()}}
-        )
-        await log_activity(tx["user_id"], "", "payment_succeeded", {"plan": tx["plan"], "amount": tx.get("amount")})
-
-    return {
-        "status": status_str,
-        "payment_status": payment_status_str,
-        "amount_total": session.get("amount_total"),
-        "currency": session.get("currency"),
-    }
-
-@api_router.post("/webhook/stripe")
-async def stripe_webhook(request: Request):
-    body = await request.body()
-    sig = request.headers.get("Stripe-Signature", "")
-    secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
-    try:
-        if secret:
-            event = stripe.Webhook.construct_event(body, sig, secret)
-        else:
-            event = json.loads(body.decode())
-    except Exception as e:
-        logger.error(f"Webhook parse error: {e}")
-        raise HTTPException(status_code=400, detail="Invalid payload")
-
-    etype = event.get("type") if isinstance(event, dict) else event["type"]
-    data_obj = event["data"]["object"] if isinstance(event, dict) else event.data.object
-
-    if etype == "checkout.session.completed":
-        sid = data_obj.get("id")
-        meta = data_obj.get("metadata") or {}
-        user_id = meta.get("user_id")
-        plan = meta.get("plan")
-        p = PLANS.get(plan or "")
-        if user_id and p:
-            until = datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS + p["days"])
-            await db.users.update_one(
-                {"id": user_id},
-                {"$set": {
-                    "is_premium": True,
-                    "premium_until": until.isoformat(),
-                    "trial_until": (datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)).isoformat(),
-                    "stripe_customer_id": data_obj.get("customer"),
-                    "stripe_subscription_id": data_obj.get("subscription"),
-                }}
-            )
-        await db.payment_transactions.update_one(
-            {"session_id": sid},
-            {"$set": {"payment_status": "paid", "status": "complete", "completed_at": now_iso()}}
-        )
-    return {"received": True}
+# Payments endpoints moved to routers/payments.py
 
 
 # ===== Admin =====
@@ -2002,132 +1873,7 @@ async def profile_weight_trend(user: dict = Depends(get_current_user)):
     return {"current_kg": current, "earliest_kg": earliest, "delta_kg": delta, "points": points}
 
 
-# ===== Form Check (AI Vision: analyze exercise execution) =====
-@api_router.post("/formcheck/analyze")
-async def formcheck_analyze(payload: FormCheckRequest, user: dict = Depends(get_current_user)):
-    """Premium: analyze a photo of the user performing an exercise.
-    Returns form score, issues, tips, safety score. Does NOT store the photo."""
-    require_premium(user)
-    image_b64 = strip_base64_prefix(payload.image_base64)
-
-    sys = (
-        "Du bist Alpha Form Coach - ein zertifizierter Personal Trainer und Bewegungs-Analyst. "
-        "Du analysierst Übungsfotos OBJEKTIV und SACHLICH auf Ausführung & Sicherheit. "
-        "Du gibst KEINE medizinische Diagnose, nur Fitness-Hinweise. "
-        "Antworte AUSSCHLIESSLICH mit validem JSON, keine Markdown-Codeblöcke, keine Erklärungen."
-    )
-
-    prompt = f"""Analysiere dieses Foto. Übung: '{payload.exercise_name}' (Zielmuskel: {payload.target_muscle or "unbekannt"}).
-Notiz vom User: {payload.notes or "-"}
-
-Falls KEIN Mensch oder keine Trainings-Position erkennbar: gib {{"error": "no_pose_detected"}} zurück.
-
-Sonst gib AUSSCHLIESSLICH dieses JSON zurück:
-{{
-  "exercise_recognized": "Bankdrücken",
-  "form_score": 7,
-  "safety_score": 8,
-  "phase": "Endposition (Stange auf Brust)",
-  "issues": [
-    "Ellenbogen zu weit ausgestellt (~80°) — Schulterrisiko",
-    "Stange landet etwas zu hoch (Schlüsselbein statt Brust)"
-  ],
-  "good_points": [
-    "Schulterblätter sauber zusammengezogen",
-    "Stabile Basis mit den Beinen"
-  ],
-  "tips": [
-    "Ellenbogen näher zum Körper (45-60°)",
-    "Stange tiefer auf die Brustmitte führen",
-    "Atmen: einatmen beim Ablassen, ausatmen beim Drücken"
-  ],
-  "primary_correction": "Ellenbogen näher zum Körper",
-  "confidence": 0.78
-}}
-
-Skalen:
-- form_score: 1-10 (Technik-Sauberkeit)
-- safety_score: 1-10 (Verletzungsrisiko, 10 = sicher)
-- confidence: 0-1
-- issues: max 3 wichtigste Fehler
-- good_points: max 3 was bereits gut ist
-- tips: max 4 konkrete Verbesserungen
-
-Sei ehrlich aber konstruktiv. Wenn die Form bereits gut ist (score >= 8), feiere das auch."""
-
-    chat = LlmChat(
-        api_key=EMERGENT_LLM_KEY,
-        session_id=f"formcheck-{user['id']}-{uuid.uuid4()}",
-        system_message=sys,
-    ).with_model("openai", "gpt-5.5")
-
-    try:
-        img = ImageContent(image_base64=image_b64)
-        resp = await chat.send_message(UserMessage(text=prompt, file_contents=[img]))
-        text = resp if isinstance(resp, str) else str(resp)
-    except Exception as e:
-        logger.error(f"Form check vision error: {e}")
-        raise HTTPException(status_code=500, detail=f"KI-Analyse fehlgeschlagen: {str(e)}")
-
-    data = parse_json_from_llm(text)
-    if not data:
-        raise HTTPException(status_code=500, detail="KI konnte die Analyse nicht generieren. Bitte erneut versuchen.")
-    if data.get("error") == "no_pose_detected":
-        raise HTTPException(status_code=400, detail="Keine Trainings-Pose erkennbar. Bitte ein klares Foto während der Übung aufnehmen.")
-
-    def _int(v, default=0):
-        try:
-            return int(round(float(v)))
-        except Exception:
-            return default
-    def _list(v, mx=4):
-        return [str(x)[:200] for x in v][:mx] if isinstance(v, list) else []
-    def _num(v, default=0.0):
-        try:
-            return float(v)
-        except Exception:
-            return default
-
-    record = {
-        "id": str(uuid.uuid4()),
-        "user_id": user["id"],
-        "exercise_name": payload.exercise_name[:120],
-        "exercise_recognized": str(data.get("exercise_recognized", payload.exercise_name))[:120],
-        "form_score": max(1, min(10, _int(data.get("form_score", 5), 5))),
-        "safety_score": max(1, min(10, _int(data.get("safety_score", 5), 5))),
-        "phase": str(data.get("phase", ""))[:200],
-        "issues": _list(data.get("issues"), 4),
-        "good_points": _list(data.get("good_points"), 4),
-        "tips": _list(data.get("tips"), 5),
-        "primary_correction": str(data.get("primary_correction", ""))[:200],
-        "confidence": round(max(0.0, min(1.0, _num(data.get("confidence", 0.5), 0.5))), 2),
-        "notes": (payload.notes or "")[:300],
-        "created_at": now_iso(),
-    }
-    await db.form_checks.insert_one(record)
-    try:
-        await log_activity(user["id"], user.get("name") or "User", "form_check",
-                           {"exercise": record["exercise_name"], "score": record["form_score"]})
-    except Exception:
-        pass
-    record.pop("_id", None)
-    return record
-
-
-@api_router.get("/formcheck/history")
-async def formcheck_history(user: dict = Depends(get_current_user), limit: int = 20):
-    require_premium(user)
-    checks = await db.form_checks.find(
-        {"user_id": user["id"]}, {"_id": 0}
-    ).sort("created_at", -1).to_list(min(max(limit, 1), 50))
-    return {"checks": checks}
-
-
-@api_router.delete("/formcheck/{check_id}")
-async def formcheck_delete(check_id: str, user: dict = Depends(get_current_user)):
-    require_premium(user)
-    res = await db.form_checks.delete_one({"id": check_id, "user_id": user["id"]})
-    return {"ok": True, "deleted": res.deleted_count}
+# ===== Form Check endpoints moved to routers/formcheck.py =====
 
 
 # ===== Body Scan → Plan Adjustment Suggestion =====
@@ -2255,62 +2001,9 @@ Gib AUSSCHLIESSLICH dieses JSON zurück:
 
 
 # ===== Push Notifications (Web Push / VAPID) =====
-@api_router.get("/notifications/vapid-public-key")
-async def push_vapid_public_key():
-    if not VAPID_PUBLIC_KEY:
-        raise HTTPException(status_code=503, detail="Push-Service nicht konfiguriert")
-    return {"public_key": VAPID_PUBLIC_KEY}
-
-
-@api_router.post("/notifications/subscribe")
-async def push_subscribe(payload: PushSubscribeRequest, user: dict = Depends(get_current_user)):
-    """Save a Web Push subscription. Replaces any existing subscription for this user+endpoint."""
-    sub = {
-        "user_id": user["id"],
-        "endpoint": payload.endpoint,
-        "keys": payload.keys,
-        "triggers": payload.triggers or {"workout_reminder": True, "streak_protect": True, "weekly_review": True},
-        "reminder_time": payload.reminder_time or "18:00",
-        "timezone_offset": int(payload.timezone_offset or 0),
-        "created_at": now_iso(),
-        "last_used_at": now_iso(),
-    }
-    await db.push_subscriptions.update_one(
-        {"user_id": user["id"], "endpoint": payload.endpoint},
-        {"$set": sub},
-        upsert=True,
-    )
-    return {"ok": True}
-
-
-@api_router.delete("/notifications/unsubscribe")
-async def push_unsubscribe(endpoint: str, user: dict = Depends(get_current_user)):
-    res = await db.push_subscriptions.delete_one({"user_id": user["id"], "endpoint": endpoint})
-    return {"ok": True, "deleted": res.deleted_count}
-
-
-@api_router.get("/notifications/settings")
-async def push_settings(user: dict = Depends(get_current_user)):
-    subs = await db.push_subscriptions.find(
-        {"user_id": user["id"]}, {"_id": 0}
-    ).to_list(20)
-    return {"subscriptions": subs}
-
-
-@api_router.put("/notifications/settings")
-async def push_settings_update(payload: PushSubscribeRequest, user: dict = Depends(get_current_user)):
-    """Update triggers/reminder_time for an existing subscription."""
-    await db.push_subscriptions.update_one(
-        {"user_id": user["id"], "endpoint": payload.endpoint},
-        {"$set": {
-            "triggers": payload.triggers or {"workout_reminder": True, "streak_protect": True, "weekly_review": True},
-            "reminder_time": payload.reminder_time or "18:00",
-            "timezone_offset": int(payload.timezone_offset or 0),
-        }},
-    )
-    return {"ok": True}
-
-
+# HTTP endpoints moved to routers/push.py
+# Shared helpers (_send_web_push, push_dispatcher_loop) remain here because they are
+# used by other in-process tasks (auto-adjust, bodyscan plan-adjust, dispatcher loop).
 def _send_web_push(sub: dict, title: str, body: str, url: str = "/dashboard", tag: str = "alphafit") -> bool:
     """Send a single web push. Returns True on success."""
     if not VAPID_PRIVATE_KEY:
@@ -2339,15 +2032,8 @@ def _send_web_push(sub: dict, title: str, body: str, url: str = "/dashboard", ta
         return False
 
 
-@api_router.post("/notifications/test")
-async def push_test(payload: PushTestRequest, user: dict = Depends(get_current_user)):
-    """Send a test push to all of the user's subscriptions."""
-    subs = await db.push_subscriptions.find({"user_id": user["id"]}, {"_id": 0}).to_list(10)
-    sent = 0
-    for s in subs:
-        if _send_web_push(s, payload.title, payload.body, "/dashboard", "test"):
-            sent += 1
-    return {"ok": True, "subscriptions": len(subs), "sent": sent}
+# /notifications/test moved to routers/push.py
+
 
 
 async def push_dispatcher_loop():
@@ -2485,6 +2171,18 @@ async def admin_revoke_premium(payload: dict, admin: dict = Depends(require_admi
 @api_router.get("/")
 async def root():
     return {"service": "alpha-fit", "status": "running"}
+
+
+# ===== Include modular routers (extracted from server.py) =====
+# Imports happen here at the bottom, AFTER all top-level definitions are ready,
+# to allow router modules to `from server import ...` without circular import issues.
+from routers import formcheck as _formcheck_router  # noqa: E402
+from routers import payments as _payments_router  # noqa: E402
+from routers import push as _push_router  # noqa: E402
+
+api_router.include_router(_formcheck_router.router)
+api_router.include_router(_payments_router.router)
+api_router.include_router(_push_router.router)
 
 
 # Include router & CORS

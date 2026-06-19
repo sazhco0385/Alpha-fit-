@@ -1,0 +1,39 @@
+{
+  "summary": "Iteration 6 — backend-only regression after server.py refactor (extraction of formcheck/payments/push into routers/*). All 33 tests pass (14 from test_new_features_v5.py + 19 new tests in test_refactor_routers.py). Zero behavioral regression. Routes confirmed mounted exactly once via OpenAPI introspection (localhost:8001/openapi.json). All 11 refactored paths present with correct HTTP methods and no duplicate registrations. Backend logs clean — no double-registration warnings. server.py shrunk from 2502 → 2201 lines (verified). Refactor scope confirmed correct: routers import shared symbols (db, models, helpers, VAPID_PUBLIC_KEY, _send_web_push, EMERGENT_LLM_KEY, get_current_user, require_premium, etc.) FROM server at the BOTTOM of server.py (deferred imports avoid circular-import). FormCheck (analyze/history/delete), Payments (checkout/status/webhook), Push (vapid-public-key/subscribe/settings GET+PUT/unsubscribe/test) all functional. Core endpoints (auth/me, plans/current, sessions/stats, coach/insights, admin/stats, bodyscan/history) all 200 for admin. Stripe webhook accepts POST without auth and returns {received: true} for unknown event types when STRIPE_WEBHOOK_SECRET is unset (signature-bypass path via json.loads — note: in prod with secret set, an unsigned payload like this would 400, which is correct). Payments checkout invalid plan → 400 'Ungültiger Plan'. Payments status for fake session_id → 404 'Transaktion nicht gefunden'. Push subscribe→PUT update→GET verify→test→DELETE unsubscribe full lifecycle works (deleted_count=1).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/formcheck/analyze", "issue": "Model still hardcoded as gpt-5.5 in routers/formcheck.py:78 (carried over from server.py). Other vision endpoints use gpt-5.2. Pre-existing inconsistency, not introduced by the refactor."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_refactor_routers.py",
+    "/app/backend/tests/test_new_features_v5.py",
+    "/app/test_reports/pytest/pytest_iter6.xml",
+    "/app/test_reports/pytest/pytest_iter6_refactor.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is still 2201 lines after this refactor — well above the 700-line guideline. Recommended next extraction targets: /coach/* (insights/chat), /nutrition/*, /sessions/*, /bodyscan/* (analyze + plan-adjust + history), /profile/*, /admin/* (stats + activity). The pattern established here (router file imports from server at the bottom of server.py) works cleanly and avoids circular imports — same pattern can be reused.",
+    "Deferred-import pattern (`from routers import x` placed AFTER all top-level defs in server.py) is a workaround that future devs may not notice — add a 1-line comment at line 2179 explaining why it must stay at the bottom, to prevent someone moving it to the top and breaking everything.",
+    "FormCheck model 'gpt-5.5' inconsistency persists (was flagged in iter 5). Worth verifying intentional vs typo.",
+    "routers/payments.py + routers/formcheck.py + routers/push.py have NO unit tests of their own — they're only covered indirectly via HTTP integration tests. As the codebase modularizes, consider adding module-level imports tests (e.g. `from routers import formcheck` succeeds, `formcheck.router.routes` contains expected paths).",
+    "routers/__init__.py exists but is empty — fine. If the refactor continues, consider re-exporting routers from __init__ to centralize the wiring list.",
+    "/openapi.json is reachable internally (port 8001) but not externally through the ingress — this is by design (only /api/* is proxied) but worth documenting if external API explorers are needed."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_refactor_routers.py (new — 19 regression tests covering OpenAPI duplicate-check + core endpoints + 3 extracted routers)"
+  ],
+  "success_rate": {"backend": "100% (33/33: 14 v5 + 19 refactor)", "frontend": "not tested (backend-only per request)"},
+  "test_credentials": "Admin sazhco0385@gmail.com / Bellakiki1 (from /app/memory/test_credentials.md). Premium auto-active.",
+  "seed_data_creation": "test_subscribe_update_unsubscribe_lifecycle creates a fake push subscription with endpoint https://example.test/push/TEST_refactor_<hex> and self-cleans via DELETE at end of test (verified deleted=1).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Refactor (iter 6) is verified green. server.py = 2201 lines. Three routers extracted to /app/backend/routers/{formcheck,payments,push}.py using a deferred-import pattern (`from routers import x` placed at line 2179, AFTER all top-level defs, BEFORE app.include_router(api_router)). routers/__init__.py is empty. To check route registry, hit http://localhost:8001/openapi.json (not exposed via ingress). All extracted routes use the same /api prefix via api_router.include_router(<sub_router>). test_refactor_routers.py is the canonical regression file for any future router extractions — add new TestXxxRouter classes as more modules are split out. Push test endpoint will try to send to https://example.test which fails fast (DNS) — sent=0 is normal. Stripe webhook fallback path (no STRIPE_WEBHOOK_SECRET) accepts raw JSON and returns {received: true} — this is dev-mode behaviour; prod with secret would 400 on unsigned payloads.",
+  "rca of the issue": "No bugs found. Refactor is behaviorally identical to pre-extraction. All 33 regression tests pass on the live backend at https://fitness-ai-premium.preview.emergentagent.com via the public ingress, plus OpenAPI introspection from localhost:8001 confirms exactly one registration per extracted route."
+}

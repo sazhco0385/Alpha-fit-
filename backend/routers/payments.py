@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from datetime import datetime, timezone, timedelta
 import uuid
 import os
+import json
 import logging
 import stripe
 
@@ -145,6 +146,3 @@ async def stripe_webhook(request: Request):
             {"$set": {"payment_status": "paid", "status": "complete", "completed_at": now_iso()}}
         )
     return {"received": True}
-
-
-# ===== Admin =====
