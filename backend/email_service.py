@@ -40,7 +40,7 @@ async def send_email(to_email: str, subject: str, html: str, tag: str = "") -> O
 
 
 # ===== Layout =====
-def _layout(title: str, preheader: str, body_html: str, cta_text: str = "", cta_url: str = "") -> str:
+def _layout(title: str, preheader: str, body_html: str, cta_text: str = "", cta_url: str = "", unsub_token: str = "") -> str:
     """Royal-gold branded email layout. All inline CSS, table-based for client compat."""
     cta_block = ""
     if cta_text and cta_url:
@@ -53,6 +53,12 @@ def _layout(title: str, preheader: str, body_html: str, cta_text: str = "", cta_
           </td>
         </tr>
         """
+
+    unsub_link = (
+        f'<a href="{APP_URL}/unsubscribe?t={unsub_token}" style="color: #999; text-decoration: underline;">Abbestellen</a>'
+        if unsub_token else
+        f'<a href="{APP_URL}/settings" style="color: #999; text-decoration: underline;">Email-Einstellungen</a>'
+    )
 
     return f"""<!doctype html>
 <html lang="de">
@@ -84,7 +90,7 @@ def _layout(title: str, preheader: str, body_html: str, cta_text: str = "", cta_
           <tr>
             <td align="center" style="padding: 28px 32px 32px; border-top: 1px solid rgba(212, 175, 55, 0.08); color: #6a6a6a; font-size: 12px; line-height: 1.6;">
               <div style="margin-bottom: 6px;">alpha-fit • <a href="{APP_URL}" style="color: #d4af37; text-decoration: none;">alpha-fit.fitness</a></div>
-              <div style="opacity: 0.7;">Du erhältst diese Email als alpha-fit Nutzer. <a href="{APP_URL}/profile" style="color: #999; text-decoration: underline;">Email-Einstellungen verwalten</a></div>
+              <div style="opacity: 0.7;">Du erhältst diese Email als alpha-fit Nutzer. <a href="{APP_URL}/settings" style="color: #999; text-decoration: underline;">Einstellungen</a> · {unsub_link}</div>
             </td>
           </tr>
         </table>
@@ -96,7 +102,7 @@ def _layout(title: str, preheader: str, body_html: str, cta_text: str = "", cta_
 
 
 # ===== Templates =====
-def render_welcome(name: str) -> tuple[str, str]:
+def render_welcome(name: str, unsub_token: str = "") -> tuple[str, str]:
     subject = f"Willkommen bei alpha-fit, {name}! 🏆"
     preheader = "Dein 7-Tage-Trial startet jetzt. Hol dir den ersten Workout-Plan."
     body = f"""
@@ -110,10 +116,10 @@ def render_welcome(name: str) -> tuple[str, str]:
       </ul>
       <p style="margin: 0; color: #999;">Wir sehen uns im Gym.<br>— Das alpha-fit Team</p>
     """
-    return subject, _layout("Willkommen bei alpha-fit", preheader, body, "Jetzt starten", f"{APP_URL}/dashboard")
+    return subject, _layout("Willkommen bei alpha-fit", preheader, body, "Jetzt starten", f"{APP_URL}/dashboard", unsub_token)
 
 
-def render_payment_success(name: str, plan: str, amount: float, currency: str) -> tuple[str, str]:
+def render_payment_success(name: str, plan: str, amount: float, currency: str, unsub_token: str = "") -> tuple[str, str]:
     plan_label = {"monthly": "Monatlich", "yearly": "Jährlich", "lifetime": "Lifetime"}.get(plan, plan)
     currency_symbol = "€" if currency.lower() == "eur" else currency.upper()
     subject = "Zahlung erfolgreich — Premium aktiviert ✅"
@@ -138,10 +144,10 @@ def render_payment_success(name: str, plan: str, amount: float, currency: str) -
       </ul>
       <p style="margin: 0; color: #999;">Rechnung folgt automatisch von Stripe. Bei Fragen: <a href="mailto:supportalphafit@gmail.com" style="color: #d4af37;">supportalphafit@gmail.com</a></p>
     """
-    return subject, _layout("Premium aktiviert", preheader, body, "Zum Dashboard", f"{APP_URL}/dashboard")
+    return subject, _layout("Premium aktiviert", preheader, body, "Zum Dashboard", f"{APP_URL}/dashboard", unsub_token)
 
 
-def render_trial_ending(name: str, days_left: int) -> tuple[str, str]:
+def render_trial_ending(name: str, days_left: int, unsub_token: str = "") -> tuple[str, str]:
     subject = f"Noch {days_left} Tag{'e' if days_left > 1 else ''} Trial — verlängere jetzt"
     preheader = "Dein 7-Tage Trial endet bald. Sichere dir Premium dauerhaft."
     body = f"""
@@ -151,10 +157,10 @@ def render_trial_ending(name: str, days_left: int) -> tuple[str, str]:
       <p style="margin: 0 0 14px;">Premium ab <strong style="color: #d4af37;">9,99 €/Monat</strong> — kündbar jederzeit, keine Abo-Falle.</p>
       <p style="margin: 0; color: #999;">Du hast diese Woche {{streak_workouts}} Workouts absolviert. Lass den Fortschritt nicht verfallen.</p>
     """
-    return subject, _layout("Trial endet bald", preheader, body, "Premium verlängern", f"{APP_URL}/premium")
+    return subject, _layout("Trial endet bald", preheader, body, "Premium verlängern", f"{APP_URL}/premium", unsub_token)
 
 
-def render_streak_reminder(name: str, days_since: int) -> tuple[str, str]:
+def render_streak_reminder(name: str, days_since: int, unsub_token: str = "") -> tuple[str, str]:
     subject = f"{name}, seit {days_since} Tagen kein Training 🚨"
     preheader = "Dein Streak ist in Gefahr — komm zurück."
     body = f"""
@@ -164,10 +170,10 @@ def render_streak_reminder(name: str, days_since: int) -> tuple[str, str]:
       <p style="margin: 0 0 14px;">Wenn du heute auf den Plan zurückkommst, restart dein KI-Plan automatisch und passt sich an deine aktuelle Form an.</p>
       <p style="margin: 0; color: #999;">Du gegen dein Ich von gestern — sonst niemand.</p>
     """
-    return subject, _layout("Comeback Time", preheader, body, "Jetzt trainieren", f"{APP_URL}/dashboard")
+    return subject, _layout("Comeback Time", preheader, body, "Jetzt trainieren", f"{APP_URL}/dashboard", unsub_token)
 
 
-def render_weekly_summary(name: str, stats: Dict[str, Any]) -> tuple[str, str]:
+def render_weekly_summary(name: str, stats: Dict[str, Any], unsub_token: str = "") -> tuple[str, str]:
     workouts = stats.get("workouts", 0)
     volume = int(stats.get("volume_kg", 0))
     streak = stats.get("streak", 0)
@@ -203,10 +209,10 @@ def render_weekly_summary(name: str, stats: Dict[str, Any]) -> tuple[str, str]:
       </table>
       <p style="margin: 0; color: #999;">Disziplin schlägt Motivation — jeden Tag.</p>
     """
-    return subject, _layout("Wochen-Review", preheader, body, "Insights anschauen", f"{APP_URL}/coach")
+    return subject, _layout("Wochen-Review", preheader, body, "Insights anschauen", f"{APP_URL}/coach", unsub_token)
 
 
-def render_winback(name: str, total_workouts: int, total_volume_kg: int, discount_pct: int = 30) -> tuple[str, str]:
+def render_winback(name: str, total_workouts: int, total_volume_kg: int, discount_pct: int = 30, unsub_token: str = "") -> tuple[str, str]:
     subject = f"{name}, dein Comeback wartet — {discount_pct}% Rabatt drin"
     preheader = f"{total_workouts} Workouts, {total_volume_kg:,} kg Volumen — komm zurück."
     body = f"""
@@ -229,4 +235,4 @@ def render_winback(name: str, total_workouts: int, total_volume_kg: int, discoun
       <p style="margin: 0 0 14px;">Komm zurück mit <strong style="color: #d4af37;">{discount_pct}% Rabatt</strong> auf die ersten 3 Monate — einmaliges Angebot, gültig für 7 Tage.</p>
       <p style="margin: 0; color: #999;">Disziplin ist nichts, was du verlierst. Aber sie verlässt dich, wenn du nicht hingehst.</p>
     """
-    return subject, _layout("Comeback Offer", preheader, body, f"Premium mit {discount_pct}% holen", f"{APP_URL}/premium?winback=1")
+    return subject, _layout("Comeback Offer", preheader, body, f"Premium mit {discount_pct}% holen", f"{APP_URL}/premium?winback=1", unsub_token)

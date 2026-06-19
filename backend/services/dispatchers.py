@@ -10,7 +10,7 @@ import logging
 from pywebpush import webpush, WebPushException
 
 from server import (
-    db, now_iso,
+    db, now_iso, create_unsub_token,
     VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY, VAPID_SUBJECT,
 )
 
@@ -154,7 +154,7 @@ async def run_email_dispatcher_once() -> dict:
             wk_workouts = await db.workout_sessions.count_documents({
                 "user_id": u["id"], "status": "completed", "completed_at": {"$gte": wk_ago},
             })
-            subject, html = render_trial_ending(u.get("name") or "Champion", days_left)
+            subject, html = render_trial_ending(u.get("name") or "Champion", days_left, create_unsub_token(u["id"]))
             html = html.replace("{streak_workouts}", str(wk_workouts))
             email_id = await send_email(u["email"], subject, html, tag="trial_ending")
             await db.email_log.insert_one({
@@ -200,7 +200,7 @@ async def run_email_dispatcher_once() -> dict:
                 days_since = max(3, int((now - last_dt).total_seconds() / 86400))
             except Exception:
                 days_since = 3
-            subject, html = render_streak_reminder(u.get("name") or "Champion", days_since)
+            subject, html = render_streak_reminder(u.get("name") or "Champion", days_since, create_unsub_token(u["id"]))
             email_id = await send_email(u["email"], subject, html, tag="streak_reminder")
             await db.email_log.insert_one({
                 "user_id": u["id"], "email": u["email"], "template": "streak_reminder",
@@ -251,7 +251,7 @@ async def run_email_dispatcher_once() -> dict:
                 streak = await calculate_streak(u["id"])
                 subject, html = render_weekly_summary(u.get("name") or "Champion", {
                     "workouts": len(this_week), "volume_kg": tv, "streak": streak, "delta_pct": delta_pct,
-                })
+                }, create_unsub_token(u["id"]))
                 email_id = await send_email(u["email"], subject, html, tag="weekly_summary")
                 await db.email_log.insert_one({
                     "user_id": u["id"], "email": u["email"], "template": "weekly_summary",
@@ -290,7 +290,7 @@ async def run_email_dispatcher_once() -> dict:
                 log.get("reps", 0) * log.get("weight_kg", 0)
                 for s in sessions for log in s.get("logged_sets", [])
             ))
-            subject, html = render_winback(u.get("name") or "Champion", total_workouts, total_volume, discount_pct=30)
+            subject, html = render_winback(u.get("name") or "Champion", total_workouts, total_volume, discount_pct=30, unsub_token=create_unsub_token(u["id"]))
             email_id = await send_email(u["email"], subject, html, tag="winback")
             await db.email_log.insert_one({
                 "user_id": u["id"], "email": u["email"], "template": "winback",

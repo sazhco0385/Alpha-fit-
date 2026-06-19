@@ -17,7 +17,8 @@ router = APIRouter()
 async def _send_welcome_email(user: dict) -> None:
     try:
         from email_service import send_email, render_welcome
-        subject, html = render_welcome(user.get("name") or "Champion")
+        from server import create_unsub_token
+        subject, html = render_welcome(user.get("name") or "Champion", create_unsub_token(user["id"]))
         email_id = await send_email(user["email"], subject, html, tag="welcome")
         await db.email_log.insert_one({
             "user_id": user["id"], "email": user["email"], "template": "welcome",

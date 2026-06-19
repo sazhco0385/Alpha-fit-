@@ -8,7 +8,7 @@ import logging
 import stripe
 
 from server import (
-    db, get_current_user, now_iso, log_activity,
+    db, get_current_user, now_iso, log_activity, create_unsub_token,
     CheckoutRequest, PLANS, TRIAL_DAYS,
 )
 from email_service import send_email, render_payment_success
@@ -26,7 +26,7 @@ async def _send_payment_email_once(user_id: str, plan: str, amount: float, curre
         u = await db.users.find_one({"id": user_id}, {"_id": 0})
         if not u or not u.get("email"):
             return
-        subject, html = render_payment_success(u.get("name") or "Champion", plan, float(amount or 0), currency or "EUR")
+        subject, html = render_payment_success(u.get("name") or "Champion", plan, float(amount or 0), currency or "EUR", create_unsub_token(user_id))
         email_id = await send_email(u["email"], subject, html, tag="payment_success")
         await db.email_log.insert_one({
             "user_id": user_id, "email": u["email"], "template": "payment_success",

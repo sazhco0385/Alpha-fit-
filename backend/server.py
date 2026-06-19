@@ -161,6 +161,26 @@ def decode_token(token: str) -> Optional[str]:
     except Exception:
         return None
 
+
+def create_unsub_token(user_id: str) -> str:
+    """Long-lived (1 year) token for one-click unsubscribe links in emails."""
+    payload = {
+        "sub": user_id,
+        "scope": "unsub",
+        "exp": datetime.now(timezone.utc) + timedelta(days=365),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+
+
+def decode_unsub_token(token: str) -> Optional[str]:
+    try:
+        data = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        if data.get("scope") != "unsub":
+            return None
+        return data.get("sub")
+    except Exception:
+        return None
+
 def public_user(u: dict) -> dict:
     if not u:
         return None
@@ -332,6 +352,7 @@ from routers import support as _support_router  # noqa: E402
 from routers import emails as _emails_router  # noqa: E402
 from routers import auth as _auth_router  # noqa: E402
 from routers import onboarding as _onboarding_router  # noqa: E402
+from routers import unsubscribe as _unsubscribe_router  # noqa: E402
 
 api_router.include_router(_formcheck_router.router)
 api_router.include_router(_payments_router.router)
@@ -345,6 +366,7 @@ api_router.include_router(_support_router.router)
 api_router.include_router(_emails_router.router)
 api_router.include_router(_auth_router.router)
 api_router.include_router(_onboarding_router.router)
+api_router.include_router(_unsubscribe_router.router)
 
 # Include router & CORS
 app.include_router(api_router)

@@ -21,6 +21,7 @@ import BodyScan from "./pages/BodyScan";
 import Library, { LibraryDetail } from "./pages/Library";
 import FormCheck from "./pages/FormCheck";
 import Settings from "./pages/Settings";
+import Unsubscribe from "./pages/Unsubscribe";
 import A2HSPrompt from "./components/A2HSPrompt";
 import SplashScreen from "./components/SplashScreen";
 
@@ -67,6 +68,7 @@ function App() {
             <Route path="/library/:slug" element={<LibraryDetail />} />
             <Route path="/formcheck" element={<ProtectedRoute><FormCheck /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>

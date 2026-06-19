@@ -48,6 +48,13 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - Email notifications (trial ending, payment success)
 - Push notifications for workout reminders
 
+## Implemented (2026-02-15) - Email Unsubscribe Landing
+- **Signed JWT unsubscribe tokens** (1-year expiry, scope=`unsub`) via `create_unsub_token()` / `decode_unsub_token()` in server.py
+- **3 public endpoints** (no auth) in `routers/unsubscribe.py`: GET /api/unsubscribe/verify, POST /update, POST /all
+- **Unsub link in every email footer** — all 6 templates updated; auth/payments/dispatcher callers pass `create_unsub_token(user_id)`
+- **Public `/unsubscribe` page** in React (`pages/Unsubscribe.jsx`): 4 trigger toggles auto-save + „ALLE MARKETING-EMAILS ABBESTELLEN" button. Welcome/Payment-Success bleiben immer aktiv (DSGVO).
+- Smoke tests ✅: verify/update/all alle korrekt, bad token → 400, JWT roundtrip funktioniert.
+
 ## Implemented (2026-02-15) - Backend Modular Refactor (Phase 3 Final)
 - Extracted last 2 routers: `routers/auth.py` (register/login/me/heartbeat) + `routers/onboarding.py`
 - Extracted shared services into a new `services/` package:
