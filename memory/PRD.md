@@ -48,6 +48,22 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - Email notifications (trial ending, payment success)
 - Push notifications for workout reminders
 
+## Implemented (2026-02-15) - Backend Modular Refactor (Phase 3 Final)
+- Extracted last 2 routers: `routers/auth.py` (register/login/me/heartbeat) + `routers/onboarding.py`
+- Extracted shared services into a new `services/` package:
+  - `services/llm_coach.py`: build_coach_system, call_llm, generate_ai_plan, parse_json_from_llm, fallback_plan, _perform_plan_adjust, _run_adjust_job, calculate_nutrition_goals
+  - `services/dispatchers.py`: _send_web_push, push_dispatcher_loop, run_email_dispatcher_once, email_dispatcher_loop
+- **server.py: 1021 → 361 lines** (down 85.6% from original 2502 monolith). Now contains only: config, models, security helpers, seed_admin, startup events, root endpoint, router/service wiring, CORS, shutdown.
+- Re-export pattern preserved (`from services.X import * as part of server's namespace`) so existing `from server import …` in router files keeps working — zero router-side changes.
+- 11 modular routers + 2 services + 1 server.py = **clean production layout**.
+- Regression: **163 backend tests pass, 1 skipped** (full pytest run). Zero behavior change.
+
+## Implemented (2026-02-15) - Custom Plan Editor + Notification Settings + Win-Back Email
+- **Custom Plan Editor**: `PUT /api/plans/current` with full validation (≤7 days, 1-15 exercises each, value clamps for sets/reps/weight/rest). Creates new plan version with `source='user_edited'`. `GET /api/plans/exercise-suggestions` returns 8 muscle groups. Frontend `/plan` page has BEARBEITEN mode with editable name/notes/day-names + expandable exercise rows + delete + add-from-picker + custom-exercise prompt.
+- **Notification Preferences**: `GET/PUT /api/notifications/preferences` returns/updates unified `{email: {trial_ending, streak_reminder, weekly_summary, winback}, push: {workout_reminder, streak_protect, weekly_review}}`. Email dispatcher checks pref before sending each trigger. Frontend `/settings` adds EMAIL-BENACHRICHTIGUNGEN card with 4 toggles + auto-save. TriggerToggle uses `role=switch` + `aria-checked` for a11y.
+- **Win-Back Email**: New `render_winback` template (royal-gold, 30% discount CTA, total workouts + volume kg stats). Dispatcher block finds users with `premium_until` expired 7-14 days ago + `is_premium=false` + ≥1 completed workout. Idempotent via `email_log` (1× per user lifetime). Skip if `email.winback=false`.
+- **Regression: 26/26 tests pass** (iteration_8.json) + 75 prior tests still green = **101 total backend tests**.
+
 ## Implemented (2026-02-15) - Resend Email Integration
 - **5 transactional email templates** (Royal-Gold branded HTML, inline CSS, table-based for email client compat):
   - `welcome` — sent on POST /api/auth/register (fire-and-forget)

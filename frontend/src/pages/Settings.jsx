@@ -343,6 +343,8 @@ function TriggerToggle({ icon: Icon, title, desc, enabled, onToggle, testid }) {
   return (
     <button
       onClick={() => onToggle(!enabled)}
+      role="switch"
+      aria-checked={enabled}
       className={`w-full flex items-center gap-3 p-3 border transition text-left ${
         enabled ? "border-[#00BFFF] bg-[#00BFFF]/5" : "border-[#1A1A24] hover:border-[#00BFFF]/40"
       }`}

@@ -55,7 +55,6 @@ PLANS = {
 }
 TRIAL_DAYS = 7
 
-
 # ===== Models =====
 class RegisterRequest(BaseModel):
     email: EmailStr
@@ -138,7 +137,6 @@ class NutritionLogRequest(BaseModel):
     meal_type: str = "snack"
     notes: Optional[str] = ""
 
-
 # ===== Helpers =====
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -210,7 +208,6 @@ async def require_admin(user: dict = Depends(get_current_user)) -> dict:
         raise HTTPException(status_code=403, detail="Admin only")
     return user
 
-
 # ===== Startup: Seed admin =====
 @app.on_event("startup")
 async def seed_admin():
@@ -239,546 +236,19 @@ async def seed_admin():
     await db.users.insert_one(user)
     logger.info(f"Seeded admin user: {ADMIN_EMAIL}")
 
+# ===== Onboarding endpoint moved to routers/onboarding.py =====
 
-# ===== Auth =====
-@api_router.post("/auth/register")
-async def register(payload: RegisterRequest):
-    existing = await db.users.find_one({"email": payload.email.lower()})
-    if existing:
-        raise HTTPException(status_code=400, detail="E-Mail bereits registriert")
-    user = {
-        "id": str(uuid.uuid4()),
-        "email": payload.email.lower(),
-        "password_hash": hash_password(payload.password),
-        "name": payload.name,
-        "is_admin": False,
-        "is_premium": False,
-        "premium_until": None,
-        "trial_until": None,
-        "onboarding_completed": False,
-        "profile": None,
-        "current_plan_id": None,
-        "badges": [],
-        "created_at": now_iso(),
-    }
-    await db.users.insert_one(user)
-    await log_activity(user["id"], user["name"], "registered", {})
-    # Welcome email (fire-and-forget, non-blocking)
-    asyncio.create_task(_send_welcome_email(user))
-    token = create_token(user["id"])
-    return {"token": token, "user": public_user(user)}
-
-
-async def _send_welcome_email(user: dict) -> None:
-    try:
-        from email_service import send_email, render_welcome
-        subject, html = render_welcome(user.get("name") or "Champion")
-        email_id = await send_email(user["email"], subject, html, tag="welcome")
-        await db.email_log.insert_one({
-            "user_id": user["id"], "email": user["email"], "template": "welcome",
-            "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
-        })
-    except Exception as e:
-        logger.error(f"welcome email failed for {user.get('email')}: {e}")
-
-
-@api_router.post("/auth/login")
-async def login(payload: LoginRequest):
-    user = await db.users.find_one({"email": payload.email.lower()}, {"_id": 0})
-    if not user or not verify_password(payload.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Ungültige Anmeldedaten")
-    token = create_token(user["id"])
-    return {"token": token, "user": public_user(user)}
-
-@api_router.get("/auth/me")
-async def me(user: dict = Depends(get_current_user)):
-    return public_user(user)
-
-@api_router.post("/auth/heartbeat")
-async def heartbeat(user: dict = Depends(get_current_user)):
-    """User-Aktivität ping - jede Minute vom Frontend gesendet."""
-    await db.users.update_one(
-        {"id": user["id"]},
-        {"$set": {"last_active_at": now_iso()}}
-    )
-    return {"ok": True}
-
-
-# ===== Onboarding =====
-@api_router.post("/onboarding")
-async def save_onboarding(data: OnboardingData, user: dict = Depends(get_current_user)):
-    await db.users.update_one(
-        {"id": user["id"]},
-        {"$set": {"profile": data.model_dump(), "onboarding_completed": True}}
-    )
-    await log_activity(user["id"], user.get("name", ""), "onboarding_completed", {"goal": data.goal})
-    # Auto-generate first AI plan
-    plan = await generate_ai_plan(user["id"], data.model_dump())
-    return {"ok": True, "plan_id": plan["id"]}
-
-
-# ===== AI Coach =====
-# HTTP endpoints moved to routers/coach.py
-# Helpers below (build_coach_system, call_llm, generate_ai_plan, parse_json_from_llm,
-# fallback_plan, _perform_plan_adjust, _run_adjust_job) stay here because they are
-# called from multiple routers (coach, sessions auto-adjust, bodyscan plan-adjust, onboarding).
-def build_coach_system() -> str:
-    return (
-        "Du bist Alpha Coach, ein hochmoderner KI-Personaltrainer für die alpha-fit App. "
-        "Du erstellst Trainingspläne und passt sie progressiv an. "
-        "Antworte IMMER auf Deutsch. Sei direkt, motivierend, alpha-männlich, präzise."
-    )
-
-async def call_llm(system: str, user_text: str, session_id: str) -> str:
-    chat = LlmChat(
-        api_key=EMERGENT_LLM_KEY,
-        session_id=session_id,
-        system_message=system,
-    ).with_model("openai", "gpt-5.5")
-    resp = await chat.send_message(UserMessage(text=user_text))
-    return resp if isinstance(resp, str) else str(resp)
-
-async def generate_ai_plan(user_id: str, profile: dict) -> dict:
-    """Use LLM to generate a structured workout plan as JSON."""
-    prompt = f"""
-Erstelle einen Trainingsplan für folgenden Athleten:
-- Ziel: {profile.get('goal')}
-- Erfahrung: {profile.get('experience')}
-- Geschlecht: {profile.get('gender')}
-- Alter: {profile.get('age')}
-- Größe: {profile.get('height_cm')} cm
-- Gewicht: {profile.get('weight_kg')} kg
-- Tage pro Woche: {profile.get('days_per_week')}
-- Equipment: {profile.get('equipment')}
-- Verletzungen: {profile.get('injuries') or 'keine'}
-
-Gib AUSSCHLIESSLICH valides JSON zurück (kein Markdown, keine Erklärungen), genau in diesem Format:
-{{
-  "name": "Plan-Name",
-  "weeks": 4,
-  "progression_notes": "Kurzer Hinweis zur Progression",
-  "days": [
-    {{
-      "day_index": 1,
-      "name": "Push - Brust/Schulter/Trizeps",
-      "focus": "Push",
-      "exercises": [
-        {{
-          "name": "Bankdrücken",
-          "target_muscle": "Brust",
-          "sets": 4,
-          "reps": 8,
-          "weight_kg": 60,
-          "rest_seconds": 90,
-          "notes": "Sauber, kontrolliert"
-        }}
-      ]
-    }}
-  ]
-}}
-
-Erstelle exakt {profile.get('days_per_week')} Trainingstage. Jeder Tag 5-7 Übungen. Realistische Startgewichte basierend auf Erfahrung und Körpergewicht."""
-
-    text = await call_llm(build_coach_system(), prompt, f"plan-{user_id}")
-    # Try to extract JSON
-    plan_data = parse_json_from_llm(text)
-    if not plan_data:
-        plan_data = fallback_plan(profile)
-
-    plan = {
-        "id": str(uuid.uuid4()),
-        "user_id": user_id,
-        "name": plan_data.get("name", "Alpha Plan"),
-        "weeks": plan_data.get("weeks", 4),
-        "progression_notes": plan_data.get("progression_notes", ""),
-        "days": plan_data.get("days", []),
-        "created_at": now_iso(),
-        "version": 1,
-    }
-    await db.training_plans.insert_one(plan)
-    plan.pop("_id", None)
-    await db.users.update_one({"id": user_id}, {"$set": {"current_plan_id": plan["id"]}})
-    return plan
-
-def parse_json_from_llm(text: str) -> Optional[dict]:
-    if not text:
-        return None
-    t = text.strip()
-    # strip code fences
-    if t.startswith("```"):
-        t = t.strip("`")
-        if t.startswith("json"):
-            t = t[4:]
-    # find first { and last }
-    start = t.find("{")
-    end = t.rfind("}")
-    if start == -1 or end == -1:
-        return None
-    try:
-        return json.loads(t[start:end+1])
-    except Exception:
-        return None
-
-def fallback_plan(profile: dict) -> dict:
-    """Fallback plan if AI fails."""
-    days_count = profile.get("days_per_week", 3)
-    base_w = max(20, int(profile.get("weight_kg", 70) * 0.5))
-    template_days = [
-        {"name": "Push - Brust/Schulter/Trizeps", "focus": "Push",
-         "exercises": [
-             {"name": "Bankdrücken", "target_muscle": "Brust", "sets": 4, "reps": 8, "weight_kg": base_w, "rest_seconds": 90, "notes": ""},
-             {"name": "Schulterdrücken", "target_muscle": "Schulter", "sets": 4, "reps": 10, "weight_kg": int(base_w*0.6), "rest_seconds": 75, "notes": ""},
-             {"name": "Schrägbankdrücken Kurzhantel", "target_muscle": "Brust oben", "sets": 3, "reps": 10, "weight_kg": int(base_w*0.4), "rest_seconds": 75, "notes": ""},
-             {"name": "Trizepsdrücken", "target_muscle": "Trizeps", "sets": 3, "reps": 12, "weight_kg": int(base_w*0.4), "rest_seconds": 60, "notes": ""},
-             {"name": "Seitheben", "target_muscle": "Schulter", "sets": 3, "reps": 15, "weight_kg": 8, "rest_seconds": 45, "notes": ""},
-         ]},
-        {"name": "Pull - Rücken/Bizeps", "focus": "Pull",
-         "exercises": [
-             {"name": "Klimmzüge", "target_muscle": "Rücken", "sets": 4, "reps": 8, "weight_kg": 0, "rest_seconds": 90, "notes": ""},
-             {"name": "Langhantelrudern", "target_muscle": "Rücken", "sets": 4, "reps": 10, "weight_kg": int(base_w*0.8), "rest_seconds": 90, "notes": ""},
-             {"name": "Latziehen", "target_muscle": "Latissimus", "sets": 3, "reps": 12, "weight_kg": int(base_w*0.7), "rest_seconds": 75, "notes": ""},
-             {"name": "Bizeps Curl", "target_muscle": "Bizeps", "sets": 3, "reps": 12, "weight_kg": int(base_w*0.3), "rest_seconds": 60, "notes": ""},
-             {"name": "Face Pulls", "target_muscle": "Schulter hinten", "sets": 3, "reps": 15, "weight_kg": 15, "rest_seconds": 45, "notes": ""},
-         ]},
-        {"name": "Legs - Beine/Po", "focus": "Legs",
-         "exercises": [
-             {"name": "Kniebeugen", "target_muscle": "Quadrizeps", "sets": 4, "reps": 8, "weight_kg": base_w, "rest_seconds": 120, "notes": ""},
-             {"name": "Rumänisches Kreuzheben", "target_muscle": "Hamstrings", "sets": 4, "reps": 10, "weight_kg": int(base_w*0.9), "rest_seconds": 90, "notes": ""},
-             {"name": "Beinpresse", "target_muscle": "Beine", "sets": 3, "reps": 12, "weight_kg": int(base_w*1.5), "rest_seconds": 90, "notes": ""},
-             {"name": "Wadenheben", "target_muscle": "Waden", "sets": 4, "reps": 15, "weight_kg": int(base_w*0.5), "rest_seconds": 45, "notes": ""},
-             {"name": "Ausfallschritte", "target_muscle": "Beine", "sets": 3, "reps": 12, "weight_kg": int(base_w*0.3), "rest_seconds": 60, "notes": ""},
-         ]},
-        {"name": "Upper Body", "focus": "Upper",
-         "exercises": [
-             {"name": "Bankdrücken", "target_muscle": "Brust", "sets": 4, "reps": 8, "weight_kg": base_w, "rest_seconds": 90, "notes": ""},
-             {"name": "Langhantelrudern", "target_muscle": "Rücken", "sets": 4, "reps": 8, "weight_kg": int(base_w*0.8), "rest_seconds": 90, "notes": ""},
-             {"name": "Schulterdrücken", "target_muscle": "Schulter", "sets": 3, "reps": 10, "weight_kg": int(base_w*0.6), "rest_seconds": 75, "notes": ""},
-             {"name": "Latziehen", "target_muscle": "Latissimus", "sets": 3, "reps": 12, "weight_kg": int(base_w*0.7), "rest_seconds": 75, "notes": ""},
-         ]},
-        {"name": "Lower Body", "focus": "Lower",
-         "exercises": [
-             {"name": "Kniebeugen", "target_muscle": "Quadrizeps", "sets": 4, "reps": 8, "weight_kg": base_w, "rest_seconds": 120, "notes": ""},
-             {"name": "Kreuzheben", "target_muscle": "Rücken/Beine", "sets": 4, "reps": 6, "weight_kg": int(base_w*1.2), "rest_seconds": 120, "notes": ""},
-             {"name": "Beinpresse", "target_muscle": "Beine", "sets": 3, "reps": 12, "weight_kg": int(base_w*1.5), "rest_seconds": 90, "notes": ""},
-             {"name": "Wadenheben", "target_muscle": "Waden", "sets": 4, "reps": 15, "weight_kg": int(base_w*0.5), "rest_seconds": 45, "notes": ""},
-         ]},
-        {"name": "Full Body", "focus": "Full",
-         "exercises": [
-             {"name": "Kniebeugen", "target_muscle": "Beine", "sets": 3, "reps": 10, "weight_kg": int(base_w*0.8), "rest_seconds": 90, "notes": ""},
-             {"name": "Bankdrücken", "target_muscle": "Brust", "sets": 3, "reps": 10, "weight_kg": int(base_w*0.8), "rest_seconds": 90, "notes": ""},
-             {"name": "Klimmzüge", "target_muscle": "Rücken", "sets": 3, "reps": 8, "weight_kg": 0, "rest_seconds": 90, "notes": ""},
-             {"name": "Plank", "target_muscle": "Core", "sets": 3, "reps": 60, "weight_kg": 0, "rest_seconds": 45, "notes": "Sekunden"},
-         ]},
-    ]
-    selected = template_days[:days_count] if days_count <= len(template_days) else template_days + template_days[:days_count-len(template_days)]
-    for i, d in enumerate(selected):
-        d["day_index"] = i + 1
-    return {
-        "name": f"Alpha {profile.get('goal','Custom').title()} Plan",
-        "weeks": 4,
-        "progression_notes": "Steigere alle 2 Wochen das Gewicht um 2.5-5kg wenn die Wiederholungen sauber sind.",
-        "days": selected,
-    }
-
-
-
-async def _perform_plan_adjust(user: dict, plan: dict) -> dict:
-    """Core LLM-driven plan adjustment. Returns the saved new plan dict."""
-    # gather last 10 completed sessions
-    sessions = await db.workout_sessions.find(
-        {"user_id": user["id"], "status": "completed"}, {"_id": 0}
-    ).sort("completed_at", -1).to_list(10)
-
-    perf_summary = []
-    for s in sessions:
-        day = next((d for d in plan["days"] if d["day_index"] == s.get("day_index")), None)
-        if not day:
-            continue
-        for log in s.get("logged_sets", []):
-            ex_idx = log["exercise_index"]
-            if ex_idx < len(day["exercises"]):
-                ex = day["exercises"][ex_idx]
-                perf_summary.append(
-                    f"{ex['name']}: Soll {ex['sets']}x{ex['reps']}@{ex['weight_kg']}kg, Ist {log['reps']} Whdh @ {log['weight_kg']}kg"
-                )
-
-    perf_text = "\n".join(perf_summary[-20:]) or "Noch keine Daten."
-
-    # Shrink plan payload (only essential fields per exercise)
-    slim_days = []
-    for d in plan.get("days", []):
-        slim_days.append({
-            "day_index": d.get("day_index"),
-            "name": d.get("name"),
-            "exercises": [
-                {
-                    "name": ex.get("name"),
-                    "target_muscle": ex.get("target_muscle"),
-                    "sets": ex.get("sets"),
-                    "reps": ex.get("reps"),
-                    "weight_kg": ex.get("weight_kg"),
-                    "rest_sec": ex.get("rest_sec", 90),
-                }
-                for ex in (d.get("exercises") or [])
-            ],
-        })
-
-    prompt = f"""
-Aktueller Trainingsplan (JSON): {json.dumps(slim_days)}
-
-Performance der letzten Einheiten:
-{perf_text}
-
-User-Profil: {json.dumps(user.get('profile'))}
-
-Passe den Plan progressiv an. Erhöhe Gewichte wo Athlet die Ziel-Wiederholungen geschafft hat (2.5-5kg). Verringere wo unterschritten (-2.5-5kg). Anzahl Tage und Übungen beibehalten falls möglich, aber du darfst Übungen variieren wenn sinnvoll.
-
-Gib NUR JSON zurück im Format:
-{{
-  "name": "Plan-Name v2",
-  "weeks": 4,
-  "progression_notes": "Was wurde angepasst",
-  "days": [...]
-}}
-"""
-    text = await call_llm(build_coach_system(), prompt, f"adjust-{user['id']}-{uuid.uuid4()}")
-    plan_data = parse_json_from_llm(text)
-    if not plan_data:
-        raise HTTPException(status_code=500, detail="Konnte Plan nicht aktualisieren")
-
-    new_plan = {
-        "id": str(uuid.uuid4()),
-        "user_id": user["id"],
-        "name": plan_data.get("name", "Alpha Plan v2"),
-        "weeks": plan_data.get("weeks", 4),
-        "progression_notes": plan_data.get("progression_notes", ""),
-        "days": plan_data.get("days", []),
-        "created_at": now_iso(),
-        "version": plan.get("version", 1) + 1,
-        "previous_plan_id": plan["id"],
-    }
-    await db.training_plans.insert_one(new_plan)
-    new_plan.pop("_id", None)
-    await db.users.update_one({"id": user["id"]}, {"$set": {"current_plan_id": new_plan["id"]}})
-    return new_plan
-
-
-async def _run_adjust_job(job_id: str, user: dict, plan: dict) -> None:
-    """Background worker: performs adjust then writes result back to the job document."""
-    try:
-        new_plan = await asyncio.wait_for(_perform_plan_adjust(user, plan), timeout=180)
-        await db.plan_adjust_jobs.update_one(
-            {"id": job_id},
-            {"$set": {
-                "status": "done",
-                "plan": new_plan,
-                "finished_at": now_iso(),
-            }},
-        )
-    except asyncio.TimeoutError:
-        await db.plan_adjust_jobs.update_one(
-            {"id": job_id},
-            {"$set": {"status": "error", "error": "KI hat zu lange gebraucht. Bitte erneut versuchen.", "finished_at": now_iso()}},
-        )
-    except HTTPException as he:
-        await db.plan_adjust_jobs.update_one(
-            {"id": job_id},
-            {"$set": {"status": "error", "error": he.detail, "finished_at": now_iso()}},
-        )
-    except Exception as e:
-        logger.error(f"adjust job {job_id} failed: {e}")
-        await db.plan_adjust_jobs.update_one(
-            {"id": job_id},
-            {"$set": {"status": "error", "error": "KI-Anpassung fehlgeschlagen", "finished_at": now_iso()}},
-        )
-
-
-
-
-
-# ===== Training Plans + Sessions endpoints moved to routers/sessions.py =====
-
-
-# ===== Stripe Payments =====
-# Payments endpoints moved to routers/payments.py
-
-
-# ===== Admin endpoints moved to routers/admin.py =====
 # ===== Support endpoints moved to routers/support.py =====
 
-
-# ===== Nutrition Tracking (AI Vision) =====
 def strip_base64_prefix(b64: str) -> str:
     """Entfernt 'data:image/jpeg;base64,' Prefix falls vorhanden."""
     if "," in b64 and b64.startswith("data:"):
         return b64.split(",", 1)[1]
     return b64
 
-# ===== Nutrition endpoints moved to routers/nutrition.py =====
-
-def calculate_nutrition_goals(profile: dict) -> dict:
-    """Berechnet tägliche Nährstoff-Ziele basierend auf Mifflin-St Jeor + Ziel."""
-    if not profile:
-        return {"calories": 2200, "protein_g": 150, "carbs_g": 250, "fat_g": 70, "fiber_g": 30, "sugar_g": 50, "sodium_mg": 2300}
-
-    weight = float(profile.get("weight_kg", 75))
-    height = float(profile.get("height_cm", 175))
-    age = int(profile.get("age", 30))
-    gender = profile.get("gender", "male")
-    goal = profile.get("goal", "general")
-    days_per_week = int(profile.get("days_per_week", 3))
-
-    # Mifflin-St Jeor BMR
-    if gender == "female":
-        bmr = 10 * weight + 6.25 * height - 5 * age - 161
-    else:
-        bmr = 10 * weight + 6.25 * height - 5 * age + 5
-
-    # Activity factor based on training days
-    activity = 1.375 + (days_per_week - 2) * 0.075  # 2d=1.375, 6d=1.675
-    tdee = bmr * activity
-
-    # Adjust for goal
-    if goal == "muscle_gain":
-        tdee += 300  # surplus
-        protein_per_kg = 2.0
-    elif goal == "fat_loss":
-        tdee -= 400  # deficit
-        protein_per_kg = 2.2
-    elif goal == "strength":
-        tdee += 150
-        protein_per_kg = 2.0
-    else:
-        protein_per_kg = 1.6
-
-    calories = round(tdee)
-    protein_g = round(weight * protein_per_kg)
-    fat_g = round(calories * 0.25 / 9)  # 25% from fat
-    carbs_g = round((calories - protein_g * 4 - fat_g * 9) / 4)
-
-    return {
-        "calories": calories,
-        "protein_g": protein_g,
-        "carbs_g": max(carbs_g, 0),
-        "fat_g": fat_g,
-        "fiber_g": 30,
-        "sugar_g": round(calories * 0.10 / 4),  # max 10% from sugar
-        "sodium_mg": 2300,
-    }
-
-
-# ===== Body Scan (AI Vision) =====
-# HTTP endpoints moved to routers/bodyscan.py
 def require_premium(user: dict) -> None:
     if not is_premium_active(user):
         raise HTTPException(status_code=403, detail="Premium erforderlich für AI Body Scan")
-
-
-
-
-# ===== Form Check endpoints moved to routers/formcheck.py =====
-
-
-
-
-
-# ===== Push Notifications (Web Push / VAPID) =====
-# HTTP endpoints moved to routers/push.py
-# Shared helpers (_send_web_push, push_dispatcher_loop) remain here because they are
-# used by other in-process tasks (auto-adjust, bodyscan plan-adjust, dispatcher loop).
-def _send_web_push(sub: dict, title: str, body: str, url: str = "/dashboard", tag: str = "alphafit") -> bool:
-    """Send a single web push. Returns True on success."""
-    if not VAPID_PRIVATE_KEY:
-        logger.warning("VAPID_PRIVATE_KEY not configured")
-        return False
-    try:
-        webpush(
-            subscription_info={"endpoint": sub["endpoint"], "keys": sub["keys"]},
-            data=json.dumps({"title": title, "body": body, "url": url, "tag": tag}),
-            vapid_private_key=VAPID_PRIVATE_KEY,
-            vapid_claims={"sub": VAPID_SUBJECT},
-            ttl=86400,
-        )
-        return True
-    except WebPushException as e:
-        logger.warning(f"Push failed for {sub.get('endpoint','')[:60]}: {e}")
-        # 404/410 = subscription gone, remove it
-        status = getattr(getattr(e, 'response', None), 'status_code', None)
-        if status in (404, 410):
-            asyncio.create_task(db.push_subscriptions.delete_one(
-                {"user_id": sub["user_id"], "endpoint": sub["endpoint"]}
-            ))
-        return False
-    except Exception as e:
-        logger.error(f"Push exception: {e}")
-        return False
-
-
-# /notifications/test moved to routers/push.py
-
-
-
-async def push_dispatcher_loop():
-    """Background loop: every minute, checks all subscriptions and sends scheduled pushes.
-    Triggers: workout_reminder (daily at reminder_time), streak_protect (no activity in 24h before streak break),
-    weekly_review (sunday 18:00 local)."""
-    await asyncio.sleep(5)
-    last_minute = None
-    while True:
-        try:
-            now_utc = datetime.now(timezone.utc)
-            current_minute = now_utc.strftime("%Y%m%d%H%M")
-            if current_minute == last_minute:
-                await asyncio.sleep(20)
-                continue
-            last_minute = current_minute
-
-            subs = await db.push_subscriptions.find({}, {"_id": 0}).to_list(2000)
-            for sub in subs:
-                triggers = sub.get("triggers") or {}
-                tz_offset = int(sub.get("timezone_offset") or 0)
-                local_now = now_utc + timedelta(minutes=tz_offset)
-                local_hhmm = local_now.strftime("%H:%M")
-                local_dow = local_now.weekday()  # 0=Mon, 6=Sun
-                reminder_time = sub.get("reminder_time") or "18:00"
-
-                # Daily workout reminder
-                if triggers.get("workout_reminder") and local_hhmm == reminder_time:
-                    user = await db.users.find_one({"id": sub["user_id"]})
-                    if user:
-                        name = (user.get("name") or "Alpha").split()[0]
-                        _send_web_push(sub,
-                                       title=f"🛡️ {name}, dein Workout wartet",
-                                       body="Zeit für Training. Heute leiden, morgen herrschen.",
-                                       url="/plan", tag="workout-reminder")
-
-                # Weekly review (Sunday 18:00 local)
-                if triggers.get("weekly_review") and local_dow == 6 and local_hhmm == "18:00":
-                    _send_web_push(sub,
-                                   title="📊 Deine Alpha-Woche",
-                                   body="Schau dir dein Coach-Insights & Fortschritts-Update an.",
-                                   url="/coach", tag="weekly-review")
-
-                # Streak protect: once per day at 20:00 local, check if user has logged today
-                if triggers.get("streak_protect") and local_hhmm == "20:00":
-                    today_local = local_now.strftime("%Y-%m-%d")
-                    has_session = await db.workout_sessions.find_one(
-                        {"user_id": sub["user_id"], "status": "completed",
-                         "completed_at": {"$regex": f"^{today_local}"}}
-                    )
-                    if not has_session:
-                        # Check if user has a current streak worth protecting (>=2)
-                        user = await db.users.find_one({"id": sub["user_id"]})
-                        streak = (user or {}).get("streak_days", 0) or 0
-                        if streak >= 2:
-                            _send_web_push(sub,
-                                           title=f"🔥 Streak gefährdet ({streak} Tage)",
-                                           body="Noch keine Aktivität heute. Schütz deine Serie!",
-                                           url="/plan", tag="streak-protect")
-        except Exception as e:
-            logger.error(f"push_dispatcher_loop error: {e}")
-        await asyncio.sleep(30)
-
 
 @app.on_event("startup")
 async def start_push_dispatcher():
@@ -788,214 +258,6 @@ async def start_push_dispatcher():
     else:
         logger.warning("VAPID_PRIVATE_KEY missing - push dispatcher NOT started")
 
-
-# ===== Email Dispatcher (Resend) =====
-async def run_email_dispatcher_once() -> dict:
-    """Single pass: send trial-ending (≤48h), streak-reminder (3+ inactive days), weekly-summary (Sundays),
-    win-back (premium expired 7-14 days ago). All sends are idempotent via db.email_log."""
-    from email_service import (
-        send_email, render_trial_ending, render_streak_reminder, render_weekly_summary,
-        render_winback,
-    )
-    now = datetime.now(timezone.utc)
-    today_iso = now.date().isoformat()
-    sent = {"trial_ending": 0, "streak_reminder": 0, "weekly_summary": 0, "winback": 0, "errors": 0}
-
-    def _email_pref(u: dict, key: str) -> bool:
-        prefs = (u.get("notification_prefs") or {}).get("email") or {}
-        return bool(prefs.get(key, True))
-
-    # --- 1) Trial ending in ≤ 48h ---
-    cutoff_in_48h = (now + timedelta(hours=48)).isoformat()
-    cutoff_now = now.isoformat()
-    trial_users = await db.users.find({
-        "trial_until": {"$ne": None, "$gt": cutoff_now, "$lte": cutoff_in_48h},
-        "is_premium": True,
-    }, {"_id": 0}).to_list(500)
-    for u in trial_users:
-        try:
-            if not _email_pref(u, "trial_ending"):
-                continue
-            already = await db.email_log.find_one({
-                "user_id": u["id"], "template": "trial_ending",
-            })
-            if already:
-                continue
-            try:
-                trial_end = datetime.fromisoformat(u["trial_until"].replace("Z", "+00:00"))
-                hours_left = max(0, (trial_end - now).total_seconds() / 3600)
-                days_left = max(1, int(round(hours_left / 24)))
-            except Exception:
-                days_left = 2
-            wk_ago = (now - timedelta(days=7)).isoformat()
-            wk_workouts = await db.workout_sessions.count_documents({
-                "user_id": u["id"], "status": "completed", "completed_at": {"$gte": wk_ago},
-            })
-            subject, html = render_trial_ending(u.get("name") or "Champion", days_left)
-            html = html.replace("{streak_workouts}", str(wk_workouts))
-            email_id = await send_email(u["email"], subject, html, tag="trial_ending")
-            await db.email_log.insert_one({
-                "user_id": u["id"], "email": u["email"], "template": "trial_ending",
-                "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
-            })
-            if email_id:
-                sent["trial_ending"] += 1
-            else:
-                sent["errors"] += 1
-        except Exception as e:
-            logger.error(f"email_dispatcher trial_ending err for {u.get('email')}: {e}")
-            sent["errors"] += 1
-
-    # --- 2) Streak reminder: last completed workout 3-14 days ago ---
-    three_days_ago = (now - timedelta(days=3)).isoformat()
-    fourteen_days_ago = (now - timedelta(days=14)).isoformat()
-    users_for_streak = await db.users.find({"email": {"$exists": True}}, {"_id": 0}).to_list(2000)
-    for u in users_for_streak:
-        try:
-            if not _email_pref(u, "streak_reminder"):
-                continue
-            last_session = await db.workout_sessions.find_one(
-                {"user_id": u["id"], "status": "completed"},
-                {"_id": 0, "completed_at": 1},
-                sort=[("completed_at", -1)],
-            )
-            if not last_session or not last_session.get("completed_at"):
-                continue
-            last_at = last_session["completed_at"]
-            if not (fourteen_days_ago < last_at < three_days_ago):
-                continue
-            # Throttle: max 1 streak reminder per 14 days
-            cutoff_14d = (now - timedelta(days=14)).isoformat()
-            already = await db.email_log.find_one({
-                "user_id": u["id"], "template": "streak_reminder",
-                "sent_at": {"$gte": cutoff_14d},
-            })
-            if already:
-                continue
-            try:
-                last_dt = datetime.fromisoformat(last_at.replace("Z", "+00:00"))
-                days_since = max(3, int((now - last_dt).total_seconds() / 86400))
-            except Exception:
-                days_since = 3
-            subject, html = render_streak_reminder(u.get("name") or "Champion", days_since)
-            email_id = await send_email(u["email"], subject, html, tag="streak_reminder")
-            await db.email_log.insert_one({
-                "user_id": u["id"], "email": u["email"], "template": "streak_reminder",
-                "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
-            })
-            if email_id:
-                sent["streak_reminder"] += 1
-            else:
-                sent["errors"] += 1
-        except Exception as e:
-            logger.error(f"email_dispatcher streak err for {u.get('email')}: {e}")
-            sent["errors"] += 1
-
-    # --- 3) Weekly summary: every Sunday ---
-    if now.weekday() == 6:
-        week_start = (now - timedelta(days=7)).isoformat()
-        two_weeks_ago = (now - timedelta(days=14)).isoformat()
-        for u in users_for_streak:
-            try:
-                if not _email_pref(u, "weekly_summary"):
-                    continue
-                this_week_key = now.strftime("%G-W%V")  # ISO week
-                already = await db.email_log.find_one({
-                    "user_id": u["id"], "template": "weekly_summary", "week_key": this_week_key,
-                })
-                if already:
-                    continue
-                this_week = await db.workout_sessions.find(
-                    {"user_id": u["id"], "status": "completed", "completed_at": {"$gte": week_start}},
-                    {"_id": 0},
-                ).to_list(50)
-                if not this_week:
-                    continue
-                last_week = await db.workout_sessions.find(
-                    {"user_id": u["id"], "status": "completed",
-                     "completed_at": {"$gte": two_weeks_ago, "$lt": week_start}},
-                    {"_id": 0},
-                ).to_list(50)
-                def _vol(sessions):
-                    return sum(
-                        log.get("reps", 0) * log.get("weight_kg", 0)
-                        for s in sessions for log in s.get("logged_sets", [])
-                    )
-                tv, lv = _vol(this_week), _vol(last_week)
-                delta_pct = round(((tv - lv) / lv) * 100, 1) if lv > 0 else None
-                # streak via sessions router helper
-                from routers.sessions import calculate_streak  # noqa: E402
-                streak = await calculate_streak(u["id"])
-                subject, html = render_weekly_summary(u.get("name") or "Champion", {
-                    "workouts": len(this_week), "volume_kg": tv, "streak": streak, "delta_pct": delta_pct,
-                })
-                email_id = await send_email(u["email"], subject, html, tag="weekly_summary")
-                await db.email_log.insert_one({
-                    "user_id": u["id"], "email": u["email"], "template": "weekly_summary",
-                    "week_key": this_week_key, "resend_id": email_id, "ok": bool(email_id),
-                    "sent_at": now_iso(),
-                })
-                if email_id:
-                    sent["weekly_summary"] += 1
-                else:
-                    sent["errors"] += 1
-            except Exception as e:
-                logger.error(f"email_dispatcher weekly err for {u.get('email')}: {e}")
-                sent["errors"] += 1
-
-    # --- 4) Win-Back: premium expired 7-14 days ago, was premium for 14+ days total, ≥1 workout ---
-    expired_lo = (now - timedelta(days=14)).isoformat()
-    expired_hi = (now - timedelta(days=7)).isoformat()
-    winback_candidates = await db.users.find({
-        "is_premium": False,
-        "premium_until": {"$ne": None, "$gt": expired_lo, "$lte": expired_hi},
-    }, {"_id": 0}).to_list(2000)
-    for u in winback_candidates:
-        try:
-            if not _email_pref(u, "winback"):
-                continue
-            already = await db.email_log.find_one({"user_id": u["id"], "template": "winback"})
-            if already:
-                continue
-            sessions = await db.workout_sessions.find(
-                {"user_id": u["id"], "status": "completed"}, {"_id": 0},
-            ).to_list(500)
-            total_workouts = len(sessions)
-            if total_workouts < 1:
-                continue
-            total_volume = int(sum(
-                log.get("reps", 0) * log.get("weight_kg", 0)
-                for s in sessions for log in s.get("logged_sets", [])
-            ))
-            subject, html = render_winback(u.get("name") or "Champion", total_workouts, total_volume, discount_pct=30)
-            email_id = await send_email(u["email"], subject, html, tag="winback")
-            await db.email_log.insert_one({
-                "user_id": u["id"], "email": u["email"], "template": "winback",
-                "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
-                "stats": {"workouts": total_workouts, "volume_kg": total_volume},
-            })
-            if email_id:
-                sent["winback"] += 1
-            else:
-                sent["errors"] += 1
-        except Exception as e:
-            logger.error(f"email_dispatcher winback err for {u.get('email')}: {e}")
-            sent["errors"] += 1
-
-    logger.info(f"email dispatcher run: {sent}")
-    return {**sent, "ran_at": now_iso(), "date": today_iso}
-
-
-async def email_dispatcher_loop():
-    """Run the dispatcher every 6h."""
-    while True:
-        try:
-            await run_email_dispatcher_once()
-        except Exception as e:
-            logger.error(f"email_dispatcher_loop error: {e}")
-        await asyncio.sleep(6 * 3600)  # 6h
-
-
 @app.on_event("startup")
 async def start_email_dispatcher():
     if os.environ.get("RESEND_API_KEY"):
@@ -1003,10 +265,6 @@ async def start_email_dispatcher():
         logger.info("Email dispatcher started")
     else:
         logger.warning("RESEND_API_KEY missing - email dispatcher NOT started")
-
-
-
-
 
 def is_recently_active(last_active: Optional[str]) -> bool:
     if not last_active:
@@ -1037,13 +295,10 @@ async def log_activity(user_id: str, user_name: str, action: str, metadata: dict
         "created_at": now_iso(),
     })
 
-
-
 # ===== Root =====
 @api_router.get("/")
 async def root():
     return {"service": "alpha-fit", "status": "running"}
-
 
 # ===== Include modular routers (extracted from server.py) =====
 # IMPORTANT: These imports MUST stay at the bottom of server.py, AFTER all top-level
@@ -1051,6 +306,20 @@ async def root():
 # Router files do `from server import ...` — placing the imports here makes the
 # server module fully populated by the time the router files load, avoiding
 # circular-import errors. Do not move these to the top of the file.
+
+# Phase-3 services: import + re-export their names into server's namespace
+# so existing `from server import X` calls in router files continue to work.
+from services.llm_coach import (  # noqa: E402,F401
+    build_coach_system, call_llm, generate_ai_plan,
+    parse_json_from_llm, fallback_plan,
+    _perform_plan_adjust, _run_adjust_job,
+    calculate_nutrition_goals,
+)
+from services.dispatchers import (  # noqa: E402,F401
+    _send_web_push, push_dispatcher_loop,
+    run_email_dispatcher_once, email_dispatcher_loop,
+)
+
 from routers import formcheck as _formcheck_router  # noqa: E402
 from routers import payments as _payments_router  # noqa: E402
 from routers import push as _push_router  # noqa: E402
@@ -1061,6 +330,8 @@ from routers import coach as _coach_router  # noqa: E402  (must load AFTER sessi
 from routers import admin as _admin_router  # noqa: E402
 from routers import support as _support_router  # noqa: E402
 from routers import emails as _emails_router  # noqa: E402
+from routers import auth as _auth_router  # noqa: E402
+from routers import onboarding as _onboarding_router  # noqa: E402
 
 api_router.include_router(_formcheck_router.router)
 api_router.include_router(_payments_router.router)
@@ -1072,7 +343,8 @@ api_router.include_router(_coach_router.router)
 api_router.include_router(_admin_router.router)
 api_router.include_router(_support_router.router)
 api_router.include_router(_emails_router.router)
-
+api_router.include_router(_auth_router.router)
+api_router.include_router(_onboarding_router.router)
 
 # Include router & CORS
 app.include_router(api_router)
