@@ -1,6 +1,7 @@
 """Push notifications router (Web Push / VAPID) - extracted from server.py.
 Endpoints only. Shared helpers (_send_web_push, push_dispatcher_loop) stay in server.py."""
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 import logging
 
 from server import (
@@ -10,17 +11,33 @@ from server import (
     _send_web_push,
 )
 
-DEFAULT_EMAIL_PREFS = {
-    "trial_ending": True,
-    "streak_reminder": True,
-    "weekly_summary": True,
-    "winback": True,
-}
-DEFAULT_PUSH_PREFS = {
-    "workout_reminder": True,
-    "streak_protect": True,
-    "weekly_review": True,
-}
+
+# ===== Notification Preferences schema =====
+class EmailPrefs(BaseModel):
+    """User opt-in per email trigger. Transactional emails (welcome, payment_success)
+    are always sent and not configurable here."""
+    trial_ending: bool = Field(default=True, description="48h before the 7-day trial ends")
+    streak_reminder: bool = Field(default=True, description="When user is inactive 3-14 days")
+    weekly_summary: bool = Field(default=True, description="Sundays — workouts, volume, streak")
+    winback: bool = Field(default=True, description="7-14 days after premium expired, 30% discount")
+
+
+class PushPrefs(BaseModel):
+    """User opt-in per push notification trigger."""
+    workout_reminder: bool = Field(default=True, description="Daily reminder at reminder_time")
+    streak_protect: bool = Field(default=True, description="Last-chance ping when streak is at risk")
+    weekly_review: bool = Field(default=True, description="Sunday weekly review push")
+
+
+class NotificationPreferences(BaseModel):
+    """Unified email + push trigger preferences for the current user.
+    Same shape on GET and PUT."""
+    email: EmailPrefs = Field(default_factory=EmailPrefs)
+    push: PushPrefs = Field(default_factory=PushPrefs)
+
+
+DEFAULT_EMAIL_PREFS = EmailPrefs().model_dump()
+DEFAULT_PUSH_PREFS = PushPrefs().model_dump()
 
 logger = logging.getLogger("alphafit")
 router = APIRouter()
@@ -93,22 +110,23 @@ async def push_test(payload: PushTestRequest, user: dict = Depends(get_current_u
     return {"ok": True, "subscriptions": len(subs), "sent": sent}
 
 
-@router.get("/notifications/preferences")
-async def notifications_get_preferences(user: dict = Depends(get_current_user)):
-    """Unified email + push trigger preferences for the current user."""
+@router.get("/notifications/preferences", response_model=NotificationPreferences)
+async def notifications_get_preferences(user: dict = Depends(get_current_user)) -> NotificationPreferences:
+    """Unified email + push trigger preferences for the current user.
+    Returns the user's current preferences merged with defaults (true) for any missing key."""
     prefs = user.get("notification_prefs") or {}
-    email_prefs = {**DEFAULT_EMAIL_PREFS, **(prefs.get("email") or {})}
-    push_prefs = {**DEFAULT_PUSH_PREFS, **(prefs.get("push") or {})}
-    return {"email": email_prefs, "push": push_prefs}
+    email_data = {**DEFAULT_EMAIL_PREFS, **(prefs.get("email") or {})}
+    push_data = {**DEFAULT_PUSH_PREFS, **(prefs.get("push") or {})}
+    return NotificationPreferences(email=EmailPrefs(**email_data), push=PushPrefs(**push_data))
 
 
-@router.put("/notifications/preferences")
-async def notifications_set_preferences(payload: dict, user: dict = Depends(get_current_user)):
-    """Update which email + push triggers the user wants to receive."""
-    incoming_email = payload.get("email") or {}
-    incoming_push = payload.get("push") or {}
-    email_prefs = {k: bool(incoming_email.get(k, DEFAULT_EMAIL_PREFS[k])) for k in DEFAULT_EMAIL_PREFS}
-    push_prefs = {k: bool(incoming_push.get(k, DEFAULT_PUSH_PREFS[k])) for k in DEFAULT_PUSH_PREFS}
-    new_prefs = {"email": email_prefs, "push": push_prefs}
+@router.put("/notifications/preferences", response_model=NotificationPreferences)
+async def notifications_set_preferences(
+    payload: NotificationPreferences,
+    user: dict = Depends(get_current_user),
+) -> NotificationPreferences:
+    """Update which email + push triggers the user wants to receive.
+    Pydantic validates types automatically; missing keys default to True."""
+    new_prefs = payload.model_dump()
     await db.users.update_one({"id": user["id"]}, {"$set": {"notification_prefs": new_prefs}})
-    return new_prefs
+    return payload
