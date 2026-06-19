@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../lib/api";
-import { Check, X, Pause, Play, ChevronRight, Loader2, Flame, Trophy, TrendingUp, Sparkles } from "lucide-react";
+import { Check, X, Pause, Play, ChevronRight, Loader2, Flame, Trophy, TrendingUp, Sparkles, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { getExerciseImage } from "../lib/exerciseImages";
 
@@ -218,7 +218,7 @@ export default function ActiveWorkout() {
               <img
                 src={getExerciseImage(exercise.name, exercise.target_muscle)}
                 alt={exercise.name}
-                onError={(e) => { if (!e.currentTarget.dataset.fallback) { e.currentTarget.dataset.fallback = "1"; e.currentTarget.src = "/exercises/group-full.png"; } }}
+                onError={(e) => { if (!e.currentTarget.dataset.fallback) { e.currentTarget.dataset.fallback = "1"; e.currentTarget.src = "/exercises/group-full.webp"; } }}
                 className="w-full h-full object-cover opacity-80"
               />
               <div className="absolute inset-0" style={{
@@ -229,6 +229,16 @@ export default function ActiveWorkout() {
                 <div className="font-teko text-2xl sm:text-4xl md:text-5xl chrome-text leading-none mt-1 break-words" data-testid="exercise-name">{exercise.name}</div>
                 <div className="text-[#00BFFF] font-chakra uppercase tracking-widest text-[10px] sm:text-xs mt-1">{exercise.target_muscle}</div>
               </div>
+              {/* Form-Check shortcut */}
+              <button
+                onClick={() => navigate(`/formcheck?exercise=${encodeURIComponent(exercise.name)}&muscle=${encodeURIComponent(exercise.target_muscle || "")}`)}
+                className="absolute top-2 right-2 sm:top-3 sm:right-3 px-2 sm:px-3 py-1.5 bg-black/70 border border-[#00BFFF]/60 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10 transition flex items-center gap-1.5 backdrop-blur-sm"
+                data-testid="active-formcheck-btn"
+                aria-label="Form-Check"
+              >
+                <Activity size={14} className="text-[#00BFFF]" />
+                <span className="text-[10px] sm:text-xs font-chakra tracking-widest uppercase text-white">Form-Check</span>
+              </button>
             </div>
 
             {exercise.notes && <div className="text-gray-500 text-xs sm:text-sm italic font-chakra text-center px-2">"{exercise.notes}"</div>}

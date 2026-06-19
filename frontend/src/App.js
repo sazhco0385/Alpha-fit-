@@ -18,6 +18,9 @@ import { Impressum, AGB, Datenschutz } from "./pages/Legal";
 import Support from "./pages/Support";
 import Nutrition from "./pages/Nutrition";
 import BodyScan from "./pages/BodyScan";
+import Library, { LibraryDetail } from "./pages/Library";
+import FormCheck from "./pages/FormCheck";
+import Settings from "./pages/Settings";
 import A2HSPrompt from "./components/A2HSPrompt";
 import SplashScreen from "./components/SplashScreen";
 
@@ -60,6 +63,10 @@ function App() {
             <Route path="/support" element={<ProtectedRoute requireOnboarding={false}><Support /></ProtectedRoute>} />
             <Route path="/nutrition" element={<ProtectedRoute><Nutrition /></ProtectedRoute>} />
             <Route path="/bodyscan" element={<ProtectedRoute><BodyScan /></ProtectedRoute>} />
+            <Route path="/library" element={<Library />} />
+            <Route path="/library/:slug" element={<LibraryDetail />} />
+            <Route path="/formcheck" element={<ProtectedRoute><FormCheck /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>

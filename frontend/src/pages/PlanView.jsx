@@ -96,7 +96,7 @@ export default function PlanView() {
                   <img
                     src={getExerciseImage(ex.name, ex.target_muscle)}
                     alt={ex.name}
-                    onError={(e) => { if (!e.currentTarget.dataset.fallback) { e.currentTarget.dataset.fallback = "1"; e.currentTarget.src = "/exercises/group-full.png"; } }}
+                    onError={(e) => { if (!e.currentTarget.dataset.fallback) { e.currentTarget.dataset.fallback = "1"; e.currentTarget.src = "/exercises/group-full.webp"; } }}
                     className="w-12 h-12 sm:w-16 sm:h-16 object-cover border border-[#1A1A24] flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">

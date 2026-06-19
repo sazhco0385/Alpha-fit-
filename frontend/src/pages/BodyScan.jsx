@@ -39,6 +39,7 @@ export default function BodyScan() {
   const [current, setCurrent] = useState(null); // latest result shown after scan
   const [compareIds, setCompareIds] = useState([]); // up to 2 scan IDs
   const [notes, setNotes] = useState("");
+  const [applyingToPlan, setApplyingToPlan] = useState(false);
   const fileRef = useRef(null);
 
   const isPremium = !!user?.is_premium;
@@ -108,6 +109,29 @@ export default function BodyScan() {
       if (prev.length >= 2) return [prev[1], id];
       return [...prev, id];
     });
+  };
+
+  const applyScanToPlan = async (scanId) => {
+    if (!window.confirm("KI passt deinen Plan anhand der Schwachstellen aus diesem Scan an. Fortfahren?")) return;
+    setApplyingToPlan(true);
+    try {
+      const { data: startData } = await api.post(`/bodyscan/${scanId}/suggest-plan-adjustment`);
+      const jobId = startData.job_id;
+      let result = null;
+      for (let i = 0; i < 90; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const { data: st } = await api.get(`/coach/adjust-plan/status/${jobId}`);
+        if (st.status === "done") { result = st; break; }
+        if (st.status === "error") throw new Error(st.error || "Plan-Anpassung fehlgeschlagen");
+      }
+      if (!result) throw new Error("Zeitüberschreitung");
+      toast.success(`Plan angepasst: ${result.plan?.name || "Neuer Plan"}`);
+      navigate("/plan");
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || err?.message || "Fehler bei Plan-Anpassung");
+    } finally {
+      setApplyingToPlan(false);
+    }
   };
 
   // PREMIUM GATE
@@ -208,7 +232,7 @@ export default function BodyScan() {
       </div>
 
       {/* Current scan result */}
-      {current && <ScanResultCard scan={current} highlighted />}
+      {current && <ScanResultCard scan={current} highlighted onApplyToPlan={() => applyScanToPlan(current.id)} applying={applyingToPlan} />}
 
       {/* Compare view */}
       {compareLeft && compareRight && (
@@ -308,7 +332,7 @@ function PageHeader() {
   );
 }
 
-function ScanResultCard({ scan, highlighted }) {
+function ScanResultCard({ scan, highlighted, onApplyToPlan, applying }) {
   const delta = scan.delta_vs_previous;
   return (
     <div
@@ -436,6 +460,25 @@ function ScanResultCard({ scan, highlighted }) {
       <div className="text-[10px] text-gray-600 font-chakra mt-3 text-right">
         Konfidenz: {(scan.confidence * 100).toFixed(0)}%
       </div>
+
+      {/* Apply to Plan CTA */}
+      {onApplyToPlan && (
+        <div className="mt-4 pt-4 border-t border-[#1A1A24]" data-testid="bodyscan-apply-to-plan">
+          <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra mb-2">PLAN-ANPASSUNG</div>
+          <p className="text-body font-chakra text-sm mb-3 leading-relaxed">
+            KI passt deinen Trainingsplan automatisch an die Schwachstellen aus diesem Scan an.
+          </p>
+          <button
+            onClick={onApplyToPlan}
+            disabled={applying}
+            className="btn-primary inline-flex items-center gap-2"
+            data-testid="bodyscan-apply-plan-btn"
+          >
+            {applying ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+            {applying ? "PASSE PLAN AN..." : "PLAN AN SCHWACHSTELLEN ANPASSEN"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

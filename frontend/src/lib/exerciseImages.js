@@ -3,6 +3,7 @@
 // Stored locally at /public/exercises/{slug}.png — no external CDN dependency.
 
 const BASE = "/exercises";
+const EXT = ".webp";
 
 // ---- Exact exercise slug map (German names → slug) ----
 // Lowercase keys, matched after normalisation. Specific exercises win over muscle-group fallbacks.
@@ -181,21 +182,21 @@ export function getExerciseImage(name = "", muscle = "") {
   const m = normalise(muscle);
 
   // 1. Exact slug match
-  if (EXACT[n]) return `${BASE}/${EXACT[n]}.png`;
+  if (EXACT[n]) return `${BASE}/${EXACT[n]}${EXT}`;
   // 2. Partial substring scan against EXACT keys (longer first to avoid clashing)
   const keys = Object.keys(EXACT).sort((a, b) => b.length - a.length);
   for (const k of keys) {
-    if (n.includes(k)) return `${BASE}/${EXACT[k]}.png`;
+    if (n.includes(k)) return `${BASE}/${EXACT[k]}${EXT}`;
   }
   // 3. Muscle group fallback by explicit muscle field
-  if (GROUP_FALLBACK[m]) return `${BASE}/${GROUP_FALLBACK[m]}.png`;
+  if (GROUP_FALLBACK[m]) return `${BASE}/${GROUP_FALLBACK[m]}${EXT}`;
   // 4. Keyword scan for muscle group
   const haystack = `${n} ${m}`;
   for (const entry of KEYWORD_TO_GROUP) {
     if (entry.keys.some((k) => haystack.includes(k))) {
-      return `${BASE}/${GROUP_FALLBACK[entry.group]}.png`;
+      return `${BASE}/${GROUP_FALLBACK[entry.group]}${EXT}`;
     }
   }
   // 5. Final fallback
-  return `${BASE}/group-full.png`;
+  return `${BASE}/group-full${EXT}`;
 }

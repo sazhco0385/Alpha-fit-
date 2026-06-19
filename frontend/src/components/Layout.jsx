@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, Dumbbell, Brain, TrendingUp, Crown, Shield, LogOut, Apple } from "lucide-react";
+import { Home, Dumbbell, Brain, TrendingUp, Crown, Shield, LogOut, Apple, Settings as Cog } from "lucide-react";
 import Logo from "./Logo";
 import { useAuth } from "../lib/auth";
 
@@ -36,6 +36,9 @@ export default function Layout({ children }) {
                 <Crown size={12} /> <span className="hidden sm:inline">PREMIUM</span><span className="sm:hidden">PRO</span>
               </span>
             )}
+            <button onClick={() => navigate("/settings")} className="text-gray-400 hover:text-[#00BFFF] transition w-11 h-11 flex items-center justify-center" data-testid="settings-btn" aria-label="Einstellungen">
+              <Cog size={18} />
+            </button>
             <button onClick={() => { logout(); navigate("/"); }} className="text-gray-400 hover:text-[#00BFFF] transition w-11 h-11 flex items-center justify-center" data-testid="logout-btn" aria-label="Logout">
               <LogOut size={20} />
             </button>

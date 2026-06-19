@@ -17,6 +17,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone, timedelta
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
+from pywebpush import webpush, WebPushException
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -25,6 +26,9 @@ load_dotenv(ROOT_DIR / '.env')
 MONGO_URL = os.environ['MONGO_URL']
 DB_NAME = os.environ['DB_NAME']
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:support@alphafit.local')
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'changeme')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
@@ -103,6 +107,23 @@ class NutritionAnalyzeRequest(BaseModel):
 class BodyScanRequest(BaseModel):
     image_base64: str  # data URL or pure base64
     notes: Optional[str] = ""
+
+class FormCheckRequest(BaseModel):
+    image_base64: str
+    exercise_name: str
+    target_muscle: Optional[str] = ""
+    notes: Optional[str] = ""
+
+class PushSubscribeRequest(BaseModel):
+    endpoint: str
+    keys: dict
+    triggers: Optional[dict] = None  # {workout_reminder: true, streak_protect: true, weekly_review: true}
+    reminder_time: Optional[str] = "18:00"  # HH:MM local user time
+    timezone_offset: Optional[int] = 0  # minutes from UTC
+
+class PushTestRequest(BaseModel):
+    title: Optional[str] = "Alpha Fit"
+    body: Optional[str] = "Test-Benachrichtigung von deinem Alpha Coach 🛡️"
 
 class NutritionLogRequest(BaseModel):
     food_name: str
@@ -1891,6 +1912,426 @@ async def profile_weight_trend(user: dict = Depends(get_current_user)):
         except Exception:
             delta = None
     return {"current_kg": current, "earliest_kg": earliest, "delta_kg": delta, "points": points}
+
+
+# ===== Form Check (AI Vision: analyze exercise execution) =====
+@api_router.post("/formcheck/analyze")
+async def formcheck_analyze(payload: FormCheckRequest, user: dict = Depends(get_current_user)):
+    """Premium: analyze a photo of the user performing an exercise.
+    Returns form score, issues, tips, safety score. Does NOT store the photo."""
+    require_premium(user)
+    image_b64 = strip_base64_prefix(payload.image_base64)
+
+    sys = (
+        "Du bist Alpha Form Coach - ein zertifizierter Personal Trainer und Bewegungs-Analyst. "
+        "Du analysierst Übungsfotos OBJEKTIV und SACHLICH auf Ausführung & Sicherheit. "
+        "Du gibst KEINE medizinische Diagnose, nur Fitness-Hinweise. "
+        "Antworte AUSSCHLIESSLICH mit validem JSON, keine Markdown-Codeblöcke, keine Erklärungen."
+    )
+
+    prompt = f"""Analysiere dieses Foto. Übung: '{payload.exercise_name}' (Zielmuskel: {payload.target_muscle or "unbekannt"}).
+Notiz vom User: {payload.notes or "-"}
+
+Falls KEIN Mensch oder keine Trainings-Position erkennbar: gib {{"error": "no_pose_detected"}} zurück.
+
+Sonst gib AUSSCHLIESSLICH dieses JSON zurück:
+{{
+  "exercise_recognized": "Bankdrücken",
+  "form_score": 7,
+  "safety_score": 8,
+  "phase": "Endposition (Stange auf Brust)",
+  "issues": [
+    "Ellenbogen zu weit ausgestellt (~80°) — Schulterrisiko",
+    "Stange landet etwas zu hoch (Schlüsselbein statt Brust)"
+  ],
+  "good_points": [
+    "Schulterblätter sauber zusammengezogen",
+    "Stabile Basis mit den Beinen"
+  ],
+  "tips": [
+    "Ellenbogen näher zum Körper (45-60°)",
+    "Stange tiefer auf die Brustmitte führen",
+    "Atmen: einatmen beim Ablassen, ausatmen beim Drücken"
+  ],
+  "primary_correction": "Ellenbogen näher zum Körper",
+  "confidence": 0.78
+}}
+
+Skalen:
+- form_score: 1-10 (Technik-Sauberkeit)
+- safety_score: 1-10 (Verletzungsrisiko, 10 = sicher)
+- confidence: 0-1
+- issues: max 3 wichtigste Fehler
+- good_points: max 3 was bereits gut ist
+- tips: max 4 konkrete Verbesserungen
+
+Sei ehrlich aber konstruktiv. Wenn die Form bereits gut ist (score >= 8), feiere das auch."""
+
+    chat = LlmChat(
+        api_key=EMERGENT_LLM_KEY,
+        session_id=f"formcheck-{user['id']}-{uuid.uuid4()}",
+        system_message=sys,
+    ).with_model("openai", "gpt-5.5")
+
+    try:
+        img = ImageContent(image_base64=image_b64)
+        resp = await chat.send_message(UserMessage(text=prompt, file_contents=[img]))
+        text = resp if isinstance(resp, str) else str(resp)
+    except Exception as e:
+        logger.error(f"Form check vision error: {e}")
+        raise HTTPException(status_code=500, detail=f"KI-Analyse fehlgeschlagen: {str(e)}")
+
+    data = parse_json_from_llm(text)
+    if not data:
+        raise HTTPException(status_code=500, detail="KI konnte die Analyse nicht generieren. Bitte erneut versuchen.")
+    if data.get("error") == "no_pose_detected":
+        raise HTTPException(status_code=400, detail="Keine Trainings-Pose erkennbar. Bitte ein klares Foto während der Übung aufnehmen.")
+
+    def _int(v, default=0):
+        try:
+            return int(round(float(v)))
+        except Exception:
+            return default
+    def _list(v, mx=4):
+        return [str(x)[:200] for x in v][:mx] if isinstance(v, list) else []
+    def _num(v, default=0.0):
+        try:
+            return float(v)
+        except Exception:
+            return default
+
+    record = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "exercise_name": payload.exercise_name[:120],
+        "exercise_recognized": str(data.get("exercise_recognized", payload.exercise_name))[:120],
+        "form_score": max(1, min(10, _int(data.get("form_score", 5), 5))),
+        "safety_score": max(1, min(10, _int(data.get("safety_score", 5), 5))),
+        "phase": str(data.get("phase", ""))[:200],
+        "issues": _list(data.get("issues"), 4),
+        "good_points": _list(data.get("good_points"), 4),
+        "tips": _list(data.get("tips"), 5),
+        "primary_correction": str(data.get("primary_correction", ""))[:200],
+        "confidence": round(max(0.0, min(1.0, _num(data.get("confidence", 0.5), 0.5))), 2),
+        "notes": (payload.notes or "")[:300],
+        "created_at": now_iso(),
+    }
+    await db.form_checks.insert_one(record)
+    try:
+        await log_activity(user["id"], user.get("name") or "User", "form_check",
+                           {"exercise": record["exercise_name"], "score": record["form_score"]})
+    except Exception:
+        pass
+    record.pop("_id", None)
+    return record
+
+
+@api_router.get("/formcheck/history")
+async def formcheck_history(user: dict = Depends(get_current_user), limit: int = 20):
+    require_premium(user)
+    checks = await db.form_checks.find(
+        {"user_id": user["id"]}, {"_id": 0}
+    ).sort("created_at", -1).to_list(min(max(limit, 1), 50))
+    return {"checks": checks}
+
+
+@api_router.delete("/formcheck/{check_id}")
+async def formcheck_delete(check_id: str, user: dict = Depends(get_current_user)):
+    require_premium(user)
+    res = await db.form_checks.delete_one({"id": check_id, "user_id": user["id"]})
+    return {"ok": True, "deleted": res.deleted_count}
+
+
+# ===== Body Scan → Plan Adjustment Suggestion =====
+@api_router.post("/bodyscan/{scan_id}/suggest-plan-adjustment")
+async def bodyscan_suggest_plan_adjustment(scan_id: str, user: dict = Depends(get_current_user)):
+    """Async job: AI suggests plan adjustments based on the scan's weak_points.
+    Returns immediately with a job_id, frontend polls /coach/adjust-plan/status/{job_id}.
+    Pre-condition: user has a current plan + a body scan with weak_points."""
+    require_premium(user)
+    scan = await db.body_scans.find_one({"id": scan_id, "user_id": user["id"]}, {"_id": 0})
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan nicht gefunden")
+
+    plan_id = user.get("current_plan_id")
+    if not plan_id:
+        raise HTTPException(status_code=400, detail="Kein aktiver Plan")
+    plan = await db.training_plans.find_one({"id": plan_id}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan nicht gefunden")
+
+    existing = await db.plan_adjust_jobs.find_one({"user_id": user["id"], "status": "pending"}, {"_id": 0})
+    if existing:
+        return {"job_id": existing["id"], "status": "pending"}
+
+    job_id = str(uuid.uuid4())
+    await db.plan_adjust_jobs.insert_one({
+        "id": job_id,
+        "user_id": user["id"],
+        "status": "pending",
+        "created_at": now_iso(),
+        "plan_id": plan_id,
+        "source": "body_scan",
+        "scan_id": scan_id,
+    })
+    asyncio.create_task(_run_bodyscan_plan_adjust(job_id, user, plan, scan))
+    return {"job_id": job_id, "status": "pending"}
+
+
+async def _run_bodyscan_plan_adjust(job_id: str, user: dict, plan: dict, scan: dict) -> None:
+    """Background: takes a body scan + current plan, asks LLM to produce a refined plan focused on weak_points."""
+    try:
+        new_plan = await asyncio.wait_for(_perform_bodyscan_plan_adjust(user, plan, scan), timeout=180)
+        await db.plan_adjust_jobs.update_one(
+            {"id": job_id},
+            {"$set": {"status": "done", "plan": new_plan, "finished_at": now_iso()}},
+        )
+    except asyncio.TimeoutError:
+        await db.plan_adjust_jobs.update_one(
+            {"id": job_id},
+            {"$set": {"status": "error", "error": "KI hat zu lange gebraucht.", "finished_at": now_iso()}},
+        )
+    except HTTPException as he:
+        await db.plan_adjust_jobs.update_one(
+            {"id": job_id},
+            {"$set": {"status": "error", "error": he.detail, "finished_at": now_iso()}},
+        )
+    except Exception as e:
+        logger.error(f"bodyscan-plan-adjust job {job_id} failed: {e}")
+        await db.plan_adjust_jobs.update_one(
+            {"id": job_id},
+            {"$set": {"status": "error", "error": "Plan-Anpassung fehlgeschlagen", "finished_at": now_iso()}},
+        )
+
+
+async def _perform_bodyscan_plan_adjust(user: dict, plan: dict, scan: dict) -> dict:
+    slim_days = [{
+        "day_index": d.get("day_index"),
+        "name": d.get("name"),
+        "exercises": [
+            {"name": ex.get("name"), "target_muscle": ex.get("target_muscle"),
+             "sets": ex.get("sets"), "reps": ex.get("reps"),
+             "weight_kg": ex.get("weight_kg"), "rest_sec": ex.get("rest_sec", 90)}
+            for ex in (d.get("exercises") or [])
+        ],
+    } for d in plan.get("days", [])]
+
+    weak = scan.get("weak_points") or []
+    muscle_dev = scan.get("muscle_development") or {}
+    posture = scan.get("posture_notes") or ""
+    next_focus = scan.get("next_focus") or ""
+
+    prompt = f"""Aktueller Trainingsplan (JSON): {json.dumps(slim_days)}
+
+Body-Scan Analyse:
+- Schwachstellen: {json.dumps(weak, ensure_ascii=False)}
+- Muskelentwicklung (1-10): {json.dumps(muscle_dev)}
+- Haltung: {posture}
+- Empfohlener Fokus: {next_focus}
+
+User-Profil: {json.dumps(user.get('profile'))}
+
+Passe den Plan an die Schwachstellen aus dem Body-Scan an. Erhöhe Volumen / füge gezielte Übungen hinzu für die schwachen Muskelgruppen. Reduziere ggf. Volumen bei sehr gut entwickelten Bereichen. Anzahl Tage und grobe Struktur beibehalten.
+
+Gib AUSSCHLIESSLICH dieses JSON zurück:
+{{
+  "name": "Plan v3 - Schwachstellen-Fokus",
+  "weeks": 4,
+  "progression_notes": "Was wurde basierend auf dem Body-Scan angepasst (max 3 Sätze, konkret).",
+  "days": [...]
+}}
+"""
+    text = await call_llm(build_coach_system(), prompt, f"bodyscan-adjust-{user['id']}-{uuid.uuid4()}")
+    plan_data = parse_json_from_llm(text)
+    if not plan_data:
+        raise HTTPException(status_code=500, detail="KI konnte Plan nicht generieren.")
+
+    new_plan = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "name": plan_data.get("name", "Alpha Plan v3 - Body-Scan Anpassung"),
+        "weeks": plan_data.get("weeks", 4),
+        "progression_notes": plan_data.get("progression_notes", ""),
+        "days": plan_data.get("days", []),
+        "created_at": now_iso(),
+        "version": plan.get("version", 1) + 1,
+        "previous_plan_id": plan["id"],
+        "source": "body_scan",
+        "scan_id": scan.get("id"),
+    }
+    await db.training_plans.insert_one(new_plan)
+    new_plan.pop("_id", None)
+    await db.users.update_one({"id": user["id"]}, {"$set": {"current_plan_id": new_plan["id"]}})
+    return new_plan
+
+
+
+# ===== Push Notifications (Web Push / VAPID) =====
+@api_router.get("/notifications/vapid-public-key")
+async def push_vapid_public_key():
+    if not VAPID_PUBLIC_KEY:
+        raise HTTPException(status_code=503, detail="Push-Service nicht konfiguriert")
+    return {"public_key": VAPID_PUBLIC_KEY}
+
+
+@api_router.post("/notifications/subscribe")
+async def push_subscribe(payload: PushSubscribeRequest, user: dict = Depends(get_current_user)):
+    """Save a Web Push subscription. Replaces any existing subscription for this user+endpoint."""
+    sub = {
+        "user_id": user["id"],
+        "endpoint": payload.endpoint,
+        "keys": payload.keys,
+        "triggers": payload.triggers or {"workout_reminder": True, "streak_protect": True, "weekly_review": True},
+        "reminder_time": payload.reminder_time or "18:00",
+        "timezone_offset": int(payload.timezone_offset or 0),
+        "created_at": now_iso(),
+        "last_used_at": now_iso(),
+    }
+    await db.push_subscriptions.update_one(
+        {"user_id": user["id"], "endpoint": payload.endpoint},
+        {"$set": sub},
+        upsert=True,
+    )
+    return {"ok": True}
+
+
+@api_router.delete("/notifications/unsubscribe")
+async def push_unsubscribe(endpoint: str, user: dict = Depends(get_current_user)):
+    res = await db.push_subscriptions.delete_one({"user_id": user["id"], "endpoint": endpoint})
+    return {"ok": True, "deleted": res.deleted_count}
+
+
+@api_router.get("/notifications/settings")
+async def push_settings(user: dict = Depends(get_current_user)):
+    subs = await db.push_subscriptions.find(
+        {"user_id": user["id"]}, {"_id": 0}
+    ).to_list(20)
+    return {"subscriptions": subs}
+
+
+@api_router.put("/notifications/settings")
+async def push_settings_update(payload: PushSubscribeRequest, user: dict = Depends(get_current_user)):
+    """Update triggers/reminder_time for an existing subscription."""
+    await db.push_subscriptions.update_one(
+        {"user_id": user["id"], "endpoint": payload.endpoint},
+        {"$set": {
+            "triggers": payload.triggers or {"workout_reminder": True, "streak_protect": True, "weekly_review": True},
+            "reminder_time": payload.reminder_time or "18:00",
+            "timezone_offset": int(payload.timezone_offset or 0),
+        }},
+    )
+    return {"ok": True}
+
+
+def _send_web_push(sub: dict, title: str, body: str, url: str = "/dashboard", tag: str = "alphafit") -> bool:
+    """Send a single web push. Returns True on success."""
+    if not VAPID_PRIVATE_KEY:
+        logger.warning("VAPID_PRIVATE_KEY not configured")
+        return False
+    try:
+        webpush(
+            subscription_info={"endpoint": sub["endpoint"], "keys": sub["keys"]},
+            data=json.dumps({"title": title, "body": body, "url": url, "tag": tag}),
+            vapid_private_key=VAPID_PRIVATE_KEY,
+            vapid_claims={"sub": VAPID_SUBJECT},
+            ttl=86400,
+        )
+        return True
+    except WebPushException as e:
+        logger.warning(f"Push failed for {sub.get('endpoint','')[:60]}: {e}")
+        # 404/410 = subscription gone, remove it
+        status = getattr(getattr(e, 'response', None), 'status_code', None)
+        if status in (404, 410):
+            asyncio.create_task(db.push_subscriptions.delete_one(
+                {"user_id": sub["user_id"], "endpoint": sub["endpoint"]}
+            ))
+        return False
+    except Exception as e:
+        logger.error(f"Push exception: {e}")
+        return False
+
+
+@api_router.post("/notifications/test")
+async def push_test(payload: PushTestRequest, user: dict = Depends(get_current_user)):
+    """Send a test push to all of the user's subscriptions."""
+    subs = await db.push_subscriptions.find({"user_id": user["id"]}, {"_id": 0}).to_list(10)
+    sent = 0
+    for s in subs:
+        if _send_web_push(s, payload.title, payload.body, "/dashboard", "test"):
+            sent += 1
+    return {"ok": True, "subscriptions": len(subs), "sent": sent}
+
+
+async def push_dispatcher_loop():
+    """Background loop: every minute, checks all subscriptions and sends scheduled pushes.
+    Triggers: workout_reminder (daily at reminder_time), streak_protect (no activity in 24h before streak break),
+    weekly_review (sunday 18:00 local)."""
+    await asyncio.sleep(5)
+    last_minute = None
+    while True:
+        try:
+            now_utc = datetime.now(timezone.utc)
+            current_minute = now_utc.strftime("%Y%m%d%H%M")
+            if current_minute == last_minute:
+                await asyncio.sleep(20)
+                continue
+            last_minute = current_minute
+
+            subs = await db.push_subscriptions.find({}, {"_id": 0}).to_list(2000)
+            for sub in subs:
+                triggers = sub.get("triggers") or {}
+                tz_offset = int(sub.get("timezone_offset") or 0)
+                local_now = now_utc + timedelta(minutes=tz_offset)
+                local_hhmm = local_now.strftime("%H:%M")
+                local_dow = local_now.weekday()  # 0=Mon, 6=Sun
+                reminder_time = sub.get("reminder_time") or "18:00"
+
+                # Daily workout reminder
+                if triggers.get("workout_reminder") and local_hhmm == reminder_time:
+                    user = await db.users.find_one({"id": sub["user_id"]})
+                    if user:
+                        name = (user.get("name") or "Alpha").split()[0]
+                        _send_web_push(sub,
+                                       title=f"🛡️ {name}, dein Workout wartet",
+                                       body="Zeit für Training. Heute leiden, morgen herrschen.",
+                                       url="/plan", tag="workout-reminder")
+
+                # Weekly review (Sunday 18:00 local)
+                if triggers.get("weekly_review") and local_dow == 6 and local_hhmm == "18:00":
+                    _send_web_push(sub,
+                                   title="📊 Deine Alpha-Woche",
+                                   body="Schau dir dein Coach-Insights & Fortschritts-Update an.",
+                                   url="/coach", tag="weekly-review")
+
+                # Streak protect: once per day at 20:00 local, check if user has logged today
+                if triggers.get("streak_protect") and local_hhmm == "20:00":
+                    today_local = local_now.strftime("%Y-%m-%d")
+                    has_session = await db.workout_sessions.find_one(
+                        {"user_id": sub["user_id"], "status": "completed",
+                         "completed_at": {"$regex": f"^{today_local}"}}
+                    )
+                    if not has_session:
+                        # Check if user has a current streak worth protecting (>=2)
+                        user = await db.users.find_one({"id": sub["user_id"]})
+                        streak = (user or {}).get("streak_days", 0) or 0
+                        if streak >= 2:
+                            _send_web_push(sub,
+                                           title=f"🔥 Streak gefährdet ({streak} Tage)",
+                                           body="Noch keine Aktivität heute. Schütz deine Serie!",
+                                           url="/plan", tag="streak-protect")
+        except Exception as e:
+            logger.error(f"push_dispatcher_loop error: {e}")
+        await asyncio.sleep(30)
+
+
+@app.on_event("startup")
+async def start_push_dispatcher():
+    if VAPID_PRIVATE_KEY:
+        asyncio.create_task(push_dispatcher_loop())
+        logger.info("Push dispatcher started")
+    else:
+        logger.warning("VAPID_PRIVATE_KEY missing - push dispatcher NOT started")
+
 
 
 

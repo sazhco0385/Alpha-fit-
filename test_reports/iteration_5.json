@@ -1,0 +1,42 @@
+{
+  "summary": "Iteration 5 (5 new features) verified end-to-end. Backend: 14/14 pytest tests pass in test_new_features_v5.py covering (a) WebP assets served (/exercises/bench-press.webp 200, no PNG fallback), (b) FormCheck premium gating (free user gets 402/403 on /api/formcheck/analyze AND /api/formcheck/history; admin gets 200 history + structured analyze response or 400 'no_pose_detected' for solid-color image), (c) BodyScan plan-adjust premium gate + 404 on missing scan, (d) Push notifications full lifecycle: GET /api/notifications/vapid-public-key returns 88-char key without auth, POST /api/notifications/subscribe persists, GET /api/notifications/settings returns it with correct reminder_time + triggers, PUT /api/notifications/settings updates reminder_time (07:30→08:45) and triggers correctly, DELETE /api/notifications/unsubscribe?endpoint=... removes (deleted=1), POST /api/notifications/test returns {subscriptions, sent}, /api/notifications/subscribe requires auth (401/403), (e) /sw.js served 200 with push + notificationclick handlers (1544 bytes). Frontend (Playwright): /library is PUBLIC and renders 45 exercise cards grouped by muscle (BRUST first), 9 filter chips filter-all/chest/back/shoulders/biceps/triceps/legs/core/cardio all present; search 'bank' filters to 4 cards (Bankdrücken/Schrägbankdrücken/Kurzhantel-Bankdrücken etc), filter-legs shows 9 cards. /library/bench-press shows library-detail with 4 numbered cyan tips (library-tip-0..3), SICHERHEITS-HINWEIS disclaimer, library-back ZURÜCK button, large WebP image (/exercises/bench-press.webp). Dashboard renders both dashboard-bodyscan-cta + dashboard-library-cta side-by-side. Layout header gear settings-btn navigates to /settings. /settings shows PUSH-BENACHRICHTIGUNGEN section with push-enable-btn (headless browser shows 'Browser-Berechtigung verweigert' which is expected — actual push permission cannot be granted in CI). Admin /formcheck (premium) hides gate and shows formcheck-upload UI with exercise-input + upload-btn correctly disabled until exercise filled, and ?exercise=Squat deep-link pre-fills the input. Service Worker registered with /sw.js scriptURL on /dashboard load. ActiveWorkout has active-formcheck-btn that navigates to /formcheck?exercise=...&muscle=... (verified via deep-link pre-fill).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/formcheck/analyze", "issue": "Model is hardcoded as with_model('openai', 'gpt-5.5'). All other vision endpoints (bodyscan/nutrition) use gpt-5.2 or gpt-5.5. Worth confirming this is intentional vs typo; not a bug since the LLM proxy may accept it."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Free-user FormCheck premium gate", "issue": "Could not visually confirm formcheck-premium-gate component for a freshly registered free user because the route gate forces newly-registered users through /onboarding first (1/9). The gate component IS in /app/frontend/src/pages/FormCheck.jsx and the API gate is verified (402/403) for non-premium. Once onboarding is completed, the gate should render — main agent should self-verify with an onboarded-but-not-premium account.", "affected_selectors": ["[data-testid='formcheck-premium-gate']", "[data-testid='formcheck-upgrade-btn']"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_new_features_v5.py",
+    "/app/test_reports/pytest/pytest_iter5.xml"
+  ],
+  "action_items": [
+    "(Optional) Confirm /api/formcheck/analyze model 'gpt-5.5' is intentional — other endpoints in server.py use 'gpt-5.2' (e.g. body scan). If a typo, change to 'gpt-5.2'.",
+    "(Optional self-test) Verify formcheck-premium-gate UI for a free user who has completed onboarding (register → finish 9-step onboarding → visit /formcheck). API gating (402/403) is already confirmed."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now ~2415 lines (was 1974 in iter 4, 1849 in iter 3). The 700-line guideline keeps being exceeded — formcheck, push notifications, bodyscan adjust, coach, profile, nutrition, sessions etc should be split into APIRouter modules under /app/backend/routers/.",
+    "push_dispatcher_loop runs every minute scanning ALL subscriptions in DB - no index on (user_id, endpoint). For scale add unique compound index on push_subscriptions.",
+    "FormCheckRequest.image_base64 has no size cap — clients could POST very large data URLs. Consider explicit max_length validator or pre-check.",
+    "Form Check endpoint uses 'openai', 'gpt-5.5' — inconsistent with body_scan ('gpt-5.2'). Likely either typo or intentional newer model. Either way, document.",
+    "_send_web_push fires asyncio.create_task inside a synchronous function for cleanup of 404/410 subscriptions — works but mixing sync/async is brittle. Consider making it fully async.",
+    "/library route appears publicly accessible (no auth required) — confirmed working as designed per request, but Layout still renders header gear+logout buttons for anonymous users (cosmetic only, those buttons should arguably hide when not authenticated). Cosmetic; not a regression."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_new_features_v5.py (new pytest suite covering all 5 iter-5 features: WebP assets, FormCheck gating, BodyScan plan-adjust gating, Push notifications full lifecycle, Service Worker)"
+  ],
+  "success_rate": {"backend": "100% (14/14 in test_new_features_v5.py)", "frontend": "~95% — Library list+detail+search+filter 100%, Dashboard dual-CTA 100%, Layout settings-btn 100%, Settings push UI 100% (within headless limits — actual push permission denied as expected), FormCheck premium UI 100%, FormCheck deep-link 100%, SW registration 100%. Only free-user premium-gate UI couldn't be verified visually (blocked by onboarding redirect) — API gate is verified."},
+  "test_credentials": "Admin sazhco0385@gmail.com / Bellakiki1 (from /app/memory/test_credentials.md). One throwaway TEST_freegate_*@example.com free user registered (used + abandoned in onboarding state).",
+  "seed_data_creation": "Push subscription test_subscribe_and_settings_and_unsubscribe creates a fake endpoint https://example.test/push/TEST_iter5 for admin user and cleans itself up at the end (DELETE verifies deleted_count >=1). No persistent test data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Token key is 'af_token' in localStorage. Splash skip: sessionStorage 'alphafit_splash_seen'='1'. New free users are pushed into /onboarding (9 steps) before they can reach feature routes — to test premium-gate UIs for free users, you must either (a) complete onboarding programmatically by PUTting onboarding fields then setting onboarding_completed=true, or (b) use a pre-existing non-premium account that's already onboarded. Backend has push_dispatcher_loop running every minute scanning push_subscriptions — leftover test subscriptions could trigger real pushes. The test suite cleans up but a crash mid-test could leak. /sw.js content is short (1544 bytes) and has push + notificationclick listeners. VAPID env vars are configured: VAPID_PUBLIC_KEY='BJY2G44Z1Nq...kaFm4' (88 chars). Library detail URL pattern is /library/{slug} where slug uses kebab-case (bench-press, db-bench-press etc).",
+  "rca of the issue": "No bugs. The only inconclusive item (free-user formcheck-premium-gate UI visual) is due to onboarding forcing path, not a regression. API-level premium gating is verified via 402/403 in test_history_blocks_non_premium + test_analyze_blocks_non_premium."
+}
