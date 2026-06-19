@@ -48,6 +48,19 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - Email notifications (trial ending, payment success)
 - Push notifications for workout reminders
 
+## Implemented (2026-02-15) - Friends Phase A (Social Foundation)
+- **8 new endpoints** in `routers/friends.py`:
+  - `GET /api/friends/search?q=...` (case-insensitive, min 2 chars, max 20 results, annotated with `is_friend`/`request_status`)
+  - `GET /api/friends/list` (accepted friends + incoming + outgoing pending, friends sorted by 30d-workouts desc)
+  - `POST /api/friends/request` (404 if user not found, 400 if duplicate or already friends)
+  - `POST /api/friends/accept` (only by recipient)
+  - `POST /api/friends/decline`, `POST /api/friends/cancel`, `DELETE /api/friends/{id}`
+  - `GET /api/friends/profile/{user_id}` (gated: only friends or self; returns workouts_total, workouts_30d, streak, badges)
+- **New collection**: `db.friendships` with `{id, from_user_id, to_user_id, status: pending|accepted, created_at, accepted_at}`
+- **New page**: `/friends` (`pages/Friends.jsx`) — search bar with 300ms debounce + 4 tabs (Freunde/Anfragen/Gesendet/Suche), inline accept/decline/cancel/unfriend buttons, friend-row shows 30d workouts as mini-leaderboard preview
+- **Bottom-Nav** now has 7 entries (+ Admin = 8): Start, Plan, Food, Coach, **Crew** (NEW), Stats, Pro, Admin
+- E2E backend flow verified ✅: search → request → accept → unfriend → re-search (all 9 steps return correct state)
+
 ## Implemented (2026-02-15) - Email Unsubscribe Landing
 - **Signed JWT unsubscribe tokens** (1-year expiry, scope=`unsub`) via `create_unsub_token()` / `decode_unsub_token()` in server.py
 - **3 public endpoints** (no auth) in `routers/unsubscribe.py`: GET /api/unsubscribe/verify, POST /update, POST /all

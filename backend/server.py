@@ -353,6 +353,7 @@ from routers import emails as _emails_router  # noqa: E402
 from routers import auth as _auth_router  # noqa: E402
 from routers import onboarding as _onboarding_router  # noqa: E402
 from routers import unsubscribe as _unsubscribe_router  # noqa: E402
+from routers import friends as _friends_router  # noqa: E402
 
 api_router.include_router(_formcheck_router.router)
 api_router.include_router(_payments_router.router)
@@ -367,6 +368,7 @@ api_router.include_router(_emails_router.router)
 api_router.include_router(_auth_router.router)
 api_router.include_router(_onboarding_router.router)
 api_router.include_router(_unsubscribe_router.router)
+api_router.include_router(_friends_router.router)
 
 # Include router & CORS
 app.include_router(api_router)
