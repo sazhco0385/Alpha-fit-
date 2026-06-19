@@ -293,7 +293,7 @@ async def call_llm(system: str, user_text: str, session_id: str) -> str:
         api_key=EMERGENT_LLM_KEY,
         session_id=session_id,
         system_message=system,
-    ).with_model("openai", "gpt-5.2")
+    ).with_model("openai", "gpt-5.5")
     resp = await chat.send_message(UserMessage(text=user_text))
     return resp if isinstance(resp, str) else str(resp)
 
@@ -1526,7 +1526,7 @@ Wenn du das Essen nicht erkennen kannst, setze confidence auf 0.3 und gib trotzd
         api_key=EMERGENT_LLM_KEY,
         session_id=f"nutrition-{user['id']}-{uuid.uuid4()}",
         system_message=sys,
-    ).with_model("openai", "gpt-5.2")
+    ).with_model("openai", "gpt-5.5")
 
     try:
         img = ImageContent(image_base64=image_b64)
@@ -1760,7 +1760,7 @@ Sei ehrlich. Schmeichele nicht, aber demotiviere nicht. Werte sollen Trends zeig
         api_key=EMERGENT_LLM_KEY,
         session_id=f"bodyscan-{user['id']}-{uuid.uuid4()}",
         system_message=sys,
-    ).with_model("openai", "gpt-5.2")
+    ).with_model("openai", "gpt-5.5")
 
     try:
         img = ImageContent(image_base64=image_b64)

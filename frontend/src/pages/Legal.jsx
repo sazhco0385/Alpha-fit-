@@ -204,7 +204,7 @@ export function Datenschutz() {
 
       <Section title="4. KI-gestützter Trainings-Coach (OpenAI / Emergent)">
         <p>
-          Zur Erstellung und Anpassung deines Trainingsplans sowie für den Coach-Chat nutzen wir KI-Modelle (OpenAI GPT-5.2) über die
+          Zur Erstellung und Anpassung deines Trainingsplans sowie für den Coach-Chat nutzen wir KI-Modelle (OpenAI GPT-5.5) über die
           Emergent-Plattform als Vermittler. Hierbei werden folgende Daten an die KI übermittelt:
         </p>
         <ul className="list-disc list-inside mt-2 space-y-1">

@@ -83,7 +83,7 @@ export default function Landing() {
       {/* Features */}
       <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         {[
-          { icon: Brain, title: "KI-COACH", desc: "GPT-5.2 erstellt deinen Plan. Passt sich automatisch an deinen Fortschritt an." },
+          { icon: Brain, title: "KI-COACH", desc: "GPT-5.5 erstellt deinen Plan. Passt sich automatisch an deinen Fortschritt an." },
           { icon: Dumbbell, title: "AUTO-PROGRESSION", desc: "Gewichte & Wiederholungen werden dynamisch optimiert. Du musst nicht denken." },
           { icon: Award, title: "GLOW BADGES", desc: "Sammle Badges. Werde zur Legende. Push die Grenzen." },
         ].map((f) => (
