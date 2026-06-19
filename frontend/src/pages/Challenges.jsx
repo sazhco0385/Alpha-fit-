@@ -249,6 +249,12 @@ function CreateChallengeModal({ onClose, onCreated }) {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  useEffect(() => {
     (async () => {
       try {
         const { data } = await api.get("/friends/list");
@@ -296,8 +302,8 @@ function CreateChallengeModal({ onClose, onCreated }) {
   const metricObj = METRIC_OPTS.find((m) => m.value === metric);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" data-testid="create-challenge-modal">
-      <div className="af-card w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-xl p-5 border-t-2 sm:border-2 border-[#00BFFF]/30">
+    <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4" data-testid="create-challenge-modal">
+      <div className="w-full sm:max-w-lg h-full sm:h-auto sm:max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-xl p-5 border-t-2 sm:border-2 border-[#00BFFF]/40 bg-[#03030A]" style={{boxShadow: "0 -20px 60px rgba(0,191,255,0.08)"}}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-teko text-2xl chrome-text">NEUE CHALLENGE</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white" data-testid="close-create-modal">
@@ -458,6 +464,12 @@ function ChallengeDetailModal({ challengeId, onClose, onChanged }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -524,8 +536,8 @@ function ChallengeDetailModal({ challengeId, onClose, onChanged }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" data-testid="challenge-detail-modal">
-      <div className="af-card w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-xl border-t-2 sm:border-2 border-[#00BFFF]/30">
+    <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4" data-testid="challenge-detail-modal">
+      <div className="w-full sm:max-w-lg h-full sm:h-auto sm:max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-xl border-t-2 sm:border-2 border-[#00BFFF]/40 bg-[#03030A]" style={{boxShadow: "0 -20px 60px rgba(0,191,255,0.08)"}}>
         {loading || !challenge ? (
           <div className="p-10 text-center text-[#00BFFF]"><Loader2 size={28} className="inline animate-spin" /></div>
         ) : (
