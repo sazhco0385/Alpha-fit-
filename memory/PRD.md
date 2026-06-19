@@ -57,9 +57,7 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - Smoke test ✅: Bankdrücken-Klick lädt Jeff Nippard Tutorial sauber, X + Esc + Backdrop-Click schließen, Fallback funktioniert für unbekannte Übungen.
 
 ## Implemented (2026-02-15) - Friends Phase A (Social Foundation)
-- **8 new endpoints** in `routers/friends.py`:
   - `GET /api/friends/search?q=...` (case-insensitive, min 2 chars, max 20 results, annotated with `is_friend`/`request_status`)
-  - `GET /api/friends/list` (accepted friends + incoming + outgoing pending, friends sorted by 30d-workouts desc)
   - `POST /api/friends/request` (404 if user not found, 400 if duplicate or already friends)
   - `POST /api/friends/accept` (only by recipient)
   - `POST /api/friends/decline`, `POST /api/friends/cancel`, `DELETE /api/friends/{id}`
@@ -68,6 +66,25 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **New page**: `/friends` (`pages/Friends.jsx`) — search bar with 300ms debounce + 4 tabs (Freunde/Anfragen/Gesendet/Suche), inline accept/decline/cancel/unfriend buttons, friend-row shows 30d workouts as mini-leaderboard preview
 - **Bottom-Nav** now has 7 entries (+ Admin = 8): Start, Plan, Food, Coach, **Crew** (NEW), Stats, Pro, Admin
 - E2E backend flow verified ✅: search → request → accept → unfriend → re-search (all 9 steps return correct state)
+
+## Implemented (2026-02-15) - Friends Phase B (Challenges)
+- **New router** `routers/challenges.py` (~330 lines): 7 endpoints
+  - `POST /api/challenges` — creator auto-joins, invites must be existing friends, validates title≥2 / target>0 / days 1-60
+  - `GET /api/challenges` — returns `{active, invited, completed, counts}` with live standings hydrated; lazy-resolves expired actives on each call
+  - `GET /api/challenges/{id}` — full detail (403 for outsiders), participant or invitee only
+  - `POST /api/challenges/accept` / `/decline` — invitee actions
+  - `POST /api/challenges/leave` — participant (non-creator) only
+  - `DELETE /api/challenges/{id}` — creator only, status→cancelled
+- **Metric types**: `workouts` (count), `volume_kg` (sum reps×weight from logged_sets), `active_days` (distinct days)
+- **Lazy-resolve pattern** `_resolve_if_ended()` — no background job needed; when `now > end_at` next list/detail GET auto-completes, computes winner from highest value, sets `target_reached`, sends push to all participants
+- **Push notifications** (fire-and-forget): challenge_invite, challenge_accepted, challenge_ended, challenge_cancelled — all routed to /challenges deep-link
+- **New collection** `db.challenges` with `{id, created_by, title, metric, target, start_at, end_at, status, participants[], invites[], winner_user_id, final_standings, target_reached, resolved_at}`
+- **New page** `/challenges` (`pages/Challenges.jsx`): 3 tabs (Aktiv / Einladungen / Beendet), 2-step create modal (metric chips + target/days → friend toggles), detail modal with live ranked standings (gold/silver/bronze badges) + progress bars + creator-cancel / participant-leave / invitee-accept-decline actions
+- **CTA card** on `/friends` page links to `/challenges`
+- **Testing**: 18/18 backend pytest tests pass (iter 10), incl. friend-only invite guard, accept→standings update, lazy-resolve with poked end_at, 403-for-outsider; frontend Playwright E2E for create/tabs/detail/cancel all green
+- **UX tweak**: `GET /challenges` "completed" tab now includes `cancelled` status too (last 14d) so users keep context after a creator cancels
+
+
 
 ## Implemented (2026-02-15) - Email Unsubscribe Landing
 - **Signed JWT unsubscribe tokens** (1-year expiry, scope=`unsub`) via `create_unsub_token()` / `decode_unsub_token()` in server.py

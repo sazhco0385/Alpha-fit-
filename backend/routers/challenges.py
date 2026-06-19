@@ -315,10 +315,10 @@ async def list_challenges(user: dict = Depends(get_current_user)) -> dict:
         "participants": {"$ne": uid},
     }, {"_id": 0}).sort("created_at", -1).to_list(100)
 
-    # Recently completed (within last 14 days) where user participated
+    # Recently completed or cancelled (within last 14 days) where user participated
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).isoformat()
     completed = await db.challenges.find({
-        "status": "completed",
+        "status": {"$in": ["completed", "cancelled"]},
         "participants": uid,
         "resolved_at": {"$gte": cutoff},
     }, {"_id": 0}).sort("resolved_at", -1).to_list(50)
