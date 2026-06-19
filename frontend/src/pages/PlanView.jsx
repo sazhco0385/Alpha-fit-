@@ -158,7 +158,7 @@ export default function PlanView() {
   return (
     <Layout>
       <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 w-full sm:w-auto sm:flex-1">
           <div className="text-[10px] sm:text-xs text-gray-500 font-chakra uppercase tracking-widest">TRAININGSPLAN V{displayPlan?.version || 1}</div>
           {editMode ? (
             <input
@@ -169,7 +169,7 @@ export default function PlanView() {
               data-testid="plan-edit-name"
             />
           ) : (
-            <h1 className="font-teko text-3xl sm:text-5xl chrome-text mt-1 break-words">{plan?.name || "Plan"}</h1>
+            <h1 className="font-teko text-3xl sm:text-5xl chrome-text mt-1 break-words leading-tight" style={{ wordBreak: "normal", overflowWrap: "anywhere" }}>{plan?.name || "Plan"}</h1>
           )}
           {editMode ? (
             <textarea
@@ -185,23 +185,23 @@ export default function PlanView() {
             <p className="prose-af font-chakra mt-2 max-w-2xl">{plan?.progression_notes}</p>
           )}
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap w-full sm:w-auto">
           {!editMode ? (
             <>
-              <button onClick={enterEdit} className="btn-outline flex items-center gap-2 text-xs sm:text-sm" data-testid="plan-edit-btn">
+              <button onClick={enterEdit} className="btn-outline flex items-center gap-2 text-xs sm:text-sm flex-1 sm:flex-initial justify-center" data-testid="plan-edit-btn">
                 <Pencil size={16} /> BEARBEITEN
               </button>
-              <button onClick={adjust} disabled={adjusting} className="btn-outline flex items-center gap-2 text-xs sm:text-sm" data-testid="plan-adjust-btn">
+              <button onClick={adjust} disabled={adjusting} className="btn-outline flex items-center gap-2 text-xs sm:text-sm flex-1 sm:flex-initial justify-center" data-testid="plan-adjust-btn">
                 {adjusting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                 {adjusting ? `ANPASSEN... ${adjustElapsed}s` : "KI ANPASSEN"}
               </button>
             </>
           ) : (
             <>
-              <button onClick={saveEdit} disabled={saving} className="btn-primary flex items-center gap-2 text-xs sm:text-sm" data-testid="plan-save-btn">
+              <button onClick={saveEdit} disabled={saving} className="btn-primary flex items-center gap-2 text-xs sm:text-sm flex-1 sm:flex-initial justify-center" data-testid="plan-save-btn">
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />} SPEICHERN
               </button>
-              <button onClick={cancelEdit} disabled={saving} className="btn-outline flex items-center gap-2 text-xs sm:text-sm text-red-400 border-red-400/40 hover:border-red-400" data-testid="plan-cancel-btn">
+              <button onClick={cancelEdit} disabled={saving} className="btn-outline flex items-center gap-2 text-xs sm:text-sm flex-1 sm:flex-initial justify-center text-red-400 border-red-400/40 hover:border-red-400" data-testid="plan-cancel-btn">
                 <X size={16} /> ABBRECHEN
               </button>
             </>
