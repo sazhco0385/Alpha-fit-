@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../lib/api";
-import { Check, X, Pause, Play, ChevronRight, Loader2, Flame, Trophy, TrendingUp, Sparkles, Activity } from "lucide-react";
+import { Check, X, Pause, Play, ChevronRight, Loader2, Flame, Trophy, TrendingUp, Sparkles, Activity, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 import { getExerciseImage } from "../lib/exerciseImages";
+import ExerciseVideoModal from "../components/ExerciseVideoModal";
 import { playCountdownBeep, playRestOverChime, isSoundEnabled } from "../lib/sound";
 
 export default function ActiveWorkout() {
@@ -16,6 +17,7 @@ export default function ActiveWorkout() {
   const [setIdx, setSetIdx] = useState(0);
   const [reps, setReps] = useState(0);
   const [weight, setWeight] = useState(0);
+  const [showVideo, setShowVideo] = useState(false);
   const [resting, setResting] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
   const [restPaused, setRestPaused] = useState(false);
@@ -233,10 +235,20 @@ export default function ActiveWorkout() {
                 <div className="font-teko text-2xl sm:text-4xl md:text-5xl chrome-text leading-none mt-1 break-words" data-testid="exercise-name">{exercise.name}</div>
                 <div className="text-[#00BFFF] font-chakra uppercase tracking-widest text-[10px] sm:text-xs mt-1">{exercise.target_muscle}</div>
               </div>
+              {/* Tutorial Video shortcut */}
+              <button
+                onClick={() => setShowVideo(true)}
+                className="absolute top-2 right-2 sm:top-3 sm:right-3 px-2 sm:px-3 py-1.5 bg-black/70 border border-[#00BFFF]/60 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10 transition flex items-center gap-1.5 backdrop-blur-sm"
+                data-testid="active-video-btn"
+                aria-label="Tutorial-Video"
+              >
+                <PlayCircle size={14} className="text-[#00BFFF]" />
+                <span className="text-[10px] sm:text-xs font-chakra tracking-widest uppercase text-white">Video</span>
+              </button>
               {/* Form-Check shortcut */}
               <button
                 onClick={() => navigate(`/formcheck?exercise=${encodeURIComponent(exercise.name)}&muscle=${encodeURIComponent(exercise.target_muscle || "")}`)}
-                className="absolute top-2 right-2 sm:top-3 sm:right-3 px-2 sm:px-3 py-1.5 bg-black/70 border border-[#00BFFF]/60 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10 transition flex items-center gap-1.5 backdrop-blur-sm"
+                className="absolute top-12 right-2 sm:top-14 sm:right-3 px-2 sm:px-3 py-1.5 bg-black/70 border border-[#00BFFF]/60 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10 transition flex items-center gap-1.5 backdrop-blur-sm"
                 data-testid="active-formcheck-btn"
                 aria-label="Form-Check"
               >
@@ -312,6 +324,13 @@ export default function ActiveWorkout() {
           </div>
         )}
       </main>
+      {showVideo && (
+        <ExerciseVideoModal
+          exerciseName={exercise.name}
+          muscle={exercise.target_muscle}
+          onClose={() => setShowVideo(false)}
+        />
+      )}
     </div>
   );
 }

@@ -48,6 +48,14 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - Email notifications (trial ending, payment success)
 - Push notifications for workout reminders
 
+## Implemented (2026-02-15) - Exercise Video Demos (YouTube Curated)
+- **New library** `frontend/src/lib/exerciseVideos.js`: 60+ exercise → YouTube ID mappings (Jeff Nippard, Athlean-X, RP Strength). Substring-Matching für Variationen.
+- **Helper functions**: `getExerciseVideoId(name)`, `getExerciseVideoUrl(name)` (embed URL), `getExerciseSearchUrl(name)` (fallback YouTube search)
+- **New component** `ExerciseVideoModal.jsx`: Mobile-first modal mit YouTube iframe (16:9 responsive), close-on-Esc, body-scroll-lock, "In YouTube öffnen" Link, Fallback-UI für nicht-gemappte Übungen mit „Auf YouTube suchen" CTA
+- **PlanView**: Übungs-Zeilen sind jetzt klickbar → Modal öffnet. Hover zeigt PlayCircle-Icon auf dem Übungs-Bild.
+- **ActiveWorkout**: Neuer „VIDEO" Button rechts oben (über Form-Check) → öffnet Modal mit aktueller Übung
+- Smoke test ✅: Bankdrücken-Klick lädt Jeff Nippard Tutorial sauber, X + Esc + Backdrop-Click schließen, Fallback funktioniert für unbekannte Übungen.
+
 ## Implemented (2026-02-15) - Friends Phase A (Social Foundation)
 - **8 new endpoints** in `routers/friends.py`:
   - `GET /api/friends/search?q=...` (case-insensitive, min 2 chars, max 20 results, annotated with `is_friend`/`request_status`)

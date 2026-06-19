@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import api from "../lib/api";
-import { Play, Loader2, RefreshCw, Sparkles, Pencil, Check, X, Plus, Trash2, ChevronDown } from "lucide-react";
+import { Play, Loader2, RefreshCw, Sparkles, Pencil, Check, X, Plus, Trash2, ChevronDown, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 import { getExerciseImage } from "../lib/exerciseImages";
+import ExerciseVideoModal from "../components/ExerciseVideoModal";
 
 export default function PlanView() {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ export default function PlanView() {
   const [saving, setSaving] = useState(false);
   const [suggestions, setSuggestions] = useState(null);
   const [pickerOpen, setPickerOpen] = useState(null); // { dayIdx } | null
+  // Video modal state
+  const [videoEx, setVideoEx] = useState(null); // { name, target_muscle } | null
 
   const load = async () => {
     setLoading(true);
@@ -271,13 +274,24 @@ export default function PlanView() {
                   testid={`exercise-edit-${day.day_index}-${i}`}
                 />
               ) : (
-                <div key={i} className="flex items-center gap-3 sm:gap-4 p-2 sm:p-3 bg-[#0A0A10] border border-[#1A1A24] hover:border-[#00BFFF]/40 transition" data-testid={`exercise-${day.day_index}-${i}`}>
-                  <img
-                    src={getExerciseImage(ex.name, ex.target_muscle)}
-                    alt={ex.name}
-                    onError={(e) => { if (!e.currentTarget.dataset.fallback) { e.currentTarget.dataset.fallback = "1"; e.currentTarget.src = "/exercises/group-full.webp"; } }}
-                    className="w-12 h-12 sm:w-16 sm:h-16 object-cover border border-[#1A1A24] flex-shrink-0"
-                  />
+                <button
+                  key={i}
+                  onClick={() => setVideoEx({ name: ex.name, target_muscle: ex.target_muscle })}
+                  className="w-full flex items-center gap-3 sm:gap-4 p-2 sm:p-3 bg-[#0A0A10] border border-[#1A1A24] hover:border-[#00BFFF]/60 hover:bg-[#00BFFF]/5 transition text-left group"
+                  data-testid={`exercise-${day.day_index}-${i}`}
+                  title="Tutorial-Video ansehen"
+                >
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={getExerciseImage(ex.name, ex.target_muscle)}
+                      alt={ex.name}
+                      onError={(e) => { if (!e.currentTarget.dataset.fallback) { e.currentTarget.dataset.fallback = "1"; e.currentTarget.src = "/exercises/group-full.webp"; } }}
+                      className="w-12 h-12 sm:w-16 sm:h-16 object-cover border border-[#1A1A24]"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/60 transition">
+                      <PlayCircle size={22} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 6px rgba(0,191,255,0.8))" }} />
+                    </div>
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-teko text-base sm:text-xl tracking-wide chrome-text truncate">{ex.name}</div>
                     <div className="text-[10px] sm:text-xs text-gray-500 font-chakra uppercase tracking-widest truncate">{ex.target_muscle}</div>
@@ -286,7 +300,7 @@ export default function PlanView() {
                     <div className="font-teko text-lg sm:text-2xl electric-text glow-text-soft whitespace-nowrap">{ex.sets} × {ex.reps}</div>
                     <div className="text-[10px] sm:text-xs text-gray-400 font-chakra whitespace-nowrap">{ex.weight_kg}kg · {ex.rest_seconds}s</div>
                   </div>
-                </div>
+                </button>
               ))}
 
               {editMode && (
@@ -334,6 +348,14 @@ export default function PlanView() {
           </div>
         ))}
       </div>
+
+      {videoEx && (
+        <ExerciseVideoModal
+          exerciseName={videoEx.name}
+          muscle={videoEx.target_muscle}
+          onClose={() => setVideoEx(null)}
+        />
+      )}
     </Layout>
   );
 }
