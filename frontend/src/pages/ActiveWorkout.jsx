@@ -218,6 +218,7 @@ export default function ActiveWorkout() {
               <img
                 src={getExerciseImage(exercise.name, exercise.target_muscle)}
                 alt={exercise.name}
+                onError={(e) => { if (!e.currentTarget.dataset.fallback) { e.currentTarget.dataset.fallback = "1"; e.currentTarget.src = "/exercises/group-full.png"; } }}
                 className="w-full h-full object-cover opacity-80"
               />
               <div className="absolute inset-0" style={{

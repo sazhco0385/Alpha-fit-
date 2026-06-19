@@ -1,0 +1,265 @@
+{
+  "generated_at": 1781848026,
+  "items": [
+    {
+      "slug": "bench-press",
+      "name": "Bankdr\u00fccken",
+      "group": "chest"
+    },
+    {
+      "slug": "incline-bench-press",
+      "name": "Schr\u00e4gbankdr\u00fccken",
+      "group": "chest"
+    },
+    {
+      "slug": "db-bench-press",
+      "name": "Kurzhantel-Bankdr\u00fccken",
+      "group": "chest"
+    },
+    {
+      "slug": "push-up",
+      "name": "Liegest\u00fctze",
+      "group": "chest"
+    },
+    {
+      "slug": "cable-fly",
+      "name": "Kabel Fliegende",
+      "group": "chest"
+    },
+    {
+      "slug": "dips",
+      "name": "Dips",
+      "group": "chest"
+    },
+    {
+      "slug": "deadlift",
+      "name": "Kreuzheben",
+      "group": "back"
+    },
+    {
+      "slug": "barbell-row",
+      "name": "Langhantelrudern",
+      "group": "back"
+    },
+    {
+      "slug": "pull-up",
+      "name": "Klimmzug",
+      "group": "back"
+    },
+    {
+      "slug": "lat-pulldown",
+      "name": "Latzug",
+      "group": "back"
+    },
+    {
+      "slug": "seated-row",
+      "name": "Kabelrudern sitzend",
+      "group": "back"
+    },
+    {
+      "slug": "tbar-row",
+      "name": "T-Bar Rudern",
+      "group": "back"
+    },
+    {
+      "slug": "face-pull",
+      "name": "Face Pulls",
+      "group": "back"
+    },
+    {
+      "slug": "ohp",
+      "name": "Schulterdr\u00fccken",
+      "group": "shoulders"
+    },
+    {
+      "slug": "front-raise",
+      "name": "Frontheben",
+      "group": "shoulders"
+    },
+    {
+      "slug": "shrug",
+      "name": "Schulterheben",
+      "group": "shoulders"
+    },
+    {
+      "slug": "rear-delt-fly",
+      "name": "Reverse Fly",
+      "group": "shoulders"
+    },
+    {
+      "slug": "arnold-press",
+      "name": "Arnold Press",
+      "group": "shoulders"
+    },
+    {
+      "slug": "barbell-curl",
+      "name": "Langhantelcurls",
+      "group": "biceps"
+    },
+    {
+      "slug": "db-curl",
+      "name": "Kurzhantelcurls",
+      "group": "biceps"
+    },
+    {
+      "slug": "hammer-curl",
+      "name": "Hammercurls",
+      "group": "biceps"
+    },
+    {
+      "slug": "preacher-curl",
+      "name": "Preacher Curls",
+      "group": "biceps"
+    },
+    {
+      "slug": "triceps-pushdown",
+      "name": "Trizepsdr\u00fccken",
+      "group": "triceps"
+    },
+    {
+      "slug": "skullcrusher",
+      "name": "Skullcrusher",
+      "group": "triceps"
+    },
+    {
+      "slug": "triceps-extension",
+      "name": "Trizeps Extension",
+      "group": "triceps"
+    },
+    {
+      "slug": "close-grip-bench",
+      "name": "Enges Bankdr\u00fccken",
+      "group": "triceps"
+    },
+    {
+      "slug": "squat",
+      "name": "Kniebeuge",
+      "group": "legs"
+    },
+    {
+      "slug": "front-squat",
+      "name": "Frontkniebeuge",
+      "group": "legs"
+    },
+    {
+      "slug": "rdl",
+      "name": "Rum\u00e4nisches Kreuzheben",
+      "group": "legs"
+    },
+    {
+      "slug": "leg-press",
+      "name": "Beinpresse",
+      "group": "legs"
+    },
+    {
+      "slug": "lunge",
+      "name": "Ausfallschritte",
+      "group": "legs"
+    },
+    {
+      "slug": "leg-extension",
+      "name": "Beinstrecker",
+      "group": "legs"
+    },
+    {
+      "slug": "leg-curl",
+      "name": "Beinbeuger",
+      "group": "legs"
+    },
+    {
+      "slug": "calf-raise",
+      "name": "Wadenheben",
+      "group": "legs"
+    },
+    {
+      "slug": "hip-thrust",
+      "name": "Hip Thrust",
+      "group": "legs"
+    },
+    {
+      "slug": "plank",
+      "name": "Plank",
+      "group": "core"
+    },
+    {
+      "slug": "crunch",
+      "name": "Crunch",
+      "group": "core"
+    },
+    {
+      "slug": "hanging-leg-raise",
+      "name": "H\u00e4ngendes Beinheben",
+      "group": "core"
+    },
+    {
+      "slug": "russian-twist",
+      "name": "Russian Twist",
+      "group": "core"
+    },
+    {
+      "slug": "treadmill",
+      "name": "Laufband",
+      "group": "cardio"
+    },
+    {
+      "slug": "burpee",
+      "name": "Burpees",
+      "group": "cardio"
+    },
+    {
+      "slug": "jumping-jack",
+      "name": "Jumping Jacks",
+      "group": "cardio"
+    },
+    {
+      "slug": "rowing-machine",
+      "name": "Ruderger\u00e4t",
+      "group": "cardio"
+    },
+    {
+      "slug": "jump-rope",
+      "name": "Seilspringen",
+      "group": "cardio"
+    },
+    {
+      "slug": "group-chest",
+      "name": "Brusttraining",
+      "group": "chest"
+    },
+    {
+      "slug": "group-back",
+      "name": "R\u00fcckentraining",
+      "group": "back"
+    },
+    {
+      "slug": "group-biceps",
+      "name": "Bizepstraining",
+      "group": "biceps"
+    },
+    {
+      "slug": "group-triceps",
+      "name": "Trizepstraining",
+      "group": "triceps"
+    },
+    {
+      "slug": "group-legs",
+      "name": "Beintraining",
+      "group": "legs"
+    },
+    {
+      "slug": "group-core",
+      "name": "Bauchtraining",
+      "group": "core"
+    },
+    {
+      "slug": "group-cardio",
+      "name": "Cardio Training",
+      "group": "cardio"
+    },
+    {
+      "slug": "group-full",
+      "name": "Ganzk\u00f6rper",
+      "group": "full"
+    }
+  ]
+}
