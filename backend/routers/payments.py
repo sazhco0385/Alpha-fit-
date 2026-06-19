@@ -11,9 +11,29 @@ from server import (
     db, get_current_user, now_iso, log_activity,
     CheckoutRequest, PLANS, TRIAL_DAYS,
 )
+from email_service import send_email, render_payment_success
 
 logger = logging.getLogger("alphafit")
 router = APIRouter()
+
+
+async def _send_payment_email_once(user_id: str, plan: str, amount: float, currency: str) -> None:
+    """Send payment-success email exactly once per user (idempotent via email_log)."""
+    try:
+        already = await db.email_log.find_one({"user_id": user_id, "template": "payment_success"})
+        if already:
+            return
+        u = await db.users.find_one({"id": user_id}, {"_id": 0})
+        if not u or not u.get("email"):
+            return
+        subject, html = render_payment_success(u.get("name") or "Champion", plan, float(amount or 0), currency or "EUR")
+        email_id = await send_email(u["email"], subject, html, tag="payment_success")
+        await db.email_log.insert_one({
+            "user_id": user_id, "email": u["email"], "template": "payment_success",
+            "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
+        })
+    except Exception as e:
+        logger.error(f"payment_success email failed for user={user_id}: {e}")
 
 
 @router.post("/payments/checkout")
@@ -98,6 +118,9 @@ async def payment_status(session_id: str, user: dict = Depends(get_current_user)
             {"$set": {"status": status_str, "payment_status": "paid", "completed_at": now_iso()}}
         )
         await log_activity(tx["user_id"], "", "payment_succeeded", {"plan": tx["plan"], "amount": tx.get("amount")})
+        # Payment success email (fire-and-forget, idempotent)
+        import asyncio as _aio
+        _aio.create_task(_send_payment_email_once(tx["user_id"], tx["plan"], tx.get("amount", 0), tx.get("currency", "EUR")))
 
     return {
         "status": status_str,
@@ -145,4 +168,7 @@ async def stripe_webhook(request: Request):
             {"session_id": sid},
             {"$set": {"payment_status": "paid", "status": "complete", "completed_at": now_iso()}}
         )
+        if user_id and p:
+            import asyncio as _aio
+            _aio.create_task(_send_payment_email_once(user_id, plan, p.get("amount", 0), p.get("currency", "EUR")))
     return {"received": True}

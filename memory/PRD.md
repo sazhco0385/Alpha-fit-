@@ -48,6 +48,21 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - Email notifications (trial ending, payment success)
 - Push notifications for workout reminders
 
+## Implemented (2026-02-15) - Resend Email Integration
+- **5 transactional email templates** (Royal-Gold branded HTML, inline CSS, table-based for email client compat):
+  - `welcome` — sent on POST /api/auth/register (fire-and-forget)
+  - `payment_success` — sent from payment_status + stripe webhook (idempotent via email_log)
+  - `trial_ending` — daily dispatcher, ≤48h before trial_until expires
+  - `streak_reminder` — daily dispatcher, last workout 3-14 days ago, max 1/14d
+  - `weekly_summary` — Sundays only, ISO-week deduplicated, 3 stat cards (workouts, volume kg, streak)
+- **Email dispatcher loop** runs every 6h on startup; admin can manually trigger via POST /api/admin/emails/run-dispatcher
+- **`/api/emails/test`** for previewing any template; **`/api/admin/emails/log`** for delivery audit
+- New collection `db.email_log` (used both for audit + idempotency)
+- New router `routers/emails.py`; helper module `email_service.py` (Resend SDK wrapped in asyncio.to_thread)
+- Env vars added: `RESEND_API_KEY`, `RESEND_SENDER_EMAIL` (default `onboarding@resend.dev`), `RESEND_SENDER_NAME`
+- **Smoke test ✅**: all 5 templates sent successfully to verified address (Resend IDs returned)
+- ⚠️ Resend currently in **testing mode** — only sends to `internetsachen28@gmail.com` until a domain is verified at https://resend.com/domains. Then change RESEND_SENDER_EMAIL to `noreply@alpha-fit.fitness`.
+
 ## Implemented (2026-02-15) - Backend Modular Refactor (Phase 2)
 - Extracted 6 additional APIRouters: `nutrition`, `bodyscan`, `sessions`, `coach`, `admin`, `support`.
 - `server.py` shrunk further: 2201 → **855 lines** (down 61.2% from original 2502 monolith).

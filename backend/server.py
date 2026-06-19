@@ -263,8 +263,24 @@ async def register(payload: RegisterRequest):
     }
     await db.users.insert_one(user)
     await log_activity(user["id"], user["name"], "registered", {})
+    # Welcome email (fire-and-forget, non-blocking)
+    asyncio.create_task(_send_welcome_email(user))
     token = create_token(user["id"])
     return {"token": token, "user": public_user(user)}
+
+
+async def _send_welcome_email(user: dict) -> None:
+    try:
+        from email_service import send_email, render_welcome
+        subject, html = render_welcome(user.get("name") or "Champion")
+        email_id = await send_email(user["email"], subject, html, tag="welcome")
+        await db.email_log.insert_one({
+            "user_id": user["id"], "email": user["email"], "template": "welcome",
+            "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
+        })
+    except Exception as e:
+        logger.error(f"welcome email failed for {user.get('email')}: {e}")
+
 
 @api_router.post("/auth/login")
 async def login(payload: LoginRequest):
@@ -773,6 +789,172 @@ async def start_push_dispatcher():
         logger.warning("VAPID_PRIVATE_KEY missing - push dispatcher NOT started")
 
 
+# ===== Email Dispatcher (Resend) =====
+async def run_email_dispatcher_once() -> dict:
+    """Single pass: send trial-ending (≤48h), streak-reminder (3+ inactive days), weekly-summary (Sundays).
+    All sends are idempotent via db.email_log (one row per user+template+window)."""
+    from email_service import (
+        send_email, render_trial_ending, render_streak_reminder, render_weekly_summary,
+    )
+    now = datetime.now(timezone.utc)
+    today_iso = now.date().isoformat()
+    sent = {"trial_ending": 0, "streak_reminder": 0, "weekly_summary": 0, "errors": 0}
+
+    # --- 1) Trial ending in ≤ 48h ---
+    cutoff_in_48h = (now + timedelta(hours=48)).isoformat()
+    cutoff_now = now.isoformat()
+    trial_users = await db.users.find({
+        "trial_until": {"$ne": None, "$gt": cutoff_now, "$lte": cutoff_in_48h},
+        "is_premium": True,
+    }, {"_id": 0}).to_list(500)
+    for u in trial_users:
+        try:
+            already = await db.email_log.find_one({
+                "user_id": u["id"], "template": "trial_ending",
+            })
+            if already:
+                continue
+            try:
+                trial_end = datetime.fromisoformat(u["trial_until"].replace("Z", "+00:00"))
+                hours_left = max(0, (trial_end - now).total_seconds() / 3600)
+                days_left = max(1, int(round(hours_left / 24)))
+            except Exception:
+                days_left = 2
+            wk_ago = (now - timedelta(days=7)).isoformat()
+            wk_workouts = await db.workout_sessions.count_documents({
+                "user_id": u["id"], "status": "completed", "completed_at": {"$gte": wk_ago},
+            })
+            subject, html = render_trial_ending(u.get("name") or "Champion", days_left)
+            html = html.replace("{streak_workouts}", str(wk_workouts))
+            email_id = await send_email(u["email"], subject, html, tag="trial_ending")
+            await db.email_log.insert_one({
+                "user_id": u["id"], "email": u["email"], "template": "trial_ending",
+                "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
+            })
+            if email_id:
+                sent["trial_ending"] += 1
+            else:
+                sent["errors"] += 1
+        except Exception as e:
+            logger.error(f"email_dispatcher trial_ending err for {u.get('email')}: {e}")
+            sent["errors"] += 1
+
+    # --- 2) Streak reminder: last completed workout 3-14 days ago ---
+    three_days_ago = (now - timedelta(days=3)).isoformat()
+    fourteen_days_ago = (now - timedelta(days=14)).isoformat()
+    users_for_streak = await db.users.find({"email": {"$exists": True}}, {"_id": 0}).to_list(2000)
+    for u in users_for_streak:
+        try:
+            last_session = await db.workout_sessions.find_one(
+                {"user_id": u["id"], "status": "completed"},
+                {"_id": 0, "completed_at": 1},
+                sort=[("completed_at", -1)],
+            )
+            if not last_session or not last_session.get("completed_at"):
+                continue
+            last_at = last_session["completed_at"]
+            if not (fourteen_days_ago < last_at < three_days_ago):
+                continue
+            # Throttle: max 1 streak reminder per 14 days
+            cutoff_14d = (now - timedelta(days=14)).isoformat()
+            already = await db.email_log.find_one({
+                "user_id": u["id"], "template": "streak_reminder",
+                "sent_at": {"$gte": cutoff_14d},
+            })
+            if already:
+                continue
+            try:
+                last_dt = datetime.fromisoformat(last_at.replace("Z", "+00:00"))
+                days_since = max(3, int((now - last_dt).total_seconds() / 86400))
+            except Exception:
+                days_since = 3
+            subject, html = render_streak_reminder(u.get("name") or "Champion", days_since)
+            email_id = await send_email(u["email"], subject, html, tag="streak_reminder")
+            await db.email_log.insert_one({
+                "user_id": u["id"], "email": u["email"], "template": "streak_reminder",
+                "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
+            })
+            if email_id:
+                sent["streak_reminder"] += 1
+            else:
+                sent["errors"] += 1
+        except Exception as e:
+            logger.error(f"email_dispatcher streak err for {u.get('email')}: {e}")
+            sent["errors"] += 1
+
+    # --- 3) Weekly summary: every Sunday ---
+    if now.weekday() == 6:
+        week_start = (now - timedelta(days=7)).isoformat()
+        two_weeks_ago = (now - timedelta(days=14)).isoformat()
+        for u in users_for_streak:
+            try:
+                this_week_key = now.strftime("%G-W%V")  # ISO week
+                already = await db.email_log.find_one({
+                    "user_id": u["id"], "template": "weekly_summary", "week_key": this_week_key,
+                })
+                if already:
+                    continue
+                this_week = await db.workout_sessions.find(
+                    {"user_id": u["id"], "status": "completed", "completed_at": {"$gte": week_start}},
+                    {"_id": 0},
+                ).to_list(50)
+                if not this_week:
+                    continue
+                last_week = await db.workout_sessions.find(
+                    {"user_id": u["id"], "status": "completed",
+                     "completed_at": {"$gte": two_weeks_ago, "$lt": week_start}},
+                    {"_id": 0},
+                ).to_list(50)
+                def _vol(sessions):
+                    return sum(
+                        log.get("reps", 0) * log.get("weight_kg", 0)
+                        for s in sessions for log in s.get("logged_sets", [])
+                    )
+                tv, lv = _vol(this_week), _vol(last_week)
+                delta_pct = round(((tv - lv) / lv) * 100, 1) if lv > 0 else None
+                # streak via sessions router helper
+                from routers.sessions import calculate_streak  # noqa: E402
+                streak = await calculate_streak(u["id"])
+                subject, html = render_weekly_summary(u.get("name") or "Champion", {
+                    "workouts": len(this_week), "volume_kg": tv, "streak": streak, "delta_pct": delta_pct,
+                })
+                email_id = await send_email(u["email"], subject, html, tag="weekly_summary")
+                await db.email_log.insert_one({
+                    "user_id": u["id"], "email": u["email"], "template": "weekly_summary",
+                    "week_key": this_week_key, "resend_id": email_id, "ok": bool(email_id),
+                    "sent_at": now_iso(),
+                })
+                if email_id:
+                    sent["weekly_summary"] += 1
+                else:
+                    sent["errors"] += 1
+            except Exception as e:
+                logger.error(f"email_dispatcher weekly err for {u.get('email')}: {e}")
+                sent["errors"] += 1
+
+    logger.info(f"email dispatcher run: {sent}")
+    return {**sent, "ran_at": now_iso(), "date": today_iso}
+
+
+async def email_dispatcher_loop():
+    """Run the dispatcher every 6h."""
+    while True:
+        try:
+            await run_email_dispatcher_once()
+        except Exception as e:
+            logger.error(f"email_dispatcher_loop error: {e}")
+        await asyncio.sleep(6 * 3600)  # 6h
+
+
+@app.on_event("startup")
+async def start_email_dispatcher():
+    if os.environ.get("RESEND_API_KEY"):
+        asyncio.create_task(email_dispatcher_loop())
+        logger.info("Email dispatcher started")
+    else:
+        logger.warning("RESEND_API_KEY missing - email dispatcher NOT started")
+
+
 
 
 
@@ -828,6 +1010,7 @@ from routers import sessions as _sessions_router  # noqa: E402
 from routers import coach as _coach_router  # noqa: E402  (must load AFTER sessions; imports calculate_streak from it)
 from routers import admin as _admin_router  # noqa: E402
 from routers import support as _support_router  # noqa: E402
+from routers import emails as _emails_router  # noqa: E402
 
 api_router.include_router(_formcheck_router.router)
 api_router.include_router(_payments_router.router)
@@ -838,6 +1021,7 @@ api_router.include_router(_sessions_router.router)
 api_router.include_router(_coach_router.router)
 api_router.include_router(_admin_router.router)
 api_router.include_router(_support_router.router)
+api_router.include_router(_emails_router.router)
 
 
 # Include router & CORS
