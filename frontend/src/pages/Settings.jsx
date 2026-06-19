@@ -6,8 +6,9 @@ import {
   isPushSupported, getPushPermission, subscribePush, unsubscribePush,
   getCurrentSubscription, updatePushSettings, sendTestPush,
 } from "../lib/push";
-import { Bell, BellOff, Loader2, Check, X, Send, AlertTriangle, Settings as Cog, Flame, Calendar, BarChart3 } from "lucide-react";
+import { Bell, BellOff, Loader2, Check, X, Send, AlertTriangle, Settings as Cog, Flame, Calendar, BarChart3, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
+import { isSoundEnabled, setSoundEnabled, playRestOverChime } from "../lib/sound";
 
 const DEFAULT_TRIGGERS = { workout_reminder: true, streak_protect: true, weekly_review: true };
 
@@ -22,6 +23,14 @@ export default function Settings() {
   const [reminderTime, setReminderTime] = useState("18:00");
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [soundOn, setSoundOnState] = useState(isSoundEnabled());
+
+  const toggleSound = (v) => {
+    setSoundEnabled(v);
+    setSoundOnState(v);
+    if (v) playRestOverChime();
+    toast.success(v ? "Sound aktiviert" : "Sound deaktiviert");
+  };
 
   useEffect(() => {
     (async () => {
@@ -106,6 +115,38 @@ export default function Settings() {
       <div className="mb-5 sm:mb-6 flex items-center gap-3">
         <Cog size={28} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text">EINSTELLUNGEN</h1>
+      </div>
+
+      {/* Sound block */}
+      <div className="af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6" data-testid="settings-sound">
+        <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            {soundOn ? <Volume2 size={20} className="text-[#00BFFF]" /> : <VolumeX size={20} className="text-gray-500" />}
+            <h2 className="font-teko text-2xl sm:text-3xl chrome-text">SOUND</h2>
+          </div>
+        </div>
+        <p className="prose-af font-chakra mb-3">
+          Akustische Signale beim Workout: Countdown-Pieps in den letzten 3 Sekunden der Pause,
+          und ein Gong wenn die Pause vorbei ist.
+        </p>
+        <button
+          onClick={() => toggleSound(!soundOn)}
+          className={`w-full flex items-center gap-3 p-3 border transition text-left ${
+            soundOn ? "border-[#00BFFF] bg-[#00BFFF]/5" : "border-[#1A1A24] hover:border-[#00BFFF]/40"
+          }`}
+          data-testid="toggle-sound"
+        >
+          <div className={`w-9 h-9 flex items-center justify-center border ${soundOn ? "border-[#00BFFF] text-[#00BFFF]" : "border-[#1A1A24] text-gray-500"}`}>
+            {soundOn ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-teko text-lg tracking-wide text-white">Pause-Ende Ton</div>
+            <div className="text-[10px] text-gray-400 font-chakra">Beep auf 3-2-1 + Gong bei 0 + leichte Vibration</div>
+          </div>
+          <div className={`w-10 h-6 flex-shrink-0 relative transition ${soundOn ? "bg-[#00BFFF]" : "bg-[#1A1A24]"}`} style={{ borderRadius: "999px" }}>
+            <div className="absolute top-0.5 w-5 h-5 bg-white transition-all" style={{ borderRadius: "999px", left: soundOn ? "calc(100% - 22px)" : "2px" }} />
+          </div>
+        </button>
       </div>
 
       {/* Notifications block */}

@@ -4,6 +4,7 @@ import api from "../lib/api";
 import { Check, X, Pause, Play, ChevronRight, Loader2, Flame, Trophy, TrendingUp, Sparkles, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { getExerciseImage } from "../lib/exerciseImages";
+import { playCountdownBeep, playRestOverChime, isSoundEnabled } from "../lib/sound";
 
 export default function ActiveWorkout() {
   const { sessionId } = useParams();
@@ -83,8 +84,11 @@ export default function ActiveWorkout() {
         if (p <= 1) {
           clearInterval(restRef.current);
           setResting(false);
+          if (isSoundEnabled()) playRestOverChime();
           return 0;
         }
+        // 3-2-1 countdown beep
+        if (p <= 4 && isSoundEnabled()) playCountdownBeep();
         return p - 1;
       });
     }, 1000);
