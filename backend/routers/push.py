@@ -10,6 +10,18 @@ from server import (
     _send_web_push,
 )
 
+DEFAULT_EMAIL_PREFS = {
+    "trial_ending": True,
+    "streak_reminder": True,
+    "weekly_summary": True,
+    "winback": True,
+}
+DEFAULT_PUSH_PREFS = {
+    "workout_reminder": True,
+    "streak_protect": True,
+    "weekly_review": True,
+}
+
 logger = logging.getLogger("alphafit")
 router = APIRouter()
 
@@ -79,3 +91,24 @@ async def push_test(payload: PushTestRequest, user: dict = Depends(get_current_u
         if _send_web_push(s, payload.title, payload.body, "/dashboard", "test"):
             sent += 1
     return {"ok": True, "subscriptions": len(subs), "sent": sent}
+
+
+@router.get("/notifications/preferences")
+async def notifications_get_preferences(user: dict = Depends(get_current_user)):
+    """Unified email + push trigger preferences for the current user."""
+    prefs = user.get("notification_prefs") or {}
+    email_prefs = {**DEFAULT_EMAIL_PREFS, **(prefs.get("email") or {})}
+    push_prefs = {**DEFAULT_PUSH_PREFS, **(prefs.get("push") or {})}
+    return {"email": email_prefs, "push": push_prefs}
+
+
+@router.put("/notifications/preferences")
+async def notifications_set_preferences(payload: dict, user: dict = Depends(get_current_user)):
+    """Update which email + push triggers the user wants to receive."""
+    incoming_email = payload.get("email") or {}
+    incoming_push = payload.get("push") or {}
+    email_prefs = {k: bool(incoming_email.get(k, DEFAULT_EMAIL_PREFS[k])) for k in DEFAULT_EMAIL_PREFS}
+    push_prefs = {k: bool(incoming_push.get(k, DEFAULT_PUSH_PREFS[k])) for k in DEFAULT_PUSH_PREFS}
+    new_prefs = {"email": email_prefs, "push": push_prefs}
+    await db.users.update_one({"id": user["id"]}, {"$set": {"notification_prefs": new_prefs}})
+    return new_prefs

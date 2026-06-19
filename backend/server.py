@@ -791,14 +791,19 @@ async def start_push_dispatcher():
 
 # ===== Email Dispatcher (Resend) =====
 async def run_email_dispatcher_once() -> dict:
-    """Single pass: send trial-ending (≤48h), streak-reminder (3+ inactive days), weekly-summary (Sundays).
-    All sends are idempotent via db.email_log (one row per user+template+window)."""
+    """Single pass: send trial-ending (≤48h), streak-reminder (3+ inactive days), weekly-summary (Sundays),
+    win-back (premium expired 7-14 days ago). All sends are idempotent via db.email_log."""
     from email_service import (
         send_email, render_trial_ending, render_streak_reminder, render_weekly_summary,
+        render_winback,
     )
     now = datetime.now(timezone.utc)
     today_iso = now.date().isoformat()
-    sent = {"trial_ending": 0, "streak_reminder": 0, "weekly_summary": 0, "errors": 0}
+    sent = {"trial_ending": 0, "streak_reminder": 0, "weekly_summary": 0, "winback": 0, "errors": 0}
+
+    def _email_pref(u: dict, key: str) -> bool:
+        prefs = (u.get("notification_prefs") or {}).get("email") or {}
+        return bool(prefs.get(key, True))
 
     # --- 1) Trial ending in ≤ 48h ---
     cutoff_in_48h = (now + timedelta(hours=48)).isoformat()
@@ -809,6 +814,8 @@ async def run_email_dispatcher_once() -> dict:
     }, {"_id": 0}).to_list(500)
     for u in trial_users:
         try:
+            if not _email_pref(u, "trial_ending"):
+                continue
             already = await db.email_log.find_one({
                 "user_id": u["id"], "template": "trial_ending",
             })
@@ -845,6 +852,8 @@ async def run_email_dispatcher_once() -> dict:
     users_for_streak = await db.users.find({"email": {"$exists": True}}, {"_id": 0}).to_list(2000)
     for u in users_for_streak:
         try:
+            if not _email_pref(u, "streak_reminder"):
+                continue
             last_session = await db.workout_sessions.find_one(
                 {"user_id": u["id"], "status": "completed"},
                 {"_id": 0, "completed_at": 1},
@@ -888,6 +897,8 @@ async def run_email_dispatcher_once() -> dict:
         two_weeks_ago = (now - timedelta(days=14)).isoformat()
         for u in users_for_streak:
             try:
+                if not _email_pref(u, "weekly_summary"):
+                    continue
                 this_week_key = now.strftime("%G-W%V")  # ISO week
                 already = await db.email_log.find_one({
                     "user_id": u["id"], "template": "weekly_summary", "week_key": this_week_key,
@@ -931,6 +942,45 @@ async def run_email_dispatcher_once() -> dict:
             except Exception as e:
                 logger.error(f"email_dispatcher weekly err for {u.get('email')}: {e}")
                 sent["errors"] += 1
+
+    # --- 4) Win-Back: premium expired 7-14 days ago, was premium for 14+ days total, ≥1 workout ---
+    expired_lo = (now - timedelta(days=14)).isoformat()
+    expired_hi = (now - timedelta(days=7)).isoformat()
+    winback_candidates = await db.users.find({
+        "is_premium": False,
+        "premium_until": {"$ne": None, "$gt": expired_lo, "$lte": expired_hi},
+    }, {"_id": 0}).to_list(2000)
+    for u in winback_candidates:
+        try:
+            if not _email_pref(u, "winback"):
+                continue
+            already = await db.email_log.find_one({"user_id": u["id"], "template": "winback"})
+            if already:
+                continue
+            sessions = await db.workout_sessions.find(
+                {"user_id": u["id"], "status": "completed"}, {"_id": 0},
+            ).to_list(500)
+            total_workouts = len(sessions)
+            if total_workouts < 1:
+                continue
+            total_volume = int(sum(
+                log.get("reps", 0) * log.get("weight_kg", 0)
+                for s in sessions for log in s.get("logged_sets", [])
+            ))
+            subject, html = render_winback(u.get("name") or "Champion", total_workouts, total_volume, discount_pct=30)
+            email_id = await send_email(u["email"], subject, html, tag="winback")
+            await db.email_log.insert_one({
+                "user_id": u["id"], "email": u["email"], "template": "winback",
+                "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
+                "stats": {"workouts": total_workouts, "volume_kg": total_volume},
+            })
+            if email_id:
+                sent["winback"] += 1
+            else:
+                sent["errors"] += 1
+        except Exception as e:
+            logger.error(f"email_dispatcher winback err for {u.get('email')}: {e}")
+            sent["errors"] += 1
 
     logger.info(f"email dispatcher run: {sent}")
     return {**sent, "ran_at": now_iso(), "date": today_iso}

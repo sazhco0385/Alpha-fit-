@@ -204,3 +204,29 @@ def render_weekly_summary(name: str, stats: Dict[str, Any]) -> tuple[str, str]:
       <p style="margin: 0; color: #999;">Disziplin schlägt Motivation — jeden Tag.</p>
     """
     return subject, _layout("Wochen-Review", preheader, body, "Insights anschauen", f"{APP_URL}/coach")
+
+
+def render_winback(name: str, total_workouts: int, total_volume_kg: int, discount_pct: int = 30) -> tuple[str, str]:
+    subject = f"{name}, dein Comeback wartet — {discount_pct}% Rabatt drin"
+    preheader = f"{total_workouts} Workouts, {total_volume_kg:,} kg Volumen — komm zurück."
+    body = f"""
+      <h1 style="font-size: 22px; font-weight: 800; color: #f4d27a; margin: 0 0 14px;">Wir vermissen dich.</h1>
+      <p style="margin: 0 0 14px;">Hey {name}, dein Premium ist seit einer Woche abgelaufen. Bevor du verschwindest, schau dir an was du gemacht hast:</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 20px;">
+        <tr>
+          <td width="48%" align="center" style="padding: 18px 8px; background: rgba(212, 175, 55, 0.06); border: 1px solid rgba(212, 175, 55, 0.18); border-radius: 12px;">
+            <div style="font-size: 32px; font-weight: 800; color: #f4d27a;">{total_workouts}</div>
+            <div style="color: #999; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px;">Workouts</div>
+          </td>
+          <td width="4%"></td>
+          <td width="48%" align="center" style="padding: 18px 8px; background: rgba(212, 175, 55, 0.06); border: 1px solid rgba(212, 175, 55, 0.18); border-radius: 12px;">
+            <div style="font-size: 26px; font-weight: 800; color: #f4d27a;">{total_volume_kg:,}</div>
+            <div style="color: #999; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px;">kg bewegt</div>
+          </td>
+        </tr>
+      </table>
+      <p style="margin: 0 0 14px;">Das war kein Zufall. Das war Arbeit. <strong style="color: #d4af37;">Schmeiß den Fortschritt nicht weg.</strong></p>
+      <p style="margin: 0 0 14px;">Komm zurück mit <strong style="color: #d4af37;">{discount_pct}% Rabatt</strong> auf die ersten 3 Monate — einmaliges Angebot, gültig für 7 Tage.</p>
+      <p style="margin: 0; color: #999;">Disziplin ist nichts, was du verlierst. Aber sie verlässt dich, wenn du nicht hingehst.</p>
+    """
+    return subject, _layout("Comeback Offer", preheader, body, f"Premium mit {discount_pct}% holen", f"{APP_URL}/premium?winback=1")

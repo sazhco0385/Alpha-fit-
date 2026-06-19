@@ -6,11 +6,12 @@ import {
   isPushSupported, getPushPermission, subscribePush, unsubscribePush,
   getCurrentSubscription, updatePushSettings, sendTestPush,
 } from "../lib/push";
-import { Bell, BellOff, Loader2, Check, X, Send, AlertTriangle, Settings as Cog, Flame, Calendar, BarChart3, Volume2, VolumeX } from "lucide-react";
+import { Bell, BellOff, Loader2, Check, X, Send, AlertTriangle, Settings as Cog, Flame, Calendar, BarChart3, Volume2, VolumeX, Mail, AlertCircle, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
 import { isSoundEnabled, setSoundEnabled, playRestOverChime } from "../lib/sound";
 
 const DEFAULT_TRIGGERS = { workout_reminder: true, streak_protect: true, weekly_review: true };
+const DEFAULT_EMAIL_PREFS = { trial_ending: true, streak_reminder: true, weekly_summary: true, winback: true };
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ export default function Settings() {
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [testing, setTesting] = useState(false);
   const [soundOn, setSoundOnState] = useState(isSoundEnabled());
+  const [emailPrefs, setEmailPrefs] = useState(DEFAULT_EMAIL_PREFS);
+  const [savingEmail, setSavingEmail] = useState(false);
 
   const toggleSound = (v) => {
     setSoundEnabled(v);
@@ -34,6 +37,10 @@ export default function Settings() {
 
   useEffect(() => {
     (async () => {
+      try {
+        const { data } = await api.get("/notifications/preferences");
+        setEmailPrefs({ ...DEFAULT_EMAIL_PREFS, ...(data.email || {}) });
+      } catch {}
       if (!supported) return;
       setPermission(await getPushPermission());
       const s = await getCurrentSubscription();
@@ -51,6 +58,19 @@ export default function Settings() {
       }
     })();
   }, [supported]);
+
+  const saveEmailPrefs = async (next) => {
+    setSavingEmail(true);
+    try {
+      await api.put("/notifications/preferences", { email: next, push: triggers });
+      setEmailPrefs(next);
+      toast.success("Email-Einstellungen gespeichert");
+    } catch {
+      toast.error("Speichern fehlgeschlagen");
+    } finally {
+      setSavingEmail(false);
+    }
+  };
 
   const enable = async () => {
     setBusy(true);
@@ -259,6 +279,57 @@ export default function Settings() {
               </div>
             )}
           </>
+        )}
+      </div>
+
+      {/* Email triggers block */}
+      <div className="af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6" data-testid="settings-email">
+        <div className="flex items-center gap-3 mb-2">
+          <Mail size={20} className="text-[#00BFFF]" />
+          <h2 className="font-teko text-2xl sm:text-3xl chrome-text">EMAIL-BENACHRICHTIGUNGEN</h2>
+        </div>
+        <p className="prose-af font-chakra mb-4 text-sm">
+          Welche Emails möchtest du erhalten? Welcome- und Zahlungs-Bestätigungen
+          werden immer gesendet (rechtlich notwendig).
+        </p>
+        <div className="space-y-2 mb-2" data-testid="email-triggers">
+          <TriggerToggle
+            icon={AlertCircle}
+            title="Trial-Erinnerung"
+            desc="48h vor Ablauf deiner Testphase"
+            enabled={emailPrefs.trial_ending}
+            onToggle={(v) => saveEmailPrefs({ ...emailPrefs, trial_ending: v })}
+            testid="toggle-email-trial-ending"
+          />
+          <TriggerToggle
+            icon={Flame}
+            title="Streak-Reminder"
+            desc="Wenn du 3+ Tage nicht trainiert hast"
+            enabled={emailPrefs.streak_reminder}
+            onToggle={(v) => saveEmailPrefs({ ...emailPrefs, streak_reminder: v })}
+            testid="toggle-email-streak-reminder"
+          />
+          <TriggerToggle
+            icon={BarChart3}
+            title="Wochen-Zusammenfassung"
+            desc="Jeden Sonntag mit Workouts, Volumen, Streak"
+            enabled={emailPrefs.weekly_summary}
+            onToggle={(v) => saveEmailPrefs({ ...emailPrefs, weekly_summary: v })}
+            testid="toggle-email-weekly-summary"
+          />
+          <TriggerToggle
+            icon={TrendingDown}
+            title="Comeback-Angebot"
+            desc="Nach Premium-Ende, Rabatt-Email"
+            enabled={emailPrefs.winback}
+            onToggle={(v) => saveEmailPrefs({ ...emailPrefs, winback: v })}
+            testid="toggle-email-winback"
+          />
+        </div>
+        {savingEmail && (
+          <div className="text-[10px] text-gray-500 font-chakra mt-2 flex items-center gap-2">
+            <Loader2 size={12} className="animate-spin" /> Speichert...
+          </div>
         )}
       </div>
 

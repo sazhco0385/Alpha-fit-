@@ -26,6 +26,104 @@ async def get_current_plan(user: dict = Depends(get_current_user)):
     return {"plan": plan}
 
 
+@router.put("/plans/current")
+async def update_current_plan(payload: dict, user: dict = Depends(get_current_user)):
+    """User-driven plan editing. Validates structure, bumps version, replaces current plan."""
+    plan_id = user.get("current_plan_id")
+    if not plan_id:
+        raise HTTPException(status_code=400, detail="Kein aktiver Plan")
+    current = await db.training_plans.find_one({"id": plan_id}, {"_id": 0})
+    if not current:
+        raise HTTPException(status_code=404, detail="Plan nicht gefunden")
+
+    name = (payload.get("name") or current.get("name") or "Mein Plan")[:120]
+    progression_notes = (payload.get("progression_notes") or "")[:500]
+    days_in = payload.get("days")
+    if not isinstance(days_in, list) or not days_in:
+        raise HTTPException(status_code=400, detail="Plan muss mindestens einen Tag haben")
+    if len(days_in) > 7:
+        raise HTTPException(status_code=400, detail="Maximal 7 Trainingstage")
+
+    def _clean_exercise(ex, idx_for_error):
+        if not isinstance(ex, dict):
+            raise HTTPException(status_code=400, detail=f"Übung {idx_for_error}: ungültiges Format")
+        ex_name = str(ex.get("name") or "").strip()
+        if not ex_name:
+            raise HTTPException(status_code=400, detail=f"Übung {idx_for_error}: Name fehlt")
+        def _int(v, default, lo, hi):
+            try:
+                n = int(round(float(v))) if v is not None else default
+                return max(lo, min(hi, n))
+            except Exception:
+                return default
+        def _num(v, default, lo, hi):
+            try:
+                n = float(v) if v is not None else default
+                return max(lo, min(hi, n))
+            except Exception:
+                return default
+        return {
+            "name": ex_name[:120],
+            "target_muscle": str(ex.get("target_muscle") or "").strip()[:60],
+            "sets": _int(ex.get("sets"), 3, 1, 20),
+            "reps": _int(ex.get("reps"), 10, 1, 100),
+            "weight_kg": round(_num(ex.get("weight_kg"), 0, 0, 1000), 2),
+            "rest_seconds": _int(ex.get("rest_seconds") or ex.get("rest_sec"), 60, 0, 600),
+            "notes": str(ex.get("notes") or "")[:300],
+        }
+
+    days_clean = []
+    for di, d in enumerate(days_in):
+        if not isinstance(d, dict):
+            raise HTTPException(status_code=400, detail=f"Tag {di+1}: ungültiges Format")
+        exercises = d.get("exercises") or []
+        if not isinstance(exercises, list) or not exercises:
+            raise HTTPException(status_code=400, detail=f"Tag {di+1}: mindestens 1 Übung erforderlich")
+        if len(exercises) > 15:
+            raise HTTPException(status_code=400, detail=f"Tag {di+1}: maximal 15 Übungen")
+        clean_exs = [_clean_exercise(ex, f"{di+1}.{ei+1}") for ei, ex in enumerate(exercises)]
+        days_clean.append({
+            "day_index": di + 1,
+            "name": (str(d.get("name") or f"Tag {di+1}")).strip()[:80],
+            "exercises": clean_exs,
+        })
+
+    new_plan = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "name": name,
+        "weeks": int(current.get("weeks", 4)),
+        "progression_notes": progression_notes,
+        "days": days_clean,
+        "created_at": now_iso(),
+        "version": int(current.get("version", 1)) + 1,
+        "previous_plan_id": plan_id,
+        "source": "user_edited",
+    }
+    await db.training_plans.insert_one(new_plan)
+    new_plan.pop("_id", None)
+    await db.users.update_one({"id": user["id"]}, {"$set": {"current_plan_id": new_plan["id"]}})
+    await log_activity(user["id"], user.get("name", ""), "plan_edited", {"plan_id": new_plan["id"], "version": new_plan["version"]})
+    return {"plan": new_plan}
+
+
+@router.get("/plans/exercise-suggestions")
+async def exercise_suggestions(user: dict = Depends(get_current_user)):
+    """Curated list of exercises grouped by muscle for the plan editor's 'Add Exercise' UI."""
+    return {
+        "groups": [
+            {"muscle": "Brust", "exercises": ["Bankdrücken", "Schrägbankdrücken Kurzhantel", "Schrägbankdrücken Langhantel", "Kurzhantel Fliegende", "Liegestütze", "Cable Crossover", "Dips"]},
+            {"muscle": "Rücken", "exercises": ["Klimmzüge", "Langhantelrudern", "Latziehen", "Kurzhantelrudern einarmig", "T-Bar Rudern", "Kreuzheben", "Hyperextensions", "Face Pulls"]},
+            {"muscle": "Schulter", "exercises": ["Schulterdrücken Langhantel", "Schulterdrücken Kurzhantel", "Seitheben", "Frontheben", "Reverse Flys", "Arnold Press", "Upright Row"]},
+            {"muscle": "Beine", "exercises": ["Kniebeugen", "Beinpresse", "Ausfallschritte", "Rumänisches Kreuzheben", "Beinstrecker", "Beinbeuger", "Wadenheben", "Bulgarian Split Squats", "Hip Thrust"]},
+            {"muscle": "Bizeps", "exercises": ["Langhantel Curl", "Kurzhantel Curl", "Hammer Curl", "Konzentrations Curl", "Preacher Curl"]},
+            {"muscle": "Trizeps", "exercises": ["Trizeps Drücken Kabel", "French Press", "Dips eng", "Overhead Trizeps Extension", "Diamond Push-ups"]},
+            {"muscle": "Bauch", "exercises": ["Crunches", "Beinheben hängend", "Plank", "Russian Twists", "Cable Crunches", "Ab Wheel Rollout"]},
+            {"muscle": "Cardio", "exercises": ["Laufband", "Crosstrainer", "Rudergerät", "Stairmaster", "Fahrrad", "Burpees", "Box Jumps"]},
+        ],
+    }
+
+
 # ===== Workout Sessions =====
 @router.post("/sessions/start")
 async def start_session(payload: dict, user: dict = Depends(get_current_user)):

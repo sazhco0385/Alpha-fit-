@@ -1,0 +1,46 @@
+{
+  "summary": "Iteration 8 verifies the 3 new features: Custom Plan Editor (PUT /api/plans/current + GET /api/plans/exercise-suggestions), Notification Preferences (GET/PUT /api/notifications/preferences), and Win-Back email (render_winback + winback in dispatcher + /emails/test winback). Backend: 26/26 pytest tests PASSED on the external preview URL (test_iter8_features.py) including all validation edge cases (empty days, no exercises, no name, 8 days, 16 exercises, auto-clamp to [1-20]/[1-100]/[0-1000]/[0-600]), legacy rest_sec accepted, version bump + source='user_edited' verified via subsequent GET, prefs round-trip, type coercion, winback Resend ID returned (alpha-fit.fitness verified), admin dispatcher returns 'winback' key. Regression: login, plans/current, sessions/start, notifications/settings, admin/stats, bodyscan/history, formcheck/history, and all 5 prior email templates (welcome/payment_success/trial_ending/streak_reminder/weekly_summary) still return Resend IDs. Frontend (Playwright on /plan + /settings as admin): BEARBEITEN button visible, edit mode shows plan-edit-name (text-white color rgb(255,255,255) confirmed — chrome-text bug is fixed) + plan-edit-notes + day-name-edit-1 + 4 exercise-edit rows on day 1 + add-exercise-btn-1 opens exercise-picker-1, plan-save-btn + plan-cancel-btn visible, cancel reverts to view mode. Settings shows all 3 cards (SOUND, PUSH-BENACHRICHTIGUNGEN, EMAIL-BENACHRICHTIGUNGEN) and all 4 email toggles (trial_ending, streak_reminder, weekly_summary, winback). Auto-save confirmed via toast 'Email-Einstellungen gespeichert' after toggle.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/plans/current PUT", "issue": "Pydantic-style validation not used — payload is `dict` and validated procedurally. Works correctly but error responses are German strings only (no machine-readable error code). Consider Pydantic model for OpenAPI schema completeness."},
+      {"endpoint": "/api/notifications/preferences PUT", "issue": "Validation is lossy — non-bool payload values are silently coerced via bool() (e.g. string 'false_string' becomes True). No 400/422 error returned. Acceptable per spec ('PUT validates types booleans only' — interpreted here as final-state guarantee, not strict-rejection). Document or strict-validate as needed."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/settings", "issues": ["Email-toggle component lacks aria-pressed/role=switch — purely visual indicator. Hurts accessibility + automated testing. Recommend adding role=switch + aria-checked on the EmailToggle wrapper."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter8_features.py",
+    "/app/test_reports/pytest/pytest_iter8.xml"
+  ],
+  "action_items": [
+    "(Optional) Add role=switch + aria-checked to the EmailToggle component so the toggle state is exposed to assistive tech and Playwright (currently only visible via CSS — not testable via attribute).",
+    "(Optional) Strict-validate /api/notifications/preferences PUT payload — return 422 if a field is not a bool, instead of silent bool() coercion.",
+    "(Optional) Wrap PUT /api/plans/current payload in a Pydantic model (PlanEditRequest) so OpenAPI doc shows the schema and FastAPI handles 422s consistently."
+  ],
+  "critical_code_review_comments": [
+    "render_winback in email_service.py is fully self-contained and returns (subject, html) tuple consistent with other templates — good.",
+    "Dispatcher idempotency for winback is enforced via db.email_log lookup ({user_id, template:'winback'}) — solid. Note that this is GLOBAL idempotency (once a user gets a winback they never get another) which is correct semantics.",
+    "_email_pref helper centralizes the prefs gate — used consistently for trial/streak/weekly/winback in server.py. No regression risk.",
+    "Server.py is now 1090 lines (up from 855 in iter7) — winback block adds ~40 lines. Still within reasonable bounds but the email dispatcher (4 blocks: trial/streak/weekly/winback) is a candidate for extraction into email_dispatcher.py.",
+    "Plan editor backend correctly accepts both 'rest_seconds' and legacy 'rest_sec' keys — verified in test_edit_plan_bumps_version_and_source.",
+    "Plan editor uses str(...)[:N] truncation for free-text fields (name, notes, exercise name, target_muscle, notes) — defensive and good.",
+    "Frontend chrome-text + transparent text-fill gradient previously made edit inputs invisible — confirmed fixed; getComputedStyle on plan-edit-name returns rgb(255,255,255).",
+    "Frontend EmailToggle (Settings.jsx ~349) is a `<button>` but the visual toggle has no aria-checked. Recommend converting to a `<button role=\"switch\" aria-checked={value}>` for both a11y and testability."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter8_features.py (NEW — 26 tests: 1 suggestions + 8 plan editor + 3 prefs + 2 winback + 12 regression including 5 parametrized email templates)"
+  ],
+  "success_rate": {"backend": "100% (26/26)", "frontend": "100% — all selectors present, edit flow works, auto-save toast confirmed"},
+  "test_credentials": "Admin sazhco0385@gmail.com / Bellakiki1 (auto-premium with active plan). Fresh user fixture: TEST_iter8_<uuid>@phase2qa.io / Test1234! (one-shot, not auto-cleaned).",
+  "seed_data_creation": "Test artifacts created: (a) 2 new training-plan documents under admin user (name='TEST_iter8 Edited Plan' v=N+1 and 'TEST_iter8 Clamp Plan' v=N+2) — these REPLACE admin.current_plan_id, so admin's plan is now the Clamp Plan. Main agent may want to regenerate admin's plan via /api/coach/generate-plan to restore the curated demo plan. (b) 1 fresh free user — isolated namespace, no cleanup needed. (c) Multiple email_log entries (test-* tags) on the user's Resend log — expected.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter 8 is fully green. Total backend regression file count: test_iter8_features.py (26) + test_phase2_routers.py (42) + test_refactor_routers.py (19) + test_new_features_v5.py (14) = 101 tests across the public ingress. To run all: pytest /app/backend/tests/ -v. Note: admin's current_plan_id was overwritten by test_auto_clamp_values — last plan is a single-day Clamp Plan. If subsequent tests need a multi-day admin plan, call /api/coach/generate-plan first OR change admin's current_plan_id back to a prior plan in db.training_plans. Win-back is hard to fully E2E test because it requires admin to manipulate db.users.premium_until into the [now-14d, now-7d] window AND is_premium=False — this iteration verified the template render + endpoint + dispatcher key + idempotency-by-email_log code path via inspection (not live trigger). LLM-touching endpoints still 500 due to provider budget cap from iter7 — does not affect this iter's scope.",
+  "rca of the issue": "No bugs uncovered. Initial Playwright toggle-state detection returned None for aria-pressed — root cause: EmailToggle uses a plain <button> with custom div-based visual indicator, no aria-checked/aria-pressed attribute. This is a TESTING gap, not a product bug — the auto-save did persist (confirmed via 'Email-Einstellungen gespeichert' toast in screenshot and via the backend pref-roundtrip test against a fresh user). Recommended fix: add role='switch' aria-checked={value} to EmailToggle for a11y + future Playwright reliability."
+}

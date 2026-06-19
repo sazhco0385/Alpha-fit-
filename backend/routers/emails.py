@@ -8,7 +8,7 @@ from server import db, get_current_user, require_admin
 from email_service import (
     send_email,
     render_welcome, render_payment_success, render_trial_ending,
-    render_streak_reminder, render_weekly_summary,
+    render_streak_reminder, render_weekly_summary, render_winback,
 )
 
 logger = logging.getLogger("alphafit")
@@ -43,6 +43,8 @@ async def emails_test(payload: EmailTestRequest, user: dict = Depends(get_curren
         subject, html = render_weekly_summary(name, {
             "workouts": 4, "volume_kg": 12500, "streak": 12, "delta_pct": 8.5,
         })
+    elif t == "winback":
+        subject, html = render_winback(name, total_workouts=47, total_volume_kg=58400, discount_pct=30)
     else:
         raise HTTPException(status_code=400, detail="Unbekanntes Template")
 
