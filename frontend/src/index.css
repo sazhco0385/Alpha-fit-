@@ -133,6 +133,109 @@ h1, h2, h3, .heading {
   animation: scanline 4s linear infinite;
 }
 
+/* ===== BADGE-GLOW v2 — premium animated badges ===== */
+@keyframes badge-rotate {
+  to { transform: rotate(360deg); }
+}
+@keyframes badge-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+@keyframes badge-shimmer {
+  0%   { transform: translateX(-120%) skewX(-20deg); }
+  60%  { transform: translateX(120%)  skewX(-20deg); }
+  100% { transform: translateX(120%)  skewX(-20deg); }
+}
+@keyframes badge-spark {
+  0%, 100% { opacity: 0; transform: translate(var(--x,0), var(--y,0)) scale(0.6); }
+  50%      { opacity: 1; transform: translate(var(--x,0), var(--y,0)) scale(1.2); }
+}
+@keyframes badge-bezel-pulse {
+  0%, 100% { box-shadow: 0 0 24px var(--bg-glow, rgba(0,191,255,0.45)), inset 0 0 0 1px rgba(255,255,255,0.08); }
+  50%      { box-shadow: 0 0 44px var(--bg-glow, rgba(0,229,255,0.85)), inset 0 0 0 1px rgba(255,255,255,0.15); }
+}
+
+.badge-v2 {
+  position: relative;
+  width: 88px; height: 88px;
+  animation: badge-float 4s ease-in-out infinite;
+}
+@media (min-width: 640px) { .badge-v2 { width: 108px; height: 108px; } }
+.badge-v2.locked { animation: none; opacity: 0.35; filter: grayscale(0.8); }
+
+/* Animated outer rotating ring (conic gradient) */
+.badge-v2-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--bg-c1,#00E5FF), var(--bg-c2,#1E90FF), transparent 40%, var(--bg-c1,#00E5FF) 70%, var(--bg-c2,#1E90FF));
+  filter: blur(0.5px);
+  animation: badge-rotate 6s linear infinite;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+.badge-v2.locked .badge-v2-ring { background: linear-gradient(180deg, #303040, #1A1A24); animation: none; }
+
+/* Inner bezel — sits inside the ring as a "frame" */
+.badge-v2-bezel {
+  position: absolute; inset: 4px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(135deg, #0c0c12 0%, #050509 50%, #0c0c12 100%);
+  animation: badge-bezel-pulse 3s ease-in-out infinite;
+}
+.badge-v2.locked .badge-v2-bezel { animation: none; box-shadow: none; background: #15151c; }
+
+/* Inner face — where the icon sits */
+.badge-v2-face {
+  position: absolute; inset: 8px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: radial-gradient(circle at 50% 35%, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0) 60%), linear-gradient(180deg, #0a0a12 0%, #02020a 100%);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+
+/* Specular highlight — a glossy diagonal sheen on top */
+.badge-v2-shine {
+  position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  pointer-events: none;
+  overflow: hidden;
+}
+.badge-v2-shine::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 50%; height: 100%;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+  animation: badge-shimmer 4s ease-in-out infinite;
+}
+
+/* Particle sparks for top tiers */
+.badge-v2-sparks > i {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--bg-spark, #FFD700);
+  filter: drop-shadow(0 0 4px var(--bg-spark, #FFD700));
+  pointer-events: none;
+  animation: badge-spark 1.8s ease-in-out infinite;
+}
+.badge-v2-sparks > i:nth-child(1) { --x: -42px; --y: -10px; animation-delay: 0s; }
+.badge-v2-sparks > i:nth-child(2) { --x:  42px; --y: -10px; animation-delay: 0.3s; }
+.badge-v2-sparks > i:nth-child(3) { --x:   0px; --y: -48px; animation-delay: 0.6s; }
+.badge-v2-sparks > i:nth-child(4) { --x: -32px; --y:  32px; animation-delay: 0.9s; }
+.badge-v2-sparks > i:nth-child(5) { --x:  32px; --y:  32px; animation-delay: 1.2s; }
+
+/* Hover state: faster spin, bigger glow, slight scale */
+.badge-v2-card { transition: transform 0.3s ease; }
+.badge-v2-card:hover .badge-v2 { transform: scale(1.08); }
+.badge-v2-card:hover .badge-v2-ring { animation-duration: 1.8s; }
+.badge-v2-card:hover .badge-v2-bezel { animation-duration: 1s; }
+
+/* Reduced motion fallback */
+@media (prefers-reduced-motion: reduce) {
+  .badge-v2, .badge-v2-ring, .badge-v2-bezel, .badge-v2-shine::before, .badge-v2-sparks > i { animation: none !important; }
+}
+
+
 /* Custom button */
 .btn-primary {
   background: linear-gradient(180deg, #00E5FF 0%, #00BFFF 50%, #1E90FF 100%);
