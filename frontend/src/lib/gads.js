@@ -17,7 +17,7 @@ const CONVERSION_ID = "AW-18187044875";
 // PASTE YOUR CONVERSION LABELS HERE (from Google Ads dashboard):
 const LABELS = {
   signup: "",         // e.g. "AbCdEfGhIjK-LmNoPq"
-  premium_purchase: "", // fires after successful Stripe checkout
+  premium_purchase: "XkdBCPj63LIcEIuQoeBD", // fires after successful Stripe checkout
 };
 
 /**
