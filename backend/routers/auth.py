@@ -33,6 +33,7 @@ async def _notify_admin_new_signup(user: dict) -> None:
     import os
     admin_email = os.environ.get("ADMIN_EMAIL")
     if not admin_email:
+        logger.warning("ADMIN_EMAIL not set; skipping admin signup notification")
         return
     try:
         from email_service import send_email, render_admin_new_signup
@@ -42,7 +43,16 @@ async def _notify_admin_new_signup(user: dict) -> None:
             user_email=user["email"],
             total_users=total_users,
         )
-        await send_email(admin_email, subject, html, tag="admin_signup_notification")
+        logger.info(f"admin signup notification: sending to {admin_email} for new user {user.get('email')}")
+        email_id = await send_email(admin_email, subject, html, tag="admin_signup_notification")
+        await db.email_log.insert_one({
+            "user_id": user["id"], "email": admin_email, "template": "admin_signup_notification",
+            "new_user_email": user["email"], "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
+        })
+        if email_id:
+            logger.info(f"admin signup notification: SENT id={email_id}")
+        else:
+            logger.error(f"admin signup notification: send_email returned None for {user.get('email')}")
     except Exception as e:
         logger.error(f"admin signup notification failed for {user.get('email')}: {e}")
 
