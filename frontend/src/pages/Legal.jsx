@@ -9,7 +9,7 @@ const COMPANY = {
   city: "24937 Flensburg",
   country: "Deutschland",
   vat: "Umsatzsteuer-ID: folgt",
-  email: "sazhco0385@gmail.com",
+  email: "supportalphafit@gmail.com",
 };
 
 export function Impressum() {

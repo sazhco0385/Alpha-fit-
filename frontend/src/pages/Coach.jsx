@@ -61,10 +61,10 @@ export default function Coach() {
         </p>
       </div>
 
-      {/* Proaktive Insights */}
-      <CoachInsights />
+      {/* Proaktive Insights (collapsible auf Coach-Seite, damit Chat sichtbar ist) */}
+      <CoachInsights collapsible />
 
-      <div className="af-card flex flex-col h-[68vh] sm:h-[72vh] clip-corner-tl-br" data-testid="coach-chat">
+      <div className="af-card flex flex-col h-[60vh] sm:h-[72vh] min-h-[440px] clip-corner-tl-br" data-testid="coach-chat">
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4">
           {messages.length === 0 && (
