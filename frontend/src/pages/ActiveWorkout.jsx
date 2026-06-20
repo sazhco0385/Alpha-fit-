@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../lib/api";
-import { Check, X, Pause, Play, ChevronRight, Loader2, Flame, Trophy, TrendingUp, Sparkles, Activity, PlayCircle } from "lucide-react";
+import { Check, X, Pause, Play, ChevronRight, Loader2, Trophy, TrendingUp, Sparkles, Activity, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 import { getExerciseImage } from "../lib/exerciseImages";
 import ExerciseVideoModal from "../components/ExerciseVideoModal";
+import BadgeGlow from "../components/BadgeGlow";
 import { playCountdownBeep, playRestOverChime, isSoundEnabled } from "../lib/sound";
 
 export default function ActiveWorkout() {
@@ -381,14 +382,18 @@ function CompleteView({ newBadges, onClose }) {
         <p className="text-gray-400 font-chakra text-sm sm:text-base mt-3 px-2">Du hast geliefert. Alpha-Mode aktiviert.</p>
 
         {newBadges.length > 0 && (
-          <div className="mt-8 af-card p-6 clip-corner-tl-br" data-testid="new-badges-section">
-            <div className="text-[#00BFFF] uppercase tracking-widest text-xs font-chakra mb-3">NEUE BADGES FREIGESCHALTET</div>
-            <div className="flex flex-wrap justify-center gap-4">
+          <div className="mt-8 af-card p-5 sm:p-6 clip-corner-tl-br" data-testid="new-badges-section">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Sparkles size={14} className="text-[#FFD700]" style={{filter: "drop-shadow(0 0 6px #FFD70088)"}} />
+              <div className="text-[#FFD700] uppercase tracking-widest text-[11px] sm:text-xs font-chakra">
+                {newBadges.length === 1 ? "NEUER BADGE FREIGESCHALTET" : `${newBadges.length} NEUE BADGES FREIGESCHALTET`}
+              </div>
+              <Sparkles size={14} className="text-[#FFD700]" style={{filter: "drop-shadow(0 0 6px #FFD70088)"}} />
+            </div>
+            <div className="text-[10px] text-gray-400 font-chakra mb-4">Tippe oder schau zu wie sie animieren.</div>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
               {newBadges.map((b) => (
-                <div key={b.id} className="text-center">
-                  <Flame size={36} className="text-[#FFD700] mx-auto" style={{ filter: "drop-shadow(0 0 12px rgba(255,215,0,0.8))" }} />
-                  <div className="font-teko text-lg mt-1 chrome-text">{b.title}</div>
-                </div>
+                <BadgeGlow key={b.id} badge={b} />
               ))}
             </div>
           </div>
