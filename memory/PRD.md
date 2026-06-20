@@ -99,6 +99,34 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 
 
 
+## Implemented (2026-06-20) - Marketing / SEO Foundation
+- **3 public Feature-Landing-Pages** für Google Ads Sitelinks (kein Auth-Wall, gecrawlt):
+  - `/features/ki-coach` — AI Coach hero + Beispiel-Chat
+  - `/features/body-scan` — Vision-AI hero + Beispiel-Analyse
+  - `/features/ernaehrung` — Foto-Tracker hero + Step-by-Step
+- Shared `<FeatureLanding>` Component mit:
+  - SEO Meta-Tags pro Seite (title, description, OG-tags, canonical, twitter:card) via useEffect-injection (no react-helmet dep)
+  - Sticky Header mit Logo + CTA
+  - Hero-Section pro Page
+  - Benefit-Cards Grid
+  - Trust-Strip (SSL, 7T gratis, jederzeit kündbar)
+  - Bottom-CTA + Legal-Footer
+  - Mobile-optimiert (responsive Hero text, gratis-Start Button auf Mobile statt Login)
+- `/sitemap.xml` mit allen public Routes + Prioritäten
+- `/robots.txt` mit Allow für public, Disallow für /admin /dashboard /workout
+- Conversion-Tracking: jeder CTA-Button linkt zu `/auth?mode=register` (Signup-Conversion feuert dort via `trackConversion("signup")`)
+
+## Implemented (2026-06-20) - PR Cards (Personal Records)
+- Backend: `/api/personal-records` (list) + `/api/personal-records/{id}` (detail) + `detect_prs_for_session()` Hook in /sessions/complete
+- Epley e1RM Formel für faire PR-Vergleiche (weight*(1+reps/30))
+- Rarity-Tiers: Bronze (≤5%) / Silber (5-12%) / Gold (12-25% oder ≥100kg) / Mythic (25%+ oder ≥200kg oder Triple-PR-Session)
+- Frontend: `<PRCard>` Component mit Rarity-spezifischen Farben/Borders/Glows, animierten Sparkles, Chrome-Gradient auf Gewicht
+- `html-to-image` PNG-Export + Web Share API für native iOS/Android Share-Sheet
+- `/personal-records` Page (Trophy Room) mit Tabs "Beste pro Übung" und "Verlauf" + Rarity-Counts
+- Auto-Showcase auf Workout-Complete-Screen wenn PRs erzielt
+
+
+
 ## Implemented (2026-02-15) - Email Unsubscribe Landing
 - **Signed JWT unsubscribe tokens** (1-year expiry, scope=`unsub`) via `create_unsub_token()` / `decode_unsub_token()` in server.py
 - **3 public endpoints** (no auth) in `routers/unsubscribe.py`: GET /api/unsubscribe/verify, POST /update, POST /all

@@ -26,6 +26,9 @@ import Friends from "./pages/Friends";
 import Challenges from "./pages/Challenges";
 import Leaderboard from "./pages/Leaderboard";
 import PersonalRecords from "./pages/PersonalRecords";
+import FeatureKICoach from "./pages/features/FeatureKICoach";
+import FeatureBodyScan from "./pages/features/FeatureBodyScan";
+import FeatureNutrition from "./pages/features/FeatureNutrition";
 import A2HSPrompt from "./components/A2HSPrompt";
 import SplashScreen from "./components/SplashScreen";
 
@@ -77,6 +80,9 @@ function App() {
             <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
             <Route path="/personal-records" element={<ProtectedRoute><PersonalRecords /></ProtectedRoute>} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/features/ki-coach" element={<FeatureKICoach />} />
+            <Route path="/features/body-scan" element={<FeatureBodyScan />} />
+            <Route path="/features/ernaehrung" element={<FeatureNutrition />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>

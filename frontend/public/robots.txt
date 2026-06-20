@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /workout
+Disallow: /onboarding
+Disallow: /payment-return
+Disallow: /settings
+
+Sitemap: https://alpha-fit.fitness/sitemap.xml
