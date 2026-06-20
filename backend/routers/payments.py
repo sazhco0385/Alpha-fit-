@@ -11,7 +11,7 @@ from server import (
     db, get_current_user, now_iso, log_activity, create_unsub_token,
     CheckoutRequest, PLANS, TRIAL_DAYS,
 )
-from email_service import send_email, render_payment_success
+from email_service import send_email, render_payment_success, render_admin_new_purchase
 
 logger = logging.getLogger("alphafit")
 router = APIRouter()
@@ -34,6 +34,38 @@ async def _send_payment_email_once(user_id: str, plan: str, amount: float, curre
         })
     except Exception as e:
         logger.error(f"payment_success email failed for user={user_id}: {e}")
+
+
+async def _notify_admin_new_purchase(user_id: str, plan: str, amount: float, currency: str) -> None:
+    """Send admin notification email for every successful premium purchase. Idempotent per (user_id, plan)."""
+    import os
+    admin_email = os.environ.get("ADMIN_EMAIL")
+    if not admin_email:
+        return
+    try:
+        # Idempotency: only one admin notification per (user_id, plan)
+        already = await db.email_log.find_one({"user_id": user_id, "template": "admin_purchase_notification", "plan": plan})
+        if already:
+            return
+        u = await db.users.find_one({"id": user_id}, {"_id": 0})
+        if not u or not u.get("email"):
+            return
+        total_purchases = await db.payment_transactions.count_documents({"payment_status": "paid"})
+        subject, html = render_admin_new_purchase(
+            user_name=u.get("name") or "Unknown",
+            user_email=u["email"],
+            plan=plan,
+            amount=float(amount or 0),
+            currency=currency or "EUR",
+            total_purchases=total_purchases,
+        )
+        email_id = await send_email(admin_email, subject, html, tag="admin_purchase_notification")
+        await db.email_log.insert_one({
+            "user_id": user_id, "email": admin_email, "template": "admin_purchase_notification",
+            "plan": plan, "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
+        })
+    except Exception as e:
+        logger.error(f"admin purchase notification failed for user={user_id}: {e}")
 
 
 @router.post("/payments/checkout")
@@ -121,6 +153,7 @@ async def payment_status(session_id: str, user: dict = Depends(get_current_user)
         # Payment success email (fire-and-forget, idempotent)
         import asyncio as _aio
         _aio.create_task(_send_payment_email_once(tx["user_id"], tx["plan"], tx.get("amount", 0), tx.get("currency", "EUR")))
+        _aio.create_task(_notify_admin_new_purchase(tx["user_id"], tx["plan"], tx.get("amount", 0), tx.get("currency", "EUR")))
 
     return {
         "status": status_str,
@@ -171,4 +204,5 @@ async def stripe_webhook(request: Request):
         if user_id and p:
             import asyncio as _aio
             _aio.create_task(_send_payment_email_once(user_id, plan, p.get("amount", 0), p.get("currency", "EUR")))
+            _aio.create_task(_notify_admin_new_purchase(user_id, plan, p.get("amount", 0), p.get("currency", "EUR")))
     return {"received": True}

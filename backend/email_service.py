@@ -259,3 +259,31 @@ def render_admin_new_signup(user_name: str, user_email: str, total_users: int) -
       <p style="margin: 0; color: #999; font-size: 13px;">7-Tage Trial wurde automatisch aktiviert. Du kannst alle User im Admin-Panel verwalten.</p>
     """
     return subject, _layout("Neue Registrierung", preheader, body, "Admin Panel öffnen", f"{APP_URL}/admin", "")
+
+
+def render_admin_new_purchase(user_name: str, user_email: str, plan: str, amount: float, currency: str, total_purchases: int) -> tuple[str, str]:
+    """Internal notification to admin when a user buys premium."""
+    plan_label = {"monthly": "Monatlich", "yearly": "Jährlich", "lifetime": "Lifetime"}.get(plan, plan)
+    currency_symbol = "€" if (currency or "").lower() == "eur" else (currency or "").upper()
+    subject = f"💰 Premium-Kauf: {user_name} — {amount:.2f} {currency_symbol}"
+    preheader = f"{user_email} hat {plan_label} gekauft."
+    body = f"""
+      <h1 style="font-size: 22px; font-weight: 800; color: #f4d27a; margin: 0 0 14px;">Cha-ching. 💰</h1>
+      <p style="margin: 0 0 18px; color: #cfcfcf;">Ein User hat gerade Premium aktiviert:</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.18); border-radius: 12px; margin-bottom: 18px;">
+        <tr><td style="padding: 16px 18px;">
+          <div style="color: #999; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;">Käufer</div>
+          <div style="color: #f4d27a; font-size: 18px; font-weight: 700;">{user_name}</div>
+          <div style="color: #e9e9e9; font-size: 14px; margin-top: 4px;">{user_email}</div>
+          <div style="color: #999; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; margin: 14px 0 4px;">Plan</div>
+          <div style="color: #e9e9e9; font-size: 16px; font-weight: 600;">{plan_label}</div>
+          <div style="color: #999; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; margin: 14px 0 4px;">Betrag</div>
+          <div style="color: #34d399; font-size: 24px; font-weight: 800;">{amount:.2f} {currency_symbol}</div>
+          <div style="color: #999; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; margin: 14px 0 4px;">Gesamt-Käufe</div>
+          <div style="color: #e9e9e9; font-size: 16px; font-weight: 600;">#{total_purchases}</div>
+        </td></tr>
+      </table>
+      <p style="margin: 0; color: #999; font-size: 13px;">Stripe-Bestätigung folgt separat. Im Admin-Panel siehst du alle Details.</p>
+    """
+    return subject, _layout("Premium-Kauf", preheader, body, "Admin Panel öffnen", f"{APP_URL}/admin", "")
+
