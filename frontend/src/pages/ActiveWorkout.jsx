@@ -372,10 +372,13 @@ function CompleteView({ newBadges, onClose }) {
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-30" />
       <div className="absolute inset-0 bg-radial-blue" />
-      <div className="relative z-10 text-center max-w-xl" data-testid="workout-complete-view">
-        <Trophy size={80} className="mx-auto text-[#00E5FF]" style={{ filter: "drop-shadow(0 0 24px rgba(0,229,255,1))" }} />
-        <h1 className="font-teko text-7xl mt-4 electric-text glow-text">TRAINING ABGESCHLOSSEN</h1>
-        <p className="text-gray-400 font-chakra mt-2">Du hast geliefert. Alpha-Mode aktiviert.</p>
+      <div className="relative z-10 text-center max-w-xl w-full" data-testid="workout-complete-view">
+        <Trophy size={64} className="mx-auto text-[#00E5FF] sm:hidden" style={{ filter: "drop-shadow(0 0 24px rgba(0,229,255,1))" }} />
+        <Trophy size={80} className="mx-auto text-[#00E5FF] hidden sm:block" style={{ filter: "drop-shadow(0 0 24px rgba(0,229,255,1))" }} />
+        <h1 className="font-teko text-4xl sm:text-6xl lg:text-7xl mt-4 electric-text glow-text leading-[0.95] tracking-wide">
+          TRAINING<br />ABGESCHLOSSEN
+        </h1>
+        <p className="text-gray-400 font-chakra text-sm sm:text-base mt-3 px-2">Du hast geliefert. Alpha-Mode aktiviert.</p>
 
         {newBadges.length > 0 && (
           <div className="mt-8 af-card p-6 clip-corner-tl-br" data-testid="new-badges-section">
