@@ -4,6 +4,7 @@ import Logo from "../components/Logo";
 import { useAuth } from "../lib/auth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { trackConversion } from "../lib/gads";
 
 export default function AuthPage() {
   const { login, register } = useAuth();
@@ -18,7 +19,10 @@ export default function AuthPage() {
     try {
       let user;
       if (mode === "login") user = await login(form.email, form.password);
-      else user = await register(form.email, form.password, form.name);
+      else {
+        user = await register(form.email, form.password, form.name);
+        trackConversion("signup");
+      }
       toast.success(mode === "login" ? "Willkommen zurück, Alpha." : "Account erstellt. Los geht's!");
       // Onboarding hat IMMER Vorrang - egal ob Admin oder normaler User
       if (!user.onboarding_completed) {

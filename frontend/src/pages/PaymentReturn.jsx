@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Loader2, CheckCircle2, XCircle, Crown } from "lucide-react";
+import { trackConversion } from "../lib/gads";
 
 export default function PaymentReturn() {
   const [params] = useSearchParams();
@@ -28,6 +29,11 @@ export default function PaymentReturn() {
         if (data.payment_status === "paid" || data.status === "complete") {
           await refresh();
           setStatus("success");
+          trackConversion("premium_purchase", {
+            value: Number(data.amount_total || 0) / 100 || undefined,
+            currency: (data.currency || "EUR").toUpperCase(),
+            transaction_id: sessionId,
+          });
           return;
         }
         if (data.status === "expired") { setStatus("expired"); return; }
