@@ -356,6 +356,7 @@ from routers import unsubscribe as _unsubscribe_router  # noqa: E402
 from routers import friends as _friends_router  # noqa: E402
 from routers import challenges as _challenges_router  # noqa: E402
 from routers import leaderboard as _leaderboard_router  # noqa: E402
+from routers import personal_records as _pr_router  # noqa: E402
 
 api_router.include_router(_formcheck_router.router)
 api_router.include_router(_payments_router.router)
@@ -373,6 +374,7 @@ api_router.include_router(_unsubscribe_router.router)
 api_router.include_router(_friends_router.router)
 api_router.include_router(_challenges_router.router)
 api_router.include_router(_leaderboard_router.router)
+api_router.include_router(_pr_router.router)
 
 # Include router & CORS
 app.include_router(api_router)

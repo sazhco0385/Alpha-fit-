@@ -277,12 +277,20 @@ async def complete_session(payload: dict, user: dict = Depends(get_current_user)
     if new_badges:
         await db.users.update_one({"id": user["id"]}, {"$push": {"badges": {"$each": new_badges}}})
 
+    # ===== Personal Records Detection =====
+    plan_for_pr = None
+    if s.get("plan_id"):
+        plan_for_pr = await db.training_plans.find_one({"id": s["plan_id"]}, {"_id": 0})
+    from routers.personal_records import detect_prs_for_session
+    new_prs = await detect_prs_for_session(s, plan_for_pr)
+
     # ===== Auto Plan-Anpassung (nach kompletter Trainingswoche) =====
     await _maybe_trigger_auto_plan_adjust(user)
 
     return {
         "ok": True,
         "new_badges": new_badges,
+        "new_prs": new_prs,
         "total_completed": completed_count,
         "current_streak": streak,
         "total_volume_kg": total_volume,

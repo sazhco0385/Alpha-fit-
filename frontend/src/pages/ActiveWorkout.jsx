@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { getExerciseImage } from "../lib/exerciseImages";
 import ExerciseVideoModal from "../components/ExerciseVideoModal";
 import BadgeGlow from "../components/BadgeGlow";
+import PRCard from "../components/PRCard";
 import { playCountdownBeep, playRestOverChime, isSoundEnabled } from "../lib/sound";
 
 export default function ActiveWorkout() {
@@ -26,6 +27,7 @@ export default function ActiveWorkout() {
   const [finishing, setFinishing] = useState(false);
   const [done, setDone] = useState(false);
   const [newBadges, setNewBadges] = useState([]);
+  const [newPRs, setNewPRs] = useState([]);
   const [suggestion, setSuggestion] = useState(null);
   const restRef = useRef(null);
 
@@ -104,7 +106,7 @@ export default function ActiveWorkout() {
 
   if (loading) return <FullScreenLoader text="LADE TRAINING..." />;
   if (!day) return <FullScreenLoader text="KEIN PLAN GEFUNDEN" />;
-  if (done) return <CompleteView newBadges={newBadges} onClose={() => navigate("/dashboard")} />;
+  if (done) return <CompleteView newBadges={newBadges} newPRs={newPRs} onClose={() => navigate("/dashboard")} />;
 
   const exercise = day.exercises[exIdx];
   const totalSets = exercise?.sets || 0;
@@ -159,6 +161,7 @@ export default function ActiveWorkout() {
     try {
       const { data } = await api.post("/sessions/complete", { session_id: sessionId });
       setNewBadges(data.new_badges || []);
+      setNewPRs(data.new_prs || []);
       setDone(true);
     } catch (err) {
       toast.error("Fehler beim Abschließen");
@@ -368,7 +371,7 @@ function FullScreenLoader({ text }) {
   );
 }
 
-function CompleteView({ newBadges, onClose }) {
+function CompleteView({ newBadges, newPRs = [], onClose }) {
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-30" />
@@ -394,6 +397,24 @@ function CompleteView({ newBadges, onClose }) {
             <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
               {newBadges.map((b) => (
                 <BadgeGlow key={b.id} badge={b} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {newPRs.length > 0 && (
+          <div className="mt-8 af-card p-4 sm:p-6 clip-corner-tl-br" data-testid="new-prs-section">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Trophy size={14} className="text-[#FFD700]" style={{filter: "drop-shadow(0 0 6px #FFD70088)"}} />
+              <div className="text-[#FFD700] uppercase tracking-widest text-[11px] sm:text-xs font-chakra">
+                {newPRs.length === 1 ? "NEUER PERSONAL RECORD" : `${newPRs.length} NEUE PERSONAL RECORDS`}
+              </div>
+              <Trophy size={14} className="text-[#FFD700]" style={{filter: "drop-shadow(0 0 6px #FFD70088)"}} />
+            </div>
+            <div className="text-[10px] text-gray-400 font-chakra mb-5">Sammelkarten zum Teilen — tap auf TEILEN oder DOWNLOAD.</div>
+            <div className="flex flex-wrap justify-center gap-6">
+              {newPRs.map((pr) => (
+                <PRCard key={pr.id} pr={pr} />
               ))}
             </div>
           </div>

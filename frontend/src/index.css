@@ -238,6 +238,12 @@ h1, h2, h3, .heading {
 
 /* Custom button */
 .btn-primary {
+
+@keyframes pr-spark {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50%      { opacity: 1; transform: scale(1.2); }
+}
+
   background: linear-gradient(180deg, #00E5FF 0%, #00BFFF 50%, #1E90FF 100%);
   color: #000;
   font-family: 'Teko', sans-serif;
