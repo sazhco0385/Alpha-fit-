@@ -236,3 +236,26 @@ def render_winback(name: str, total_workouts: int, total_volume_kg: int, discoun
       <p style="margin: 0; color: #999;">Disziplin ist nichts, was du verlierst. Aber sie verlässt dich, wenn du nicht hingehst.</p>
     """
     return subject, _layout("Comeback Offer", preheader, body, f"Premium mit {discount_pct}% holen", f"{APP_URL}/premium?winback=1", unsub_token)
+
+
+
+def render_admin_new_signup(user_name: str, user_email: str, total_users: int) -> tuple[str, str]:
+    """Internal notification to admin when a new user signs up."""
+    subject = f"🎉 Neue Registrierung: {user_name} (#{total_users})"
+    preheader = f"{user_email} ist gerade beigetreten."
+    body = f"""
+      <h1 style="font-size: 22px; font-weight: 800; color: #f4d27a; margin: 0 0 14px;">Neuer User registriert.</h1>
+      <p style="margin: 0 0 18px; color: #cfcfcf;">Jemand hat sich gerade bei alpha-fit angemeldet:</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.18); border-radius: 12px; margin-bottom: 18px;">
+        <tr><td style="padding: 16px 18px;">
+          <div style="color: #999; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;">Name</div>
+          <div style="color: #f4d27a; font-size: 18px; font-weight: 700;">{user_name}</div>
+          <div style="color: #999; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; margin: 12px 0 4px;">E-Mail</div>
+          <div style="color: #e9e9e9; font-size: 16px; font-weight: 600;">{user_email}</div>
+          <div style="color: #999; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; margin: 12px 0 4px;">User-Nummer</div>
+          <div style="color: #e9e9e9; font-size: 16px; font-weight: 600;">#{total_users} (insgesamt)</div>
+        </td></tr>
+      </table>
+      <p style="margin: 0; color: #999; font-size: 13px;">7-Tage Trial wurde automatisch aktiviert. Du kannst alle User im Admin-Panel verwalten.</p>
+    """
+    return subject, _layout("Neue Registrierung", preheader, body, "Admin Panel öffnen", f"{APP_URL}/admin", "")

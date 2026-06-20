@@ -28,6 +28,25 @@ async def _send_welcome_email(user: dict) -> None:
         logger.error(f"welcome email failed for {user.get('email')}: {e}")
 
 
+async def _notify_admin_new_signup(user: dict) -> None:
+    """Send admin notification email for every new registration."""
+    import os
+    admin_email = os.environ.get("ADMIN_EMAIL")
+    if not admin_email:
+        return
+    try:
+        from email_service import send_email, render_admin_new_signup
+        total_users = await db.users.count_documents({})
+        subject, html = render_admin_new_signup(
+            user_name=user.get("name") or "Unknown",
+            user_email=user["email"],
+            total_users=total_users,
+        )
+        await send_email(admin_email, subject, html, tag="admin_signup_notification")
+    except Exception as e:
+        logger.error(f"admin signup notification failed for {user.get('email')}: {e}")
+
+
 @router.post("/auth/register")
 async def register(payload: RegisterRequest):
     existing = await db.users.find_one({"email": payload.email.lower()})
@@ -51,6 +70,7 @@ async def register(payload: RegisterRequest):
     await db.users.insert_one(user)
     await log_activity(user["id"], user["name"], "registered", {})
     asyncio.create_task(_send_welcome_email(user))
+    asyncio.create_task(_notify_admin_new_signup(user))
     token = create_token(user["id"])
     return {"token": token, "user": public_user(user)}
 
