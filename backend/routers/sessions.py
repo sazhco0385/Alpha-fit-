@@ -382,27 +382,41 @@ async def _run_auto_adjust_then_notify(job_id: str, user: dict, plan: dict) -> N
         )
 
 async def calculate_streak(user_id: str) -> int:
-    """Berechnet die aktuelle Streak (konsekutive Tage mit abgeschlossenem Training)."""
+    """Berechnet die aktuelle Streak (konsekutive Tage mit abgeschlossenem Training).
+    Premium-Streak-Freeze überbrückt automatisch genau 1-Tag-Lücken (1× pro Monat)."""
     sessions = await db.workout_sessions.find(
         {"user_id": user_id, "status": "completed"}, {"_id": 0, "completed_at": 1}
     ).sort("completed_at", -1).to_list(500)
     if not sessions:
         return 0
-    # Convert to date strings (YYYY-MM-DD), unique sorted desc
     dates = sorted({(s.get("completed_at") or "")[:10] for s in sessions if s.get("completed_at")}, reverse=True)
     if not dates:
         return 0
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     yesterday_str = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
-    # Streak only valid if last training is today or yesterday
-    if dates[0] != today_str and dates[0] != yesterday_str:
-        return 0
+    two_days_str = (datetime.now(timezone.utc) - timedelta(days=2)).strftime("%Y-%m-%d")
+    # Streak only valid if last training is today/yesterday OR 2 days ago AND user has freeze
+    from routers.streak import consume_freeze_if_available
+    if dates[0] not in (today_str, yesterday_str):
+        if dates[0] == two_days_str:
+            # Try to consume a freeze to bridge today-yesterday gap
+            if not await consume_freeze_if_available(user_id):
+                return 0
+        else:
+            return 0
     streak = 1
     for i in range(1, len(dates)):
         prev_date = datetime.fromisoformat(dates[i-1])
         curr_date = datetime.fromisoformat(dates[i])
-        if (prev_date - curr_date).days == 1:
+        gap = (prev_date - curr_date).days
+        if gap == 1:
             streak += 1
+        elif gap == 2:
+            # Try freeze
+            if await consume_freeze_if_available(user_id):
+                streak += 1
+            else:
+                break
         else:
             break
     return streak

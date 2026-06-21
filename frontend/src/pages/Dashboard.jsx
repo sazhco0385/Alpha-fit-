@@ -4,6 +4,7 @@ import Layout from "../components/Layout";
 import BadgeGlow from "../components/BadgeGlow";
 import CoachInsights from "../components/CoachInsights";
 import DailySummary from "../components/DailySummary";
+import StreakFreezeWidget from "../components/StreakFreezeWidget";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Dumbbell, Brain, TrendingUp, Crown, Play, Calendar, Flame, Award, RefreshCw, Loader2, Weight, Scan, Sparkles, BookOpen, ChevronRight } from "lucide-react";
@@ -143,6 +144,8 @@ export default function Dashboard() {
 
       {/* Alpha Coach Insights (compact) */}
       <CoachInsights compact />
+
+      <div className="mb-5"><StreakFreezeWidget /></div>
 
       {/* Daily Summary (motivation, calories, weight, next workout) */}
       <DailySummary plan={plan} sessions={sessions} />
