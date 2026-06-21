@@ -383,7 +383,8 @@ async def _run_auto_adjust_then_notify(job_id: str, user: dict, plan: dict) -> N
 
 async def calculate_streak(user_id: str) -> int:
     """Berechnet die aktuelle Streak (konsekutive Tage mit abgeschlossenem Training).
-    Premium-Streak-Freeze überbrückt automatisch genau 1-Tag-Lücken (1× pro Monat)."""
+    Premium-Streak-Freeze überbrückt automatisch genau 1-Tag-Lücken (1× pro Monat).
+    Bereits gebridge Lücken werden via streak_freeze_bridges Log idempotent erkannt."""
     sessions = await db.workout_sessions.find(
         {"user_id": user_id, "status": "completed"}, {"_id": 0, "completed_at": 1}
     ).sort("completed_at", -1).to_list(500)
@@ -395,13 +396,20 @@ async def calculate_streak(user_id: str) -> int:
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     yesterday_str = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
     two_days_str = (datetime.now(timezone.utc) - timedelta(days=2)).strftime("%Y-%m-%d")
-    # Streak only valid if last training is today/yesterday OR 2 days ago AND user has freeze
+    # Existing bridge log so we don't double-consume freezes on re-reads
+    user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "streak_freeze_bridges": 1})
+    bridges = set((user_doc or {}).get("streak_freeze_bridges") or [])
     from routers.streak import consume_freeze_if_available
+    # Streak only valid if last training is today/yesterday OR 2 days ago AND user has freeze
     if dates[0] not in (today_str, yesterday_str):
         if dates[0] == two_days_str:
-            # Try to consume a freeze to bridge today-yesterday gap
-            if not await consume_freeze_if_available(user_id):
+            bridge_key = f"{yesterday_str}->{dates[0]}"
+            if bridge_key in bridges:
+                pass  # already bridged previously
+            elif not await consume_freeze_if_available(user_id, bridge_key):
                 return 0
+            else:
+                bridges.add(bridge_key)
         else:
             return 0
     streak = 1
@@ -412,8 +420,11 @@ async def calculate_streak(user_id: str) -> int:
         if gap == 1:
             streak += 1
         elif gap == 2:
-            # Try freeze
-            if await consume_freeze_if_available(user_id):
+            bridge_key = f"{dates[i-1]}->{dates[i]}"
+            if bridge_key in bridges:
+                streak += 1
+            elif await consume_freeze_if_available(user_id, bridge_key):
+                bridges.add(bridge_key)
                 streak += 1
             else:
                 break

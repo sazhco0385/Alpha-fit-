@@ -135,14 +135,19 @@ async def payment_status(session_id: str, user: dict = Depends(get_current_user)
         plan = PLANS.get(tx["plan"])
         if plan:
             until = datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS + plan["days"])
+            now_utc = datetime.now(timezone.utc)
             await db.users.update_one(
                 {"id": tx["user_id"]},
                 {"$set": {
                     "is_premium": True,
                     "premium_until": until.isoformat(),
-                    "trial_until": (datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)).isoformat(),
+                    "trial_until": (now_utc + timedelta(days=TRIAL_DAYS)).isoformat(),
                     "stripe_customer_id": session.get("customer"),
                     "stripe_subscription_id": session.get("subscription"),
+                    # Streak-Freeze sofort gewähren bei Premium-Aktivierung
+                    "streak_freezes_available": 1,
+                    "streak_freeze_last_grant_month": now_utc.strftime("%Y-%m"),
+                    "streak_freeze_last_grant_at": now_utc.isoformat(),
                 }}
             )
         await db.payment_transactions.update_one(
@@ -187,14 +192,18 @@ async def stripe_webhook(request: Request):
         p = PLANS.get(plan or "")
         if user_id and p:
             until = datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS + p["days"])
+            now_utc = datetime.now(timezone.utc)
             await db.users.update_one(
                 {"id": user_id},
                 {"$set": {
                     "is_premium": True,
                     "premium_until": until.isoformat(),
-                    "trial_until": (datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)).isoformat(),
+                    "trial_until": (now_utc + timedelta(days=TRIAL_DAYS)).isoformat(),
                     "stripe_customer_id": data_obj.get("customer"),
                     "stripe_subscription_id": data_obj.get("subscription"),
+                    "streak_freezes_available": 1,
+                    "streak_freeze_last_grant_month": now_utc.strftime("%Y-%m"),
+                    "streak_freeze_last_grant_at": now_utc.isoformat(),
                 }}
             )
         await db.payment_transactions.update_one(

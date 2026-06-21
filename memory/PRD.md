@@ -43,10 +43,14 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
   - Frontend: /bodyscan page, Dashboard CTA card, mobile responsive
   - Testing: 13/13 backend + 5/5 frontend flows pass (iteration_3.json)
 
-## P0 Backlog (next)
-- Stripe webhook secret (STRIPE_WEBHOOK_SECRET) for production-grade signature verification
-- Email notifications (trial ending, payment success)
-- Push notifications for workout reminders
+## Implemented (2026-02-15) - Streak-Freeze (Premium Retention Lever)
+- **New router** `routers/streak.py`: `GET /api/streak/status` returns `{is_premium, freezes_available, used_this_month, next_refresh_at, monthly_allowance}`. Lazy monthly grant on read (1 freeze per calendar month for Premium users only).
+- **`consume_freeze_if_available(user_id, bridge_key)`**: atomic `$inc` + push to `streak_freezes_used_at` + `streak_freeze_bridges` log.
+- **Streak calculation** in `routers/sessions.py` patched: when a 2-day gap is detected (today → workout was 2 days ago, or any 2-day intra-streak gap), check existing `streak_freeze_bridges` log first; if not bridged yet AND a freeze is available, consume + record bridge. Subsequent reads are idempotent (no double-consume).
+- **Payment activation** (`payments.py` + `admin.py`): grants 1 freeze immediately on premium activation (both `/payments/status/{session_id}` and `/admin/members/premium` + webhook). User doesn't have to wait for next month.
+- **Frontend widget** `StreakFreezeWidget.jsx`: Premium → cyan shield + "X verfügbar / Schützt deine Streak bei 1 Tag Pause" or "Verbraucht / Neuer Freeze am DD MMM"; Free → gold lock + "Verpass 1 Tag — Streak bleibt. Premium-Feature." linking to `/premium`.
+- **Integration**: Widget placed in Dashboard between Coach-Insights and Daily-Summary.
+- **Testing**: 2/2 pytest tests pass (`test_streak_freeze.py`) covering full flow (free=0 streak, premium auto-bridge, idempotent re-read) + 37/37 regression on iter9.
 
 ## Implemented (2026-02-15) - Exercise Video Demos (YouTube Curated)
 - **New library** `frontend/src/lib/exerciseVideos.js`: 60+ exercise → YouTube ID mappings (Jeff Nippard, Athlean-X, RP Strength). Substring-Matching für Variationen.

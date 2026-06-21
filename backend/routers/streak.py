@@ -45,12 +45,17 @@ async def _refresh_monthly_freeze(user: dict) -> dict:
     return user
 
 
-async def consume_freeze_if_available(user_id: str) -> bool:
-    """Atomically consume 1 freeze. Returns True if a freeze was consumed."""
+async def consume_freeze_if_available(user_id: str, bridge_key: str = "") -> bool:
+    """Atomically consume 1 freeze. Returns True if a freeze was consumed.
+    Optionally records a bridge_key so the same gap is treated as already-bridged
+    on subsequent streak calculations (no double-consume)."""
+    push_doc: dict = {"streak_freezes_used_at": now_iso()}
+    if bridge_key:
+        push_doc["streak_freeze_bridges"] = bridge_key
     res = await db.users.update_one(
         {"id": user_id, "streak_freezes_available": {"$gt": 0}},
         {"$inc": {"streak_freezes_available": -1},
-         "$push": {"streak_freezes_used_at": now_iso()}},
+         "$push": push_doc},
     )
     return res.modified_count > 0
 

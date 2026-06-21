@@ -152,9 +152,16 @@ async def admin_delete_member(user_id: str, admin: dict = Depends(require_admin)
 @router.post("/admin/members/premium")
 async def admin_set_premium(payload: AdminPremiumRequest, admin: dict = Depends(require_admin)):
     until = datetime.now(timezone.utc) + timedelta(days=payload.days)
+    now_utc = datetime.now(timezone.utc)
     await db.users.update_one(
         {"id": payload.user_id},
-        {"$set": {"is_premium": True, "premium_until": until.isoformat()}}
+        {"$set": {
+            "is_premium": True,
+            "premium_until": until.isoformat(),
+            "streak_freezes_available": 1,
+            "streak_freeze_last_grant_month": now_utc.strftime("%Y-%m"),
+            "streak_freeze_last_grant_at": now_utc.isoformat(),
+        }}
     )
     return {"ok": True, "premium_until": until.isoformat()}
 
