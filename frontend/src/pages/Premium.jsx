@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import api from "../lib/api";
 import { Crown, Check, Zap, Loader2, Scan, Apple, Brain, Award, Sparkles, Shield, TrendingUp } from "lucide-react";
@@ -23,6 +23,15 @@ const BENEFITS = [
 export default function Premium() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(null);
+
+  // Track funnel click when arriving from a marketing email (?from=trial_reminder, ?from=winback, ...)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get("from");
+    if (from) {
+      api.post("/track/funnel", { event: `${from}_click`, source: from }).catch(() => {});
+    }
+  }, []);
 
   const subscribe = async (planKey) => {
     setLoading(planKey);

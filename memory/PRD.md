@@ -64,6 +64,14 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **Preview endpoint** `/api/emails/test` accepts `trial_usage_reminder`, `trial_usage_48h`, `trial_usage_24h` templates.
 - **Testing**: 4/4 pytest tests pass (`test_trial_usage_reminder.py`): template rendering with empty + full stats, dispatcher idempotent 48h→24h flow, pref opt-out suppression. 41/41 combined with streak + iter9 regression.
 
+## Implemented (2026-02-15) - Trial-Reminder Conversion Funnel (Admin Analytics)
+- **New router** `routers/funnel.py`: `POST /api/track/funnel` records click events to `db.funnel_events` and sets `user.last_funnel_source` for attribution. Auto-derives source from event name if not explicitly passed.
+- **Checkout attribution**: `payments.py` `/payments/checkout` reads `user.last_funnel_source` and persists it as `attribution` on `payment_transactions`. Carries through to payment success → links email → click → checkout → purchase.
+- **New admin endpoint** `GET /api/admin/funnel/trial-reminder`: aggregates 4-stage funnel (Emails → Clicks → Checkouts → Purchases) with conversion rates per stage and overall E2E rate. Returns revenue from paid attributed transactions.
+- **Frontend hook** in `Premium.jsx`: useEffect on mount reads `?from=<source>` URL param and POSTs to `/track/funnel` (fire-and-forget). Used by `trial_usage_reminder` email CTAs (`?from=trial_reminder`) and easily extensible to winback / weekly_summary / ads.
+- **Admin UI** `TrialReminderFunnel` card in `Admin.jsx`: 4 stage tiles (E-Mails / Klicks / Checkouts / Käufe) with per-stage conversion-rate badges, color-coded per stage, footer with full breakdown + revenue.
+- **Testing**: 4/4 funnel tests pass (track click sets source, checkout inherits attribution, admin aggregation returns all metric keys, non-admin blocked). 45/45 combined regression.
+
 ## Implemented (2026-02-15) - Exercise Video Demos (YouTube Curated)
 - **New library** `frontend/src/lib/exerciseVideos.js`: 60+ exercise → YouTube ID mappings (Jeff Nippard, Athlean-X, RP Strength). Substring-Matching für Variationen.
 - **Helper functions**: `getExerciseVideoId(name)`, `getExerciseVideoUrl(name)` (embed URL), `getExerciseSearchUrl(name)` (fallback YouTube search)

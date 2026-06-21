@@ -110,6 +110,8 @@ async def create_checkout(payload: CheckoutRequest, user: dict = Depends(get_cur
         "currency": p["currency"],
         "status": "initiated",
         "payment_status": "pending",
+        "attribution": user.get("last_funnel_source") or "",
+        "attribution_at": user.get("last_funnel_source_at") or "",
         "created_at": now_iso(),
     })
     await log_activity(user["id"], user.get("name", ""), "checkout_started", {"plan": payload.plan, "amount": p["amount"]})

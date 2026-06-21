@@ -17,20 +17,24 @@ export default function Admin() {
   const [replyModal, setReplyModal] = useState(null);
   const [replyText, setReplyText] = useState("");
 
+  const [funnel, setFunnel] = useState(null);
+
   const load = async () => {
     setLoading(true);
-    const [{ data: s }, { data: m }, { data: o }, { data: a }, { data: t }] = await Promise.all([
+    const [{ data: s }, { data: m }, { data: o }, { data: a }, { data: t }, { data: f }] = await Promise.all([
       api.get("/admin/stats"),
       api.get("/admin/members"),
       api.get("/admin/online"),
       api.get("/admin/activity?limit=50"),
       api.get("/admin/tickets"),
+      api.get("/admin/funnel/trial-reminder"),
     ]);
     setStats(s);
     setMembers(m.members);
     setOnline(o);
     setActivity(a.events);
     setTickets(t);
+    setFunnel(f);
     setLoading(false);
   };
 
@@ -135,6 +139,9 @@ export default function Admin() {
 
       {/* Support Tickets */}
       <TicketsSection tickets={tickets} onReply={(t) => { setReplyModal(t); setReplyText(t.admin_reply || ""); }} onDelete={deleteTicket} />
+
+      {/* Trial-Reminder Conversion Funnel */}
+      {funnel && <TrialReminderFunnel funnel={funnel} />}
 
       {/* Daily revenue chart */}
       <div className="af-card p-6 mb-8 clip-corner-tl-br">
@@ -255,6 +262,49 @@ export default function Admin() {
     </Layout>
   );
 }
+
+function TrialReminderFunnel({ funnel }) {
+  const stages = [
+    { label: "E-Mails", sub: `${funnel.emails_sent_48h} × 48h · ${funnel.emails_sent_24h} × 24h`, value: funnel.emails_sent, rate: null, color: "#A78BFA" },
+    { label: "Klicks", sub: `${funnel.clicks_unique} unique User`, value: funnel.clicks_total, rate: funnel.rate_click_through, color: "#00BFFF" },
+    { label: "Checkouts", sub: "Stripe gestartet", value: funnel.checkouts_started, rate: funnel.rate_checkout, color: "#FFD700" },
+    { label: "Käufe", sub: `${funnel.revenue.toFixed(2)} € Umsatz`, value: funnel.purchases, rate: funnel.rate_purchase, color: "#00FF7F" },
+  ];
+  return (
+    <div className="af-card p-4 sm:p-6 clip-corner-tl-br mb-6 sm:mb-8" data-testid="admin-trial-funnel">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="font-teko text-xl sm:text-2xl chrome-text flex items-center gap-2">
+          <Send size={18} className="text-[#A78BFA]" />
+          TRIAL-REMINDER FUNNEL
+        </div>
+        <div className="font-teko text-base sm:text-lg gold-chrome tracking-wider" data-testid="funnel-overall-rate">
+          {funnel.rate_overall}% E2E
+        </div>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+        {stages.map((s, i) => (
+          <div key={s.label} className="relative bg-[#0A0A10] border border-[#1A1A24] p-3 sm:p-4" data-testid={`funnel-stage-${s.label.toLowerCase()}`}>
+            <div className="text-[10px] uppercase tracking-[0.25em] font-chakra text-gray-500">Schritt {i + 1}</div>
+            <div className="font-teko text-3xl sm:text-4xl mt-1" style={{ color: s.color, textShadow: `0 0 14px ${s.color}55` }}>
+              {s.value.toLocaleString("de-DE")}
+            </div>
+            <div className="font-teko text-sm tracking-wider text-gray-300">{s.label}</div>
+            <div className="text-[11px] text-gray-500 font-chakra mt-1 truncate">{s.sub}</div>
+            {s.rate !== null && (
+              <div className="absolute top-2 right-2 text-[10px] font-chakra px-1.5 py-0.5 border" style={{ borderColor: `${s.color}66`, color: s.color }}>
+                {s.rate}%
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 text-[11px] text-gray-500 font-chakra">
+        Klick-Rate {funnel.rate_click_through}% · Checkout-Rate {funnel.rate_checkout}% · Kauf-Rate {funnel.rate_purchase}% · Gesamt-Conversion {funnel.rate_overall}%
+      </div>
+    </div>
+  );
+}
+
 
 function TicketsSection({ tickets, onReply, onDelete }) {
   const statusConfig = {

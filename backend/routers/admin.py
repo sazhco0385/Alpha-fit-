@@ -173,3 +173,55 @@ async def admin_revoke_premium(payload: dict, admin: dict = Depends(require_admi
         {"$set": {"is_premium": False, "premium_until": None, "trial_until": None}}
     )
     return {"ok": True}
+
+
+
+@router.get("/admin/funnel/trial-reminder")
+async def admin_funnel_trial_reminder(admin: dict = Depends(require_admin)):
+    """Trial-Reminder funnel: emails sent → clicks → checkouts → purchases.
+    Each stage's conversion rate is computed against the previous stage.
+    """
+    # 1) Emails sent (by milestone)
+    sent_48 = await db.email_log.count_documents({
+        "template": "trial_usage_reminder", "milestone": "48h", "ok": True,
+    })
+    sent_24 = await db.email_log.count_documents({
+        "template": "trial_usage_reminder", "milestone": "24h", "ok": True,
+    })
+    emails_sent = sent_48 + sent_24
+
+    # 2) Distinct users who clicked
+    clicks_total = await db.funnel_events.count_documents({"source": "trial_reminder"})
+    clicker_users = await db.funnel_events.distinct("user_id", {"source": "trial_reminder"})
+    clicks_unique = len(clicker_users)
+
+    # 3) Checkouts started (transactions attributed)
+    checkouts_started = await db.payment_transactions.count_documents({"attribution": "trial_reminder"})
+
+    # 4) Purchases completed
+    paid_filter = {"attribution": "trial_reminder", "payment_status": "paid"}
+    paid_pipeline = [
+        {"$match": paid_filter},
+        {"$group": {"_id": None, "count": {"$sum": 1}, "revenue": {"$sum": "$amount"}}},
+    ]
+    paid_agg = await db.payment_transactions.aggregate(paid_pipeline).to_list(1)
+    purchases = paid_agg[0]["count"] if paid_agg else 0
+    revenue = float(paid_agg[0]["revenue"]) if paid_agg else 0.0
+
+    def _rate(num, den):
+        return round((num / den) * 100, 1) if den > 0 else 0.0
+
+    return {
+        "emails_sent": emails_sent,
+        "emails_sent_48h": sent_48,
+        "emails_sent_24h": sent_24,
+        "clicks_total": clicks_total,
+        "clicks_unique": clicks_unique,
+        "checkouts_started": checkouts_started,
+        "purchases": purchases,
+        "revenue": revenue,
+        "rate_click_through": _rate(clicks_unique, emails_sent),
+        "rate_checkout": _rate(checkouts_started, clicks_unique),
+        "rate_purchase": _rate(purchases, checkouts_started),
+        "rate_overall": _rate(purchases, emails_sent),
+    }
