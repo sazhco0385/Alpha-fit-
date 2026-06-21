@@ -3,7 +3,7 @@ export default function Logo({ size = 40, withText = true, square = false }) {
   if (square) {
     return (
       <img
-        src="/alphafit-logo.png"
+        src="/alphafit-logo.png?v=2"
         alt="alpha-fit"
         style={{ width: size, height: size, objectFit: "contain" }}
         data-testid="alphafit-logo"
@@ -13,7 +13,7 @@ export default function Logo({ size = 40, withText = true, square = false }) {
   return (
     <div className="flex items-center gap-2" data-testid="alphafit-logo">
       <img
-        src="/alphafit-helmet.png"
+        src="/alphafit-helmet.png?v=2"
         alt="alpha-fit"
         style={{
           width: size,

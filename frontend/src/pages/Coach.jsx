@@ -72,7 +72,7 @@ export default function Coach() {
               <div className="relative inline-block mb-4">
                 <div className="absolute inset-0 rounded-full blur-2xl opacity-60" style={{ background: "radial-gradient(circle, rgba(0,191,255,0.5), transparent 70%)" }} />
                 <img
-                  src="/alphafit-helmet.png"
+                  src="/alphafit-helmet.png?v=2"
                   alt="Alpha Coach"
                   className="relative w-20 h-20 mx-auto"
                   style={{ filter: "drop-shadow(0 0 14px rgba(0,191,255,0.7))" }}
@@ -166,7 +166,7 @@ function ChatMessage({ role, text, index }) {
       <div className="relative w-8 h-8 flex-shrink-0">
         <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(circle, rgba(0,191,255,0.5), transparent 70%)", filter: "blur(6px)" }} />
         <img
-          src="/alphafit-helmet.png"
+          src="/alphafit-helmet.png?v=2"
           alt="Alpha Coach"
           className="relative w-8 h-8 object-contain"
           style={{ filter: "drop-shadow(0 0 6px rgba(0,191,255,0.6))" }}
@@ -185,7 +185,7 @@ function TypingBubble() {
       <div className="relative w-8 h-8 flex-shrink-0">
         <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(circle, rgba(0,191,255,0.5), transparent 70%)", filter: "blur(6px)" }} />
         <img
-          src="/alphafit-helmet.png"
+          src="/alphafit-helmet.png?v=2"
           alt="Alpha Coach"
           className="relative w-8 h-8 object-contain"
           style={{ filter: "drop-shadow(0 0 6px rgba(0,191,255,0.6))" }}
