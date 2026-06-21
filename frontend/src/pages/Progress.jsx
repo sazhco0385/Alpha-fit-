@@ -3,7 +3,7 @@ import Layout from "../components/Layout";
 import api from "../lib/api";
 import BadgeGlow from "../components/BadgeGlow";
 import { useAuth } from "../lib/auth";
-import { TrendingUp, Calendar, Dumbbell, Flame, Award, Weight, Lock, Trophy } from "lucide-react";
+import { TrendingUp, Calendar, Dumbbell, Flame, Award, Weight, Lock, Trophy, Scale } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { BADGE_WORKOUTS, BADGE_STREAKS, BADGE_VOLUMES, nextBadge } from "../lib/badges";
 
@@ -49,15 +49,24 @@ export default function Progress() {
 
   return (
     <Layout>
-      <div className="flex items-end justify-between mb-6 gap-3">
+      <div className="flex items-end justify-between mb-6 gap-3 flex-wrap">
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text">PROGRESS</h1>
-        <button
-          onClick={() => window.location.href = "/personal-records"}
-          className="btn-outline text-xs flex items-center gap-1.5 flex-shrink-0"
-          data-testid="goto-pr-room"
-        >
-          <Trophy size={12} /> PR ZIMMER
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => window.location.href = "/body-weight"}
+            className="btn-outline text-xs flex items-center gap-1.5 flex-shrink-0"
+            data-testid="goto-bodyweight"
+          >
+            <Scale size={12} /> GEWICHT
+          </button>
+          <button
+            onClick={() => window.location.href = "/personal-records"}
+            className="btn-outline text-xs flex items-center gap-1.5 flex-shrink-0"
+            data-testid="goto-pr-room"
+          >
+            <Trophy size={12} /> PR ZIMMER
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
