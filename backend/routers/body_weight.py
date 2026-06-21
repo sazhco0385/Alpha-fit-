@@ -16,6 +16,10 @@ class WeightLogCreate(BaseModel):
     logged_at: Optional[str] = None  # ISO string, defaults to now
 
 
+class GoalWeightUpdate(BaseModel):
+    goal_kg: Optional[float] = Field(None, gt=20, lt=400)  # null clears goal
+
+
 async def _latest_before(user_id: str, before_iso: str) -> Optional[dict]:
     return await db.body_weight_logs.find_one(
         {"user_id": user_id, "logged_at": {"$lte": before_iso}},
@@ -63,6 +67,36 @@ async def get_history(limit: int = 365, user: dict = Depends(get_current_user)) 
             return None
         return round(float(curr["weight_kg"]) - float(prev["weight_kg"]), 1)
 
+    # Goal info
+    goal_kg = user.get("weight_goal_kg")
+    goal_set_at = user.get("weight_goal_set_at")
+    goal_baseline_kg = user.get("weight_goal_baseline_kg")  # weight at the moment goal was set
+    goal_block = None
+    if goal_kg and latest:
+        current = float(latest["weight_kg"])
+        baseline = float(goal_baseline_kg or current)
+        target = float(goal_kg)
+        # If goal == baseline (rare), treat as 100% to avoid divide-by-zero.
+        total_distance = abs(target - baseline)
+        if target == baseline:
+            pct = 100.0
+        else:
+            # Going in the right direction: pct positive; going the wrong way: pct can be negative
+            direction = 1 if target > baseline else -1
+            signed_progress = (current - baseline) * direction
+            pct = max(0.0, min(100.0, (signed_progress / total_distance) * 100.0))
+        remaining_kg = round(target - current, 1)
+        goal_block = {
+            "goal_kg": round(target, 1),
+            "baseline_kg": round(baseline, 1),
+            "current_kg": round(current, 1),
+            "remaining_kg": remaining_kg,
+            "progress_pct": round(pct, 1),
+            "direction": "lose" if target < baseline else ("gain" if target > baseline else "maintain"),
+            "set_at": goal_set_at,
+            "reached": (target < baseline and current <= target) or (target > baseline and current >= target),
+        }
+
     return {
         "history": rows,
         "latest": latest,
@@ -73,6 +107,7 @@ async def get_history(limit: int = 365, user: dict = Depends(get_current_user)) 
             "delta_all": diff(latest, first) if first and latest and first["id"] != latest["id"] else None,
             "total_logs": len(rows),
         },
+        "goal": goal_block,
     }
 
 
@@ -82,3 +117,29 @@ async def delete_log(entry_id: str, user: dict = Depends(get_current_user)) -> d
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
     return {"ok": True}
+
+
+@router.put("/body-weight/goal")
+async def set_goal(payload: GoalWeightUpdate, user: dict = Depends(get_current_user)) -> dict:
+    """Set or update goal weight. Pass {goal_kg: null} to clear it."""
+    if payload.goal_kg is None:
+        await db.users.update_one(
+            {"id": user["id"]},
+            {"$unset": {"weight_goal_kg": "", "weight_goal_set_at": "", "weight_goal_baseline_kg": ""}},
+        )
+        return {"ok": True, "cleared": True}
+
+    # Snapshot current weight as baseline (so progress bar is meaningful)
+    latest = await db.body_weight_logs.find_one(
+        {"user_id": user["id"]}, {"_id": 0}, sort=[("logged_at", -1)],
+    )
+    baseline = round(float(latest["weight_kg"]), 1) if latest else round(float(payload.goal_kg), 1)
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {
+            "weight_goal_kg": round(float(payload.goal_kg), 1),
+            "weight_goal_set_at": now_iso(),
+            "weight_goal_baseline_kg": baseline,
+        }},
+    )
+    return {"ok": True, "goal_kg": round(float(payload.goal_kg), 1), "baseline_kg": baseline}
