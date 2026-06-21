@@ -52,6 +52,18 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **Integration**: Widget placed in Dashboard between Coach-Insights and Daily-Summary.
 - **Testing**: 2/2 pytest tests pass (`test_streak_freeze.py`) covering full flow (free=0 streak, premium auto-bridge, idempotent re-read) + 37/37 regression on iter9.
 
+## Implemented (2026-02-15) - Trial-Reminder-Email-System (Conversion Lever)
+- **New template** `render_trial_usage_reminder(name, hours_left, stats, unsub_token)` in `email_service.py`: royal-gold layout with 3 dynamic stat cards (auto-picks the top 3 non-zero stats from workouts/volume/coach_msgs/body_scans/PRs/badges), urgency pill (Trial endet bald | Letzter Tag), CTA → `/premium?from=trial_reminder`.
+- **Dispatcher block** in `services/dispatchers.py` `run_email_dispatcher_once`: two milestones with idempotent send-once-per-milestone via `email_log` `{template:"trial_usage_reminder", milestone:"48h"|"24h"}`.
+  - 48h window: `24h < trial_until - now ≤ 48h`
+  - 24h window: `0 < trial_until - now ≤ 24h`
+- **Stats computed** from trial-period only (trial_until − 7d as lower bound): workouts, volume_kg, coach_msgs (chat_messages assistant role), body_scans, PRs, badges.
+- **Respects** `notification_prefs.email.trial_ending` toggle (reuses existing pref).
+- **Stats persisted** in `email_log.stats` for admin audit + future winback personalization.
+- **New return keys** in dispatcher result: `trial_usage_48h`, `trial_usage_24h`.
+- **Preview endpoint** `/api/emails/test` accepts `trial_usage_reminder`, `trial_usage_48h`, `trial_usage_24h` templates.
+- **Testing**: 4/4 pytest tests pass (`test_trial_usage_reminder.py`): template rendering with empty + full stats, dispatcher idempotent 48h→24h flow, pref opt-out suppression. 41/41 combined with streak + iter9 regression.
+
 ## Implemented (2026-02-15) - Exercise Video Demos (YouTube Curated)
 - **New library** `frontend/src/lib/exerciseVideos.js`: 60+ exercise → YouTube ID mappings (Jeff Nippard, Athlean-X, RP Strength). Substring-Matching für Variationen.
 - **Helper functions**: `getExerciseVideoId(name)`, `getExerciseVideoUrl(name)` (embed URL), `getExerciseSearchUrl(name)` (fallback YouTube search)

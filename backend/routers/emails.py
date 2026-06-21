@@ -9,6 +9,7 @@ from email_service import (
     send_email,
     render_welcome, render_payment_success, render_trial_ending,
     render_streak_reminder, render_weekly_summary, render_winback,
+    render_trial_usage_reminder,
 )
 
 logger = logging.getLogger("alphafit")
@@ -47,6 +48,14 @@ async def emails_test(payload: EmailTestRequest, user: dict = Depends(get_curren
         }, unsub)
     elif t == "winback":
         subject, html = render_winback(name, total_workouts=47, total_volume_kg=58400, discount_pct=30, unsub_token=unsub)
+    elif t in ("trial_usage_reminder", "trial_usage_48h", "trial_usage_24h"):
+        hours = 24 if t == "trial_usage_24h" else 48
+        subject, html = render_trial_usage_reminder(
+            name.split()[0] if name else "Champion",
+            hours,
+            {"workouts": 5, "volume_kg": 14200, "coach_msgs": 12, "body_scans": 2, "prs": 3, "badges": 6},
+            unsub,
+        )
     else:
         raise HTTPException(status_code=400, detail="Unbekanntes Template")
 

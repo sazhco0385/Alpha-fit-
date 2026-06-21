@@ -239,7 +239,78 @@ def render_winback(name: str, total_workouts: int, total_volume_kg: int, discoun
 
 
 
-def render_admin_new_signup(user_name: str, user_email: str, total_users: int) -> tuple[str, str]:
+def render_trial_usage_reminder(name: str, hours_left: int, stats: Dict[str, Any], unsub_token: str = "") -> tuple[str, str]:
+    """Personalized trial reminder with usage stats — fired at 48h and 24h milestones."""
+    workouts = int(stats.get("workouts", 0) or 0)
+    volume = int(stats.get("volume_kg", 0) or 0)
+    coach_msgs = int(stats.get("coach_msgs", 0) or 0)
+    body_scans = int(stats.get("body_scans", 0) or 0)
+    badges = int(stats.get("badges", 0) or 0)
+    prs = int(stats.get("prs", 0) or 0)
+
+    # Pick the 3 most impressive stats to display (non-zero ones first)
+    candidates = [
+        ("Workouts", workouts, "absolviert"),
+        ("Volumen", f"{volume:,}".replace(",", "."), "kg"),
+        ("Coach-Chats", coach_msgs, "Antworten"),
+        ("Body-Scans", body_scans, "analysiert"),
+        ("Personal Records", prs, "neu"),
+        ("Badges", badges, "freigeschaltet"),
+    ]
+    non_zero = [c for c in candidates if (c[1] if isinstance(c[1], int) else int(str(c[1]).replace(".", "") or 0)) > 0]
+    show = (non_zero or candidates)[:3]
+    # Pad to 3 cells
+    while len(show) < 3:
+        show.append(("Workouts", 0, "absolviert"))
+
+    def _cell(label, value, suffix):
+        val_size = "22px" if isinstance(value, str) and len(value) >= 5 else "28px"
+        return f"""<td width="32%" align="center" style="padding: 16px 8px; background: rgba(212, 175, 55, 0.06); border: 1px solid rgba(212, 175, 55, 0.18); border-radius: 12px;">
+            <div style="font-size: {val_size}; font-weight: 800; color: #f4d27a; line-height: 1;">{value}</div>
+            <div style="color: #999; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-top: 6px;">{label}</div>
+            <div style="color: #6a6a6a; font-size: 10px; margin-top: 2px;">{suffix}</div>
+          </td>"""
+
+    time_str = f"{hours_left} Stunden" if hours_left >= 24 else f"{hours_left}h"
+    urgency_label = "Letzter Tag" if hours_left <= 24 else "Trial endet bald"
+
+    subject = (f"{name}, dein Trial endet in {hours_left}h — verlier deine Stats nicht"
+               if hours_left <= 24 else
+               f"{name}, noch {hours_left}h Premium — sicher dir den Vollzugriff")
+    preheader = f"{workouts} Workouts, {volume:,} kg, {coach_msgs} Coach-Chats — verlier es nicht für 9,99€".replace(",", ".")
+
+    line_first_workout = f"deine <strong style=\"color:#d4af37\">{workouts} Workouts</strong>" if workouts > 0 else "deinen Start"
+    line_volume = f", <strong style=\"color:#d4af37\">{volume:,} kg</strong> bewegtes Volumen".replace(",", ".") if volume > 0 else ""
+    line_coach = f" und <strong style=\"color:#d4af37\">{coach_msgs} Coach-Antworten</strong>" if coach_msgs > 0 else ""
+
+    body = f"""
+      <div style="display: inline-block; padding: 4px 10px; background: rgba(212,175,55,0.15); border-radius: 999px; color: #f4d27a; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 14px;">{urgency_label}</div>
+      <h1 style="font-size: 22px; font-weight: 800; color: #f4d27a; margin: 0 0 14px;">Noch {time_str}, {name}.</h1>
+      <p style="margin: 0 0 14px;">In den letzten Tagen hast du {line_first_workout}{line_volume}{line_coach} gesammelt. Das ist <strong style="color: #d4af37;">nicht nichts</strong> — das ist messbarer Fortschritt.</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 0 0 22px;">
+        <tr>
+          {_cell(*show[0])}
+          <td width="4"></td>
+          {_cell(*show[1])}
+          <td width="4"></td>
+          {_cell(*show[2])}
+        </tr>
+      </table>
+      <p style="margin: 0 0 14px;">Wenn dein Trial ausläuft, verlierst du:</p>
+      <ul style="margin: 0 0 18px; padding-left: 18px; color: #cfcfcf;">
+        <li style="margin-bottom: 6px;">KI-Plan-Anpassungen (GPT-5.5) jede Woche neu</li>
+        <li style="margin-bottom: 6px;">Body-Scan + Form-Check Vision-AI</li>
+        <li style="margin-bottom: 6px;">Foto-Nutrition Tracking + Streak-Freeze-Schutz</li>
+        <li style="margin-bottom: 6px;">Personal Record Cards zum Teilen</li>
+      </ul>
+      <p style="margin: 0 0 14px;">Premium kostet <strong style="color: #d4af37;">9,99 €/Monat</strong> — jederzeit kündbar, keine Abo-Falle. Im Quartal nur <strong>6,66 €/Monat</strong>, im Jahresplan <strong>5,83 €/Monat</strong>.</p>
+      <p style="margin: 0; color: #999;">Du gegen dein Ich von gestern — nicht gegen einen Preis.</p>
+    """
+    cta = "Jetzt Premium sichern" if hours_left <= 24 else "Premium aktivieren"
+    return subject, _layout("Trial endet bald", preheader, body, cta, f"{APP_URL}/premium?from=trial_reminder", unsub_token)
+
+
+
     """Internal notification to admin when a new user signs up."""
     subject = f"🎉 Neue Registrierung: {user_name} (#{total_users})"
     preheader = f"{user_email} ist gerade beigetreten."

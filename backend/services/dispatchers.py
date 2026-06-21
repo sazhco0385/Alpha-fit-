@@ -118,11 +118,11 @@ async def run_email_dispatcher_once() -> dict:
     win-back (premium expired 7-14 days ago). All sends are idempotent via db.email_log."""
     from email_service import (
         send_email, render_trial_ending, render_streak_reminder, render_weekly_summary,
-        render_winback,
+        render_winback, render_trial_usage_reminder,
     )
     now = datetime.now(timezone.utc)
     today_iso = now.date().isoformat()
-    sent = {"trial_ending": 0, "streak_reminder": 0, "weekly_summary": 0, "winback": 0, "errors": 0}
+    sent = {"trial_ending": 0, "trial_usage_48h": 0, "trial_usage_24h": 0, "streak_reminder": 0, "weekly_summary": 0, "winback": 0, "errors": 0}
 
     def _email_pref(u: dict, key: str) -> bool:
         prefs = (u.get("notification_prefs") or {}).get("email") or {}
@@ -168,6 +168,78 @@ async def run_email_dispatcher_once() -> dict:
         except Exception as e:
             logger.error(f"email_dispatcher trial_ending err for {u.get('email')}: {e}")
             sent["errors"] += 1
+
+    # --- 1b) Trial USAGE reminder: personalized stats at 48h and 24h milestones ---
+    async def _compute_trial_stats(uid: str, trial_start_iso: str) -> dict:
+        # Workouts + volume during trial
+        sessions = await db.workout_sessions.find(
+            {"user_id": uid, "status": "completed", "completed_at": {"$gte": trial_start_iso}},
+            {"_id": 0, "logged_sets": 1},
+        ).to_list(500)
+        workouts = len(sessions)
+        volume = int(sum(
+            (log.get("reps", 0) or 0) * (log.get("weight_kg", 0) or 0)
+            for s in sessions for log in (s.get("logged_sets") or [])
+        ))
+        coach_msgs = await db.chat_messages.count_documents({
+            "user_id": uid, "role": "assistant", "created_at": {"$gte": trial_start_iso},
+        })
+        body_scans = await db.body_scans.count_documents({
+            "user_id": uid, "created_at": {"$gte": trial_start_iso},
+        })
+        prs = await db.personal_records.count_documents({
+            "user_id": uid, "date": {"$gte": trial_start_iso},
+        }) if "personal_records" in await db.list_collection_names() else 0
+        badges_doc = await db.users.find_one({"id": uid}, {"_id": 0, "badges": 1})
+        badges = len((badges_doc or {}).get("badges") or [])
+        return {"workouts": workouts, "volume_kg": volume, "coach_msgs": coach_msgs,
+                "body_scans": body_scans, "prs": prs, "badges": badges}
+
+    for milestone_hours, key in [(48, "48h"), (24, "24h")]:
+        # Window: send when remaining ≤ milestone AND (milestone == 24 OR remaining > 24)
+        upper_cut = (now + timedelta(hours=milestone_hours)).isoformat()
+        lower_cut = (now + timedelta(hours=24)).isoformat() if milestone_hours == 48 else now.isoformat()
+        # For 48h: 24h < remaining ≤ 48h. For 24h: 0 < remaining ≤ 24h.
+        trial_window_users = await db.users.find({
+            "trial_until": {"$ne": None, "$gt": lower_cut, "$lte": upper_cut},
+            "is_premium": True,
+        }, {"_id": 0}).to_list(500)
+        for u in trial_window_users:
+            try:
+                if not _email_pref(u, "trial_ending"):
+                    continue
+                already = await db.email_log.find_one({
+                    "user_id": u["id"], "template": "trial_usage_reminder", "milestone": key,
+                })
+                if already:
+                    continue
+                trial_until_iso = u.get("trial_until")
+                try:
+                    trial_end = datetime.fromisoformat(trial_until_iso.replace("Z", "+00:00"))
+                    hours_left = max(1, int(round((trial_end - now).total_seconds() / 3600)))
+                except Exception:
+                    hours_left = milestone_hours
+                # Trial start ≈ trial_until - 7 days
+                trial_start_iso = (datetime.fromisoformat(trial_until_iso.replace("Z", "+00:00")) - timedelta(days=7)).isoformat()
+                stats = await _compute_trial_stats(u["id"], trial_start_iso)
+                subject, html = render_trial_usage_reminder(
+                    (u.get("name") or "Champion").split()[0],
+                    hours_left, stats, create_unsub_token(u["id"]),
+                )
+                email_id = await send_email(u["email"], subject, html, tag=f"trial_usage_{key}")
+                await db.email_log.insert_one({
+                    "user_id": u["id"], "email": u["email"],
+                    "template": "trial_usage_reminder", "milestone": key,
+                    "resend_id": email_id, "ok": bool(email_id), "sent_at": now_iso(),
+                    "stats": stats,
+                })
+                if email_id:
+                    sent[f"trial_usage_{key}"] += 1
+                else:
+                    sent["errors"] += 1
+            except Exception as e:
+                logger.error(f"email_dispatcher trial_usage_{key} err for {u.get('email')}: {e}")
+                sent["errors"] += 1
 
     # --- 2) Streak reminder: last completed workout 3-14 days ago ---
     three_days_ago = (now - timedelta(days=3)).isoformat()
