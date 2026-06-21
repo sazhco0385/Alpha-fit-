@@ -13,10 +13,13 @@ router = APIRouter()
 
 @router.post("/onboarding")
 async def save_onboarding(data: OnboardingData, user: dict = Depends(get_current_user)):
+    # Idempotency: only log activity + generate plan if not already onboarded.
+    was_completed = bool(user.get("onboarding_completed"))
     await db.users.update_one(
         {"id": user["id"]},
         {"$set": {"profile": data.model_dump(), "onboarding_completed": True}}
     )
-    await log_activity(user["id"], user.get("name", ""), "onboarding_completed", {"goal": data.goal})
+    if not was_completed:
+        await log_activity(user["id"], user.get("name", ""), "onboarding_completed", {"goal": data.goal})
     plan = await generate_ai_plan(user["id"], data.model_dump())
     return {"ok": True, "plan_id": plan["id"]}
