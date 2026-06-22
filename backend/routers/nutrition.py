@@ -1,6 +1,7 @@
 """Nutrition router (AI Vision food recognition + logging) - extracted from server.py."""
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime, timezone
+from pydantic import BaseModel
 import uuid
 import logging
 
@@ -78,6 +79,85 @@ Wenn du das Essen nicht erkennen kannst, setze confidence auf 0.3 und gib trotzd
         "components": data.get("components", []) if isinstance(data.get("components"), list) else [],
     }
     return result
+
+
+class NutritionNameRequest(BaseModel):
+    food_name: str
+    portion_grams: float = 100.0
+
+
+@router.post("/nutrition/analyze-name")
+async def analyze_food_name(payload: NutritionNameRequest, user: dict = Depends(get_current_user)):
+    """Schätzt Nährwerte für ein bekanntes Lebensmittel ohne Foto (Text-only GPT-5.5)."""
+    name = (payload.food_name or "").strip()
+    if not name or len(name) < 2:
+        raise HTTPException(status_code=400, detail="Bitte einen Namen eingeben (min. 2 Zeichen).")
+    try:
+        portion = max(1.0, min(5000.0, float(payload.portion_grams or 100)))
+    except Exception:
+        portion = 100.0
+
+    sys = (
+        "Du bist Alpha Nutrition AI - ein präziser Ernährungsexperte. "
+        "Du schätzt Nährwerte für eingegebene Lebensmittel nach deutschen/europäischen Nährwert-Datenbanken (BLS, USDA). "
+        "Antworte AUSSCHLIESSLICH mit validem JSON, keine Erklärungen, kein Markdown."
+    )
+
+    prompt = f"""Schätze die Nährwerte für: "{name}" bei einer Portion von {portion:.0f} g.
+
+Falls der Name eine Mahlzeit beschreibt (z.B. "Pizza Margherita", "Caesar Salad"), nutze typische Rezeptwerte für die angegebene Portion.
+Falls der Name ein einzelnes Lebensmittel ist (z.B. "Banane", "Hähnchenbrust gegrillt"), skaliere die Werte exakt auf {portion:.0f} g.
+Falls das Lebensmittel mit Marke genannt wird (z.B. "Snickers"), nutze die offiziellen Hersteller-Nährwerte und skaliere auf {portion:.0f} g.
+
+Gib AUSSCHLIESSLICH dieses JSON zurück:
+{{
+  "food_name": "Standardisierter Name (auf Deutsch, ggf. mit Zubereitung)",
+  "portion_grams": {portion:.0f},
+  "calories": 0,
+  "protein_g": 0.0,
+  "carbs_g": 0.0,
+  "fat_g": 0.0,
+  "fiber_g": 0.0,
+  "sugar_g": 0.0,
+  "sodium_mg": 0,
+  "confidence": 0.85
+}}
+
+confidence: 0.9+ = sehr sicher (gängiges Lebensmittel), 0.6-0.8 = geschätzt, <0.5 = unsicher.
+Alle Werte als Zahlen, NICHT als Strings. Für die GESAMTE Portion ({portion:.0f} g), nicht pro 100g."""
+
+    chat = LlmChat(
+        api_key=EMERGENT_LLM_KEY,
+        session_id=f"nutrition-name-{user['id']}-{uuid.uuid4()}",
+        system_message=sys,
+    ).with_model("openai", "gpt-5.5")
+
+    try:
+        resp = await chat.send_message(UserMessage(text=prompt))
+        text = resp if isinstance(resp, str) else str(resp)
+    except Exception as e:
+        logger.error(f"Nutrition-name LLM error: {e}")
+        raise HTTPException(status_code=500, detail=f"KI-Schätzung fehlgeschlagen: {str(e)}")
+
+    data = parse_json_from_llm(text)
+    if not data:
+        raise HTTPException(status_code=500, detail="Konnte das Lebensmittel nicht erkennen. Bitte präziser eingeben.")
+
+    result = {
+        "food_name": str(data.get("food_name") or name)[:200],
+        "portion_grams": float(data.get("portion_grams", portion) or portion),
+        "calories": float(data.get("calories", 0) or 0),
+        "protein_g": float(data.get("protein_g", 0) or 0),
+        "carbs_g": float(data.get("carbs_g", 0) or 0),
+        "fat_g": float(data.get("fat_g", 0) or 0),
+        "fiber_g": float(data.get("fiber_g", 0) or 0),
+        "sugar_g": float(data.get("sugar_g", 0) or 0),
+        "sodium_mg": float(data.get("sodium_mg", 0) or 0),
+        "confidence": float(data.get("confidence", 0.7) or 0.7),
+    }
+    return result
+
+
 
 
 @router.post("/nutrition/log")

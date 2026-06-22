@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Layout from "../components/Layout";
 import api from "../lib/api";
 import { toast } from "sonner";
-import { Camera, Plus, Trash2, Loader2, Apple, Flame, Beef, Wheat, Droplet, X, Check, ChevronRight, Edit3 } from "lucide-react";
+import { Camera, Plus, Trash2, Loader2, Apple, Flame, Beef, Wheat, Droplet, X, Check, ChevronRight, Edit3, Sparkles } from "lucide-react";
 
 const MEAL_TYPES = [
   { v: "breakfast", l: "Frühstück" },
@@ -245,12 +245,46 @@ function fileToBase64(file) {
 
 function EditEntryModal({ initial, title, subtitle, onSave, onClose, showComponents }) {
   const [form, setForm] = useState(initial);
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, []);
+
+  const autoFill = async () => {
+    const name = (form.food_name || "").trim();
+    if (name.length < 2) {
+      toast.error("Bitte Namen eingeben (min. 2 Zeichen)");
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const { data: r } = await api.post("/nutrition/analyze-name", {
+        food_name: name,
+        portion_grams: Number(form.portion_grams) || 100,
+      });
+      setForm((f) => ({
+        ...f,
+        food_name: r.food_name || f.food_name,
+        portion_grams: r.portion_grams,
+        calories: r.calories,
+        protein_g: r.protein_g,
+        carbs_g: r.carbs_g,
+        fat_g: r.fat_g,
+        fiber_g: r.fiber_g,
+        sugar_g: r.sugar_g,
+        sodium_mg: r.sodium_mg,
+      }));
+      const conf = Math.round((r.confidence || 0) * 100);
+      toast.success(`Werte ausgefüllt (${conf}% sicher)`);
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "KI-Schätzung fehlgeschlagen");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const num = (k) => (
     <input
@@ -287,14 +321,42 @@ function EditEntryModal({ initial, title, subtitle, onSave, onClose, showCompone
         <div className="space-y-3">
           <div>
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest font-chakra mb-1">Name</label>
-            <input
-              value={form.food_name || ""}
-              onChange={(e) => setForm({ ...form, food_name: e.target.value })}
-              className="af-input font-chakra"
-              style={{ fontSize: "16px" }}
-              required
-              data-testid="edit-food-name"
-            />
+            <div className="flex gap-2">
+              <input
+                value={form.food_name || ""}
+                onChange={(e) => setForm({ ...form, food_name: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !showComponents && !aiLoading) {
+                    e.preventDefault();
+                    autoFill();
+                  }
+                }}
+                className="af-input font-chakra flex-1 min-w-0"
+                style={{ fontSize: "16px" }}
+                placeholder="z.B. Pizza Margherita"
+                required
+                data-testid="edit-food-name"
+              />
+              {!showComponents && (
+                <button
+                  type="button"
+                  onClick={autoFill}
+                  disabled={aiLoading || (form.food_name || "").trim().length < 2}
+                  className="shrink-0 px-3 sm:px-4 border border-[#00BFFF]/60 text-[#00BFFF] font-chakra text-[11px] tracking-widest uppercase hover:bg-[#00BFFF]/10 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition"
+                  style={{ minHeight: 44 }}
+                  data-testid="ai-autofill-btn"
+                  title="Nährwerte automatisch schätzen"
+                >
+                  {aiLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  <span className="hidden sm:inline">{aiLoading ? "ANALYSIERT..." : "AI"}</span>
+                </button>
+              )}
+            </div>
+            {!showComponents && (
+              <div className="text-[10px] text-gray-500 font-chakra mt-1">
+                Tipp: Name eingeben + AI-Button drücken (oder Enter) — Werte werden geschätzt.
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
