@@ -16,7 +16,7 @@ export default function Support() {
   const [form, setForm] = useState({ subject: "", message: "", category: "general" });
   const [submitting, setSubmitting] = useState(false);
   const [tickets, setTickets] = useState([]);
-  const [supportEmail, setSupportEmail] = useState("supportalphafit@gmail.com");
+  const [supportEmail, setSupportEmail] = useState("support@alpha-fit.fitness");
 
   const load = async () => {
     try {

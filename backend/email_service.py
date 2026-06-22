@@ -28,6 +28,7 @@ async def send_email(to_email: str, subject: str, html: str, tag: str = "") -> O
         "to": [to_email],
         "subject": subject,
         "html": html,
+        "reply_to": "support@alpha-fit.fitness",
     }
     if tag:
         params["tags"] = [{"name": "category", "value": tag}]
@@ -142,7 +143,7 @@ def render_payment_success(name: str, plan: str, amount: float, currency: str, u
         <li style="margin-bottom: 6px;">Nutrition Tracking mit Foto-Erkennung</li>
         <li style="margin-bottom: 6px;">Web-Push Notifications + Streak-Schutz</li>
       </ul>
-      <p style="margin: 0; color: #999;">Rechnung folgt automatisch von Stripe. Bei Fragen: <a href="mailto:supportalphafit@gmail.com" style="color: #d4af37;">supportalphafit@gmail.com</a></p>
+      <p style="margin: 0; color: #999;">Rechnung folgt automatisch von Stripe. Bei Fragen: <a href="mailto:support@alpha-fit.fitness" style="color: #d4af37;">support@alpha-fit.fitness</a></p>
     """
     return subject, _layout("Premium aktiviert", preheader, body, "Zum Dashboard", f"{APP_URL}/dashboard", unsub_token)
 

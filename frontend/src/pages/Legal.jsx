@@ -9,7 +9,7 @@ const COMPANY = {
   city: "24937 Flensburg",
   country: "Deutschland",
   vat: "Umsatzsteuer-ID: folgt",
-  email: "supportalphafit@gmail.com",
+  email: "support@alpha-fit.fitness",
 };
 
 export function Impressum() {

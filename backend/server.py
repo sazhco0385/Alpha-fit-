@@ -28,14 +28,14 @@ DB_NAME = os.environ['DB_NAME']
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
-VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:support@alphafit.local')
+VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:support@alpha-fit.fitness')
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'changeme')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 
 stripe.api_key = STRIPE_API_KEY
-SUPPORT_EMAIL = "supportalphafit@gmail.com"
+SUPPORT_EMAIL = "support@alpha-fit.fitness"
 
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]

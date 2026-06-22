@@ -187,7 +187,7 @@ def created_ticket(session, user_token):
     assert r.status_code == 200, r.text
     d = r.json()
     assert d.get("ok") is True
-    assert d.get("support_email") == "supportalphafit@gmail.com"
+    assert d.get("support_email") == "support@alpha-fit.fitness"
     assert "ticket_id" in d
     return d["ticket_id"]
 
@@ -197,7 +197,7 @@ def test_support_my_tickets(session, user_token, created_ticket):
     r = session.get(f"{API}/support/my-tickets", headers=auth_h(token), timeout=15)
     assert r.status_code == 200
     d = r.json()
-    assert d.get("support_email") == "supportalphafit@gmail.com"
+    assert d.get("support_email") == "support@alpha-fit.fitness"
     ids = [t["id"] for t in d.get("tickets", [])]
     assert created_ticket in ids
 
