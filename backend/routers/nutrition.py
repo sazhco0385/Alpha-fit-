@@ -212,6 +212,43 @@ async def nutrition_today(user: dict = Depends(get_current_user)):
     }
 
 
+@router.get("/nutrition/recent-foods")
+async def recent_foods(user: dict = Depends(get_current_user), q: str = "", limit: int = 12):
+    """Returns the user's most-frequent + recent food entries with their last logged macros.
+    Powers the autocomplete dropdown in the manual nutrition modal (no LLM call needed)."""
+    match: dict = {"user_id": user["id"]}
+    if q and len(q) >= 1:
+        # case-insensitive partial match (regex escape minimal special chars)
+        safe = q.replace("\\", "\\\\").replace(".", "\\.").replace("*", "\\*").replace("+", "\\+").replace("(", "\\(").replace(")", "\\)").replace("[", "\\[").replace("]", "\\]")
+        match["food_name"] = {"$regex": safe, "$options": "i"}
+    pipeline = [
+        {"$match": match},
+        {"$sort": {"logged_at": -1}},
+        {"$group": {
+            "_id": {"$toLower": "$food_name"},
+            "food_name": {"$first": "$food_name"},
+            "portion_grams": {"$first": "$portion_grams"},
+            "calories": {"$first": "$calories"},
+            "protein_g": {"$first": "$protein_g"},
+            "carbs_g": {"$first": "$carbs_g"},
+            "fat_g": {"$first": "$fat_g"},
+            "fiber_g": {"$first": "$fiber_g"},
+            "sugar_g": {"$first": "$sugar_g"},
+            "sodium_mg": {"$first": "$sodium_mg"},
+            "last_logged_at": {"$first": "$logged_at"},
+            "count": {"$sum": 1},
+        }},
+        # frequent OR very recent first
+        {"$sort": {"count": -1, "last_logged_at": -1}},
+        {"$limit": max(1, min(int(limit or 12), 50))},
+    ]
+    items = await db.nutrition_entries.aggregate(pipeline).to_list(50)
+    for it in items:
+        it.pop("_id", None)
+    return {"items": items}
+
+
+
 @router.get("/nutrition/history")
 async def nutrition_history(user: dict = Depends(get_current_user), days: int = 14):
     pipeline = [

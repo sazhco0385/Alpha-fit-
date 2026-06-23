@@ -246,12 +246,54 @@ function fileToBase64(file) {
 function EditEntryModal({ initial, title, subtitle, onSave, onClose, showComponents }) {
   const [form, setForm] = useState(initial);
   const [aiLoading, setAiLoading] = useState(false);
+  const [recent, setRecent] = useState([]);
+  const [showSuggest, setShowSuggest] = useState(false);
+  const suggestRef = useRef(null);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, []);
+
+  // Load recent foods (and refilter as user types) — skips for AI-photo result mode
+  useEffect(() => {
+    if (showComponents) return; // photo-result mode doesn't need recent suggestions
+    const q = (form.food_name || "").trim();
+    const handler = setTimeout(async () => {
+      try {
+        const { data } = await api.get(`/nutrition/recent-foods${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+        setRecent(data.items || []);
+      } catch { /* ignore */ }
+    }, q.length === 0 ? 0 : 180);
+    return () => clearTimeout(handler);
+  }, [form.food_name, showComponents]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (suggestRef.current && !suggestRef.current.contains(e.target)) setShowSuggest(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const pickRecent = (item) => {
+    setForm((f) => ({
+      ...f,
+      food_name: item.food_name,
+      portion_grams: item.portion_grams || 100,
+      calories: item.calories || 0,
+      protein_g: item.protein_g || 0,
+      carbs_g: item.carbs_g || 0,
+      fat_g: item.fat_g || 0,
+      fiber_g: item.fiber_g || 0,
+      sugar_g: item.sugar_g || 0,
+      sodium_mg: item.sodium_mg || 0,
+    }));
+    setShowSuggest(false);
+    toast.success(`Übernommen: ${item.food_name}`);
+  };
 
   const autoFill = async () => {
     const name = (form.food_name || "").trim();
@@ -319,21 +361,26 @@ function EditEntryModal({ initial, title, subtitle, onSave, onClose, showCompone
         )}
 
         <div className="space-y-3">
-          <div>
+          <div ref={suggestRef} className="relative">
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest font-chakra mb-1">Name</label>
             <div className="flex gap-2">
               <input
                 value={form.food_name || ""}
-                onChange={(e) => setForm({ ...form, food_name: e.target.value })}
+                onChange={(e) => { setForm({ ...form, food_name: e.target.value }); setShowSuggest(true); }}
+                onFocus={() => setShowSuggest(true)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !showComponents && !aiLoading) {
                     e.preventDefault();
+                    setShowSuggest(false);
                     autoFill();
+                  } else if (e.key === "Escape") {
+                    setShowSuggest(false);
                   }
                 }}
                 className="af-input font-chakra flex-1 min-w-0"
                 style={{ fontSize: "16px" }}
                 placeholder="z.B. Pizza Margherita"
+                autoComplete="off"
                 required
                 data-testid="edit-food-name"
               />
@@ -352,9 +399,33 @@ function EditEntryModal({ initial, title, subtitle, onSave, onClose, showCompone
                 </button>
               )}
             </div>
-            {!showComponents && (
+            {!showComponents && showSuggest && recent.length > 0 && (
+              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-[#03030A] border border-[#1A1A24] max-h-60 overflow-y-auto shadow-2xl" data-testid="recent-foods-dropdown">
+                <div className="px-3 py-2 text-[10px] text-gray-500 font-chakra uppercase tracking-widest border-b border-[#1A1A24] bg-[#0A0A10]">
+                  Häufig gegessen
+                </div>
+                {recent.map((it, idx) => (
+                  <button
+                    key={`${it.food_name}-${idx}`}
+                    type="button"
+                    onClick={() => pickRecent(it)}
+                    className="w-full text-left px-3 py-2.5 hover:bg-[#00BFFF]/10 border-b border-[#1A1A24] last:border-b-0 font-chakra transition flex items-center justify-between gap-2"
+                    data-testid={`recent-food-${idx}`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm chrome-text truncate">{it.food_name}</div>
+                      <div className="text-[10px] text-gray-500 mt-0.5">
+                        {Math.round(it.calories || 0)} kcal · {Math.round(it.portion_grams || 0)} g · {it.count}× geloggt
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-[#00BFFF] shrink-0" />
+                  </button>
+                ))}
+              </div>
+            )}
+            {!showComponents && !showSuggest && (
               <div className="text-[10px] text-gray-500 font-chakra mt-1">
-                Tipp: Name eingeben + AI-Button drücken (oder Enter) — Werte werden geschätzt.
+                Tipp: Name eingeben + AI-Button (oder Enter), oder aus der Liste wählen.
               </div>
             )}
           </div>
