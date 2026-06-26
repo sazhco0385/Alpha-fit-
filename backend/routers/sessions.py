@@ -298,9 +298,11 @@ async def complete_session(payload: dict, user: dict = Depends(get_current_user)
 
 
 async def _maybe_trigger_auto_plan_adjust(user: dict) -> None:
-    """Wenn der User in den letzten 7 Tagen jeden Plan-Tag mindestens 1× abgeschlossen hat
-    UND die letzte Auto-Anpassung mind. 6 Tage her ist → starte einen Plan-Adjust Job im Hintergrund.
-    Sendet bei Erfolg einen Push 'Plan wurde angepasst'."""
+    """Triggers an AI plan-adjust job when EITHER:
+      (a) the user completed every plan day at least once in the last 7 days, OR
+      (b) the user logged ≥ 4 sessions AND last auto-adjust is more than 7 days ago.
+    Cooldown: min 6 days between adjustments. Sends a push 'Plan wurde angepasst' on success.
+    """
     try:
         plan_id = user.get("current_plan_id")
         if not plan_id:
@@ -309,11 +311,14 @@ async def _maybe_trigger_auto_plan_adjust(user: dict) -> None:
         if not plan or not plan.get("days"):
             return
 
+        # Cooldown: 6 days minimum between adjustments
         last_auto = user.get("last_auto_adjust_at")
+        days_since_last = 9999
         if last_auto:
             try:
                 last_dt = datetime.fromisoformat(str(last_auto).replace("Z", "+00:00"))
-                if (datetime.now(timezone.utc) - last_dt).days < 6:
+                days_since_last = (datetime.now(timezone.utc) - last_dt).days
+                if days_since_last < 6:
                     return
             except Exception:
                 pass
@@ -325,8 +330,13 @@ async def _maybe_trigger_auto_plan_adjust(user: dict) -> None:
         ).to_list(200)
         done_indices = {s.get("day_index") for s in recent if s.get("day_index") is not None}
         plan_indices = {d.get("day_index") for d in plan["days"] if d.get("day_index") is not None}
-        if not plan_indices or not plan_indices.issubset(done_indices):
-            return  # not all days completed yet this cycle
+
+        full_cycle = bool(plan_indices) and plan_indices.issubset(done_indices)
+        # Fallback: even if not all plan days hit yet, trigger after 4+ sessions and 7+ days since last adjust
+        partial_with_volume = len(recent) >= 4 and (days_since_last >= 7)
+
+        if not (full_cycle or partial_with_volume):
+            return  # not enough data yet
 
         # Avoid spawning a duplicate job
         existing = await db.plan_adjust_jobs.find_one(
@@ -342,7 +352,7 @@ async def _maybe_trigger_auto_plan_adjust(user: dict) -> None:
             "status": "pending",
             "created_at": now_iso(),
             "plan_id": plan_id,
-            "source": "auto_weekly",
+            "source": "auto_weekly" if full_cycle else "auto_partial",
         })
         await db.users.update_one(
             {"id": user["id"]},

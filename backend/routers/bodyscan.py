@@ -208,25 +208,40 @@ async def bodyscan_delete(scan_id: str, user: dict = Depends(get_current_user)):
 
 @router.get("/profile/weight-trend")
 async def profile_weight_trend(user: dict = Depends(get_current_user)):
-    """Weight history from body scans + delta vs earliest. Free for all users."""
-    profile = user.get("profile") or {}
-    current = profile.get("weight_kg")
+    """Weight history merging body_weight_logs + body_scans, sorted ascending.
+    current_kg = latest from EITHER source (whichever is newest). Free for all users."""
+    # 1) Manual body-weight logs (primary source)
+    logs = await db.body_weight_logs.find(
+        {"user_id": user["id"]},
+        {"_id": 0, "weight_kg": 1, "logged_at": 1},
+    ).sort("logged_at", 1).to_list(500)
+    # 2) Weight captured during body scans (secondary)
     scans = await db.body_scans.find(
         {"user_id": user["id"], "weight_kg_at_scan": {"$ne": None}},
         {"_id": 0, "weight_kg_at_scan": 1, "created_at": 1},
-    ).sort("created_at", 1).to_list(50)
-    points = [
-        {"date": s["created_at"], "weight_kg": s["weight_kg_at_scan"]}
-        for s in scans if s.get("weight_kg_at_scan")
-    ]
-    earliest = points[0]["weight_kg"] if points else None
+    ).sort("created_at", 1).to_list(500)
+    merged = []
+    for l in logs:
+        if l.get("weight_kg") is not None and l.get("logged_at"):
+            merged.append({"date": l["logged_at"], "weight_kg": float(l["weight_kg"])})
+    for s in scans:
+        if s.get("weight_kg_at_scan") is not None and s.get("created_at"):
+            merged.append({"date": s["created_at"], "weight_kg": float(s["weight_kg_at_scan"])})
+    merged.sort(key=lambda p: p["date"])
+    # Fallback to profile.weight_kg as a synthetic starting point if NO data at all
+    profile = user.get("profile") or {}
+    profile_weight = profile.get("weight_kg")
+    if not merged and profile_weight is not None:
+        merged.append({"date": profile.get("weight_updated_at") or now_iso(), "weight_kg": float(profile_weight)})
+    earliest = merged[0]["weight_kg"] if merged else None
+    current = merged[-1]["weight_kg"] if merged else (float(profile_weight) if profile_weight is not None else None)
     delta = None
     if current is not None and earliest is not None:
         try:
             delta = round(float(current) - float(earliest), 1)
         except Exception:
             delta = None
-    return {"current_kg": current, "earliest_kg": earliest, "delta_kg": delta, "points": points}
+    return {"current_kg": current, "earliest_kg": earliest, "delta_kg": delta, "points": merged}
 
 
 @router.post("/bodyscan/{scan_id}/suggest-plan-adjustment")

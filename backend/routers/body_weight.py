@@ -39,6 +39,15 @@ async def log_weight(payload: WeightLogCreate, user: dict = Depends(get_current_
         "created_at": now_iso(),
     }
     await db.body_weight_logs.insert_one(doc)
+    # Keep profile.weight_kg in sync so Dashboard, AI Coach & plan-adjust see the latest value.
+    # Use whole-profile $set because new users may have profile=None (dot notation fails on null parent).
+    current_profile = dict(user.get("profile") or {})
+    current_profile["weight_kg"] = doc["weight_kg"]
+    current_profile["weight_updated_at"] = doc["logged_at"]
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"profile": current_profile}},
+    )
     doc.pop("_id", None)
     return {"ok": True, "entry": doc}
 
