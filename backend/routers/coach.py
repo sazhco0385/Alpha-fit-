@@ -30,6 +30,79 @@ async def coach_generate(user: dict = Depends(get_current_user)):
     return {"plan": plan}
 
 
+@router.get("/coach/plan-adjust-status")
+async def plan_adjust_status(user: dict = Depends(get_current_user)):
+    """Returns when the next auto plan-adjust will trigger and why.
+    Used by the Dashboard to show "Bereit ✅" or "Cooldown 3 Tage" etc."""
+    plan_id = user.get("current_plan_id")
+    if not plan_id:
+        return {"status": "no_plan", "message": "Noch kein aktiver Plan."}
+    plan = await db.training_plans.find_one({"id": plan_id}, {"_id": 0, "days": 1})
+    if not plan or not plan.get("days"):
+        return {"status": "no_plan", "message": "Noch kein aktiver Plan."}
+
+    # Cooldown
+    last_auto = user.get("last_auto_adjust_at")
+    days_since_last = 9999
+    if last_auto:
+        try:
+            last_dt = datetime.fromisoformat(str(last_auto).replace("Z", "+00:00"))
+            days_since_last = (datetime.now(timezone.utc) - last_dt).days
+        except Exception:
+            pass
+
+    cooldown_days_left = max(0, 6 - days_since_last) if last_auto else 0
+
+    # Done indices in last 7 days
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    recent = await db.workout_sessions.find(
+        {"user_id": user["id"], "status": "completed", "completed_at": {"$gte": week_ago}},
+        {"_id": 0, "day_index": 1},
+    ).to_list(200)
+    done_indices = sorted({s.get("day_index") for s in recent if s.get("day_index") is not None})
+    plan_indices = sorted({d.get("day_index") for d in plan["days"] if d.get("day_index") is not None})
+    missing = [d for d in plan_indices if d not in done_indices]
+    sessions_count = len(recent)
+
+    full_cycle = bool(plan_indices) and (not missing)
+    partial_eligible = sessions_count >= 4 and days_since_last >= 7
+
+    if cooldown_days_left > 0:
+        status = "cooldown"
+        msg = f"Cooldown — nächste Anpassung in {cooldown_days_left} Tag{'en' if cooldown_days_left != 1 else ''}."
+    elif full_cycle or partial_eligible:
+        status = "ready"
+        msg = "Bereit für Anpassung — wird beim nächsten Workout-Abschluss ausgelöst."
+    elif sessions_count >= 4:
+        # 4+ sessions done but need more days since last adjust
+        days_to_wait = max(0, 7 - days_since_last) if last_auto else 7 - sessions_count
+        status = "needs_time"
+        msg = f"Noch {max(1, days_to_wait)} Tag{'e' if max(1, days_to_wait) != 1 else ''} bis zur nächsten Anpassung."
+    else:
+        # need more sessions
+        next_day = missing[0] if missing else (plan_indices[0] if plan_indices else 1)
+        remaining = len(missing) if missing else max(0, 4 - sessions_count)
+        status = "needs_sessions"
+        if missing:
+            msg = f"Noch {remaining} Trainingstag{'e' if remaining != 1 else ''} — als nächstes Tag {next_day}."
+        else:
+            msg = f"Noch {remaining} Sessions bis zur nächsten Anpassung."
+
+    return {
+        "status": status,
+        "message": msg,
+        "last_adjust_at": last_auto,
+        "days_since_last": days_since_last if last_auto else None,
+        "cooldown_days_left": cooldown_days_left,
+        "sessions_last_7d": sessions_count,
+        "plan_days_total": len(plan_indices),
+        "plan_days_done": done_indices,
+        "plan_days_missing": missing,
+        "manual_override_available": True,
+    }
+
+
+
 @router.post("/coach/adjust-plan")
 async def coach_adjust(user: dict = Depends(get_current_user)):
     """Synchronous adjust (kept for backward compat). Hard 60s timeout to avoid Cloudflare 524.

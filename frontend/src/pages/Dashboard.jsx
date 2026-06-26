@@ -18,18 +18,21 @@ export default function Dashboard() {
   const [sessions, setSessions] = useState([]);
   const [stats, setStats] = useState({ total_completed: 0, current_streak: 0, total_volume_kg: 0 });
   const [regenerating, setRegenerating] = useState(false);
+  const [adjustStatus, setAdjustStatus] = useState(null);
 
   const load = async () => {
-    const [{ data: planData }, { data: sessData }, { data: hist }, { data: st }] = await Promise.all([
+    const [{ data: planData }, { data: sessData }, { data: hist }, { data: st }, statusRes] = await Promise.all([
       api.get("/plans/current"),
       api.get("/sessions/active"),
       api.get("/sessions/history"),
       api.get("/sessions/stats"),
+      api.get("/coach/plan-adjust-status").catch(() => ({ data: null })),
     ]);
     setPlan(planData.plan);
     setActiveSession(sessData.session);
     setSessions(hist.sessions || []);
     setStats(st);
+    setAdjustStatus(statusRes?.data || null);
   };
 
   useEffect(() => { load(); }, []);
@@ -160,7 +163,7 @@ export default function Dashboard() {
 
       {/* Training Plan */}
       <section className="mb-6 sm:mb-8">
-        <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+        <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
           <h2 className="font-teko text-2xl sm:text-3xl tracking-wide chrome-text whitespace-nowrap">DEIN PLAN</h2>
           <div className="flex gap-2 flex-wrap">
             <button onClick={adjustPlan} disabled={regenerating} className="btn-outline text-xs flex items-center gap-1.5 whitespace-nowrap" data-testid="adjust-plan-btn">
@@ -170,6 +173,19 @@ export default function Dashboard() {
             <button onClick={() => navigate("/plan")} className="btn-outline text-xs whitespace-nowrap" data-testid="view-plan-btn">DETAILS</button>
           </div>
         </div>
+        {adjustStatus && adjustStatus.status !== "no_plan" && (
+          <div className="mb-3 flex items-center gap-2 text-[11px] font-chakra" data-testid="adjust-status-badge">
+            <span
+              className="inline-block w-2 h-2 rounded-full"
+              style={{
+                background: adjustStatus.status === "ready" ? "#00FF7F" : adjustStatus.status === "cooldown" ? "#FFD740" : "#00BFFF",
+                boxShadow: `0 0 8px ${adjustStatus.status === "ready" ? "#00FF7F" : adjustStatus.status === "cooldown" ? "#FFD740" : "#00BFFF"}`,
+              }}
+            />
+            <span className="text-gray-400">Nächste KI-Anpassung:</span>
+            <span className="text-gray-200">{adjustStatus.message}</span>
+          </div>
+        )}
 
         {plan ? (
           <div>
