@@ -311,7 +311,7 @@ def render_trial_usage_reminder(name: str, hours_left: int, stats: Dict[str, Any
     return subject, _layout("Trial endet bald", preheader, body, cta, f"{APP_URL}/premium?from=trial_reminder", unsub_token)
 
 
-
+def render_admin_new_signup(user_name: str, user_email: str, total_users: int) -> tuple[str, str]:
     """Internal notification to admin when a new user signs up."""
     subject = f"🎉 Neue Registrierung: {user_name} (#{total_users})"
     preheader = f"{user_email} ist gerade beigetreten."

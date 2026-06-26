@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import Layout from "../components/Layout";
 import api from "../lib/api";
 import { toast } from "sonner";
-import { Camera, Plus, Trash2, Loader2, Apple, Flame, Beef, Wheat, Droplet, X, Check, ChevronRight, Edit3, Sparkles } from "lucide-react";
+import { Camera, Plus, Trash2, Loader2, Apple, Flame, Beef, Wheat, Droplet, X, Check, ChevronRight, Edit3, Sparkles, ScanLine } from "lucide-react";
+import BarcodeScanner from "../components/BarcodeScanner";
 
 const MEAL_TYPES = [
   { v: "breakfast", l: "Frühstück" },
@@ -16,6 +17,7 @@ export default function Nutrition() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzed, setAnalyzed] = useState(null); // result from AI -> edit modal
   const [manualOpen, setManualOpen] = useState(false);
+  const [barcodeOpen, setBarcodeOpen] = useState(false);
   const fileRef = useRef(null);
 
   const load = async () => {
@@ -111,31 +113,40 @@ export default function Nutrition() {
       </div>
 
       {/* Add actions */}
-      <div className="grid grid-cols-2 gap-3 mb-5 sm:mb-6">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-6">
         <button
           onClick={() => fileRef.current?.click()}
           disabled={analyzing}
-          className="af-card p-5 clip-corner-tl-br hover:glow-box transition tracing-border text-center"
+          className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition tracing-border text-center"
           data-testid="photo-scan-btn"
         >
           {analyzing ? (
-            <Loader2 size={32} className="mx-auto animate-spin text-[#00BFFF]" />
+            <Loader2 size={28} className="mx-auto animate-spin text-[#00BFFF]" />
           ) : (
-            <Camera size={32} className="mx-auto text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.6))" }} />
+            <Camera size={28} className="mx-auto text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.6))" }} />
           )}
-          <div className="font-teko text-lg sm:text-xl mt-2 chrome-text">
-            {analyzing ? "ANALYSIERE..." : "FOTO SCAN"}
+          <div className="font-teko text-base sm:text-lg mt-2 chrome-text">
+            {analyzing ? "ANALYSIERE..." : "FOTO"}
           </div>
-          <div className="text-[10px] text-gray-500 font-chakra mt-1">KI-Erkennung</div>
+          <div className="text-[10px] text-gray-500 font-chakra mt-1">KI-Vision</div>
+        </button>
+        <button
+          onClick={() => setBarcodeOpen(true)}
+          className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition text-center"
+          data-testid="barcode-scan-btn"
+        >
+          <ScanLine size={28} className="mx-auto text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.6))" }} />
+          <div className="font-teko text-base sm:text-lg mt-2 chrome-text">BARCODE</div>
+          <div className="text-[10px] text-gray-500 font-chakra mt-1">2 Mio. Produkte</div>
         </button>
         <button
           onClick={() => setManualOpen(true)}
-          className="af-card p-5 clip-corner-tl-br hover:glow-box transition text-center"
+          className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition text-center"
           data-testid="manual-add-btn"
         >
-          <Plus size={32} className="mx-auto text-[#00BFFF]" />
-          <div className="font-teko text-lg sm:text-xl mt-2 chrome-text">MANUELL</div>
-          <div className="text-[10px] text-gray-500 font-chakra mt-1">Selbst eingeben</div>
+          <Plus size={28} className="mx-auto text-[#00BFFF]" />
+          <div className="font-teko text-base sm:text-lg mt-2 chrome-text">MANUELL</div>
+          <div className="text-[10px] text-gray-500 font-chakra mt-1">+ AI-Schätzung</div>
         </button>
         <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} className="hidden" data-testid="photo-input" />
       </div>
@@ -195,6 +206,30 @@ export default function Nutrition() {
           title="MANUELL HINZUFÜGEN"
           onSave={saveEntry}
           onClose={() => setManualOpen(false)}
+        />
+      )}
+      {/* Barcode Scanner */}
+      {barcodeOpen && (
+        <BarcodeScanner
+          onFound={(product) => {
+            setBarcodeOpen(false);
+            setAnalyzed({
+              food_name: product.food_name,
+              portion_grams: product.portion_grams,
+              calories: product.calories,
+              protein_g: product.protein_g,
+              carbs_g: product.carbs_g,
+              fat_g: product.fat_g,
+              fiber_g: product.fiber_g,
+              sugar_g: product.sugar_g,
+              sodium_mg: product.sodium_mg,
+              meal_type: guessMeal(),
+              confidence: 0.95,
+              components: [],
+              image_url: product.image_url,
+            });
+          }}
+          onClose={() => setBarcodeOpen(false)}
         />
       )}
     </Layout>

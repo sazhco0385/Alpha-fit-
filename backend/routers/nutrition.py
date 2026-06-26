@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel
 import uuid
 import logging
+import httpx
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 
@@ -247,6 +248,86 @@ async def recent_foods(user: dict = Depends(get_current_user), q: str = "", limi
         it.pop("_id", None)
     return {"items": items}
 
+
+
+
+
+OFF_URL = "https://world.openfoodfacts.org/api/v2/product/{}.json"
+OFF_FIELDS = "product_name,brands,serving_size,serving_quantity,nutriments,image_url,image_thumb_url"
+
+
+@router.get("/nutrition/barcode/{ean}")
+async def lookup_barcode(ean: str, user: dict = Depends(get_current_user)):
+    """Look up a product on Open Food Facts by EAN/UPC barcode.
+    Returns scaled macros for the product's serving size (default 100 g).
+    """
+    ean = (ean or "").strip()
+    if not ean.isdigit() or not (6 <= len(ean) <= 14):
+        raise HTTPException(status_code=400, detail="Ungültiger Barcode (6-14 Ziffern erwartet).")
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as cx:
+            r = await cx.get(OFF_URL.format(ean), params={"fields": OFF_FIELDS})
+    except Exception as e:
+        logger.error(f"Open Food Facts unreachable: {e}")
+        raise HTTPException(status_code=503, detail="Lebensmittel-Datenbank nicht erreichbar. Bitte später erneut versuchen.")
+    if r.status_code != 200:
+        raise HTTPException(status_code=502, detail="Lebensmittel-Datenbank antwortete fehlerhaft.")
+    data = r.json()
+    if data.get("status") != 1 or not data.get("product"):
+        raise HTTPException(status_code=404, detail="Produkt nicht gefunden. Bitte manuell eingeben oder Foto nutzen.")
+
+    p = data["product"]
+    n = p.get("nutriments") or {}
+    brands = (p.get("brands") or "").split(",")[0].strip()
+    name_raw = (p.get("product_name") or "").strip() or "Unbekanntes Produkt"
+    name = f"{brands} {name_raw}".strip() if brands and brands.lower() not in name_raw.lower() else name_raw
+
+    # Determine portion: prefer manufacturer serving_quantity, fallback to 100 g
+    try:
+        serving_q = float(p.get("serving_quantity") or 0)
+    except Exception:
+        serving_q = 0.0
+    portion = serving_q if 1 < serving_q <= 2000 else 100.0
+    scale = portion / 100.0
+
+    def _num(key: str, fallback_keys: tuple = ()) -> float:
+        v = n.get(key)
+        if v is None:
+            for fk in fallback_keys:
+                v = n.get(fk)
+                if v is not None:
+                    break
+        try:
+            return float(v) if v is not None else 0.0
+        except Exception:
+            return 0.0
+
+    kcal_100 = _num("energy-kcal_100g", ("energy_kcal_100g",))
+    if not kcal_100:
+        # some products only have energy_100g (kJ); convert 1 kcal = 4.184 kJ
+        kj_100 = _num("energy_100g", ("energy-kj_100g",))
+        kcal_100 = round(kj_100 / 4.184, 1) if kj_100 else 0.0
+    sodium_100g = _num("sodium_100g")
+    if not sodium_100g:
+        salt_100g = _num("salt_100g")
+        sodium_100g = round(salt_100g * 0.4, 4) if salt_100g else 0.0  # salt → sodium ≈ /2.5
+
+    result = {
+        "found": True,
+        "ean": ean,
+        "food_name": name[:200],
+        "portion_grams": round(portion, 1),
+        "calories": round(kcal_100 * scale, 1),
+        "protein_g": round(_num("proteins_100g") * scale, 2),
+        "carbs_g": round(_num("carbohydrates_100g") * scale, 2),
+        "fat_g": round(_num("fat_100g") * scale, 2),
+        "fiber_g": round(_num("fiber_100g") * scale, 2),
+        "sugar_g": round(_num("sugars_100g") * scale, 2),
+        "sodium_mg": round(sodium_100g * scale * 1000, 1),  # g → mg
+        "image_url": p.get("image_thumb_url") or p.get("image_url") or "",
+        "source": "openfoodfacts",
+    }
+    return result
 
 
 @router.get("/nutrition/history")
