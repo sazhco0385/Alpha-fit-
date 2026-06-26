@@ -18,6 +18,7 @@ import { Impressum, AGB, Datenschutz } from "./pages/Legal";
 import Support from "./pages/Support";
 import Nutrition from "./pages/Nutrition";
 import BodyScan from "./pages/BodyScan";
+import ProgressPhotos from "./pages/ProgressPhotos";
 import Library, { LibraryDetail } from "./pages/Library";
 import FormCheck from "./pages/FormCheck";
 import Settings from "./pages/Settings";
@@ -72,6 +73,7 @@ function App() {
             <Route path="/support" element={<ProtectedRoute requireOnboarding={false}><Support /></ProtectedRoute>} />
             <Route path="/nutrition" element={<ProtectedRoute><Nutrition /></ProtectedRoute>} />
             <Route path="/bodyscan" element={<ProtectedRoute><BodyScan /></ProtectedRoute>} />
+            <Route path="/progress-photos" element={<ProtectedRoute><ProgressPhotos /></ProtectedRoute>} />
             <Route path="/library" element={<Library />} />
             <Route path="/library/:slug" element={<LibraryDetail />} />
             <Route path="/formcheck" element={<ProtectedRoute><FormCheck /></ProtectedRoute>} />

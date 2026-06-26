@@ -85,6 +85,19 @@ export default function BodyScan() {
       setCurrent(data);
       setNotes("");
       toast.success("Analyse abgeschlossen");
+      // Also save the photo into the Progress Photos gallery (auto, with Gym-Light filter)
+      try {
+        const styled = await applyGymLightAndCompress(b64);
+        await api.post("/progress-photos", {
+          image_base64: styled,
+          pose: "front",
+          from_body_scan: true,
+          body_scan_id: data.id,
+        });
+      } catch (e) {
+        // non-fatal — body scan still succeeds even if photo save fails
+        console.warn("progress photo save failed", e);
+      }
       await load();
     } catch (err) {
       toast.error(err?.response?.data?.detail || "KI-Analyse fehlgeschlagen");
@@ -573,5 +586,28 @@ function fileToBase64(file) {
     r.onload = () => resolve(r.result);
     r.onerror = reject;
     r.readAsDataURL(file);
+  });
+}
+
+
+// Apply Gym-Light filter to the uploaded body-scan photo and downscale to ~1280px
+async function applyGymLightAndCompress(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const longest = Math.max(img.width, img.height);
+        const scale = longest > 1280 ? 1280 / longest : 1;
+        const cw = Math.round(img.width * scale), ch = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext("2d");
+        ctx.filter = "contrast(1.32) brightness(1.04) saturate(1.18) sepia(0.06)";
+        ctx.drawImage(img, 0, 0, cw, ch);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      } catch (e) { reject(e); }
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
   });
 }
