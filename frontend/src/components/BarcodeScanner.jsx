@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Html5Qrcode } from "html5-qrcode";
 import { X, Loader2, ScanLine, Keyboard } from "lucide-react";
 import api from "../lib/api";
@@ -96,8 +97,8 @@ export default function BarcodeScanner({ onFound, onClose }) {
     await lookup(ean);
   };
 
-  return (
-    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/95 backdrop-blur-md p-0 sm:p-4" onClick={onClose}>
+  return createPortal((
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/95 backdrop-blur-md p-0 sm:p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border-t-2 sm:border border-[#00BFFF]/40 sm:border-[#1A1A24] p-5 sm:p-6 max-w-lg w-full h-full sm:h-auto overflow-y-auto sm:clip-corner-tl-br sm:my-4 rounded-t-2xl sm:rounded-none" data-testid="barcode-scanner-modal">
         <div className="flex items-start justify-between mb-3 gap-2">
           <div className="min-w-0">
@@ -186,5 +187,5 @@ export default function BarcodeScanner({ onFound, onClose }) {
         )}
       </div>
     </div>
-  );
+  ), document.body);
 }

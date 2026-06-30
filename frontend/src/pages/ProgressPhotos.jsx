@@ -1,13 +1,17 @@
 import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import Layout from "../components/Layout";
 import PhotoCapture from "../components/PhotoCapture";
 import api from "../lib/api";
-import { Camera, Trash2, ChevronLeft, ChevronRight, X, Share2, Loader2, Sparkles } from "lucide-react";
+import { Camera, Trash2, ChevronLeft, ChevronRight, X, Share2, Loader2, Sparkles, Download } from "lucide-react";
+import { toPng } from "html-to-image";
 import { toast } from "sonner";
+import { useAuth } from "../lib/auth";
 
 const POSE_LABEL = { front: "Front", side: "Seite", back: "Rücken", free: "Frei" };
 
 export default function ProgressPhotos() {
+  const { user } = useAuth();
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [captureOpen, setCaptureOpen] = useState(false);
@@ -59,7 +63,7 @@ export default function ProgressPhotos() {
       <div className="mb-5 sm:mb-6">
         <h1 className="font-teko text-4xl sm:text-5xl chrome-text" data-testid="progress-photos-title">PROGRESS FOTOS</h1>
         <p className="text-xs sm:text-sm text-gray-400 font-chakra mt-1">
-          Mit „Gym Light" Filter — wie im Studio fotografiert.
+          Mit Gym-Light-Filter — wie im Studio fotografiert.
         </p>
       </div>
 
@@ -149,6 +153,7 @@ export default function ProgressPhotos() {
         <CompareSlider
           first={compare.first}
           last={compare.last}
+          userName={user?.name || "Athlete"}
           onClose={() => setShowCompareModal(false)}
         />
       )}
@@ -174,8 +179,8 @@ function Lightbox({ photo, onClose, onDelete }) {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, []);
-  return (
-    <div className="fixed inset-0 z-[70] bg-black flex flex-col" data-testid="photo-lightbox" onClick={onClose}>
+  return createPortal((
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col" data-testid="photo-lightbox" onClick={onClose}>
       <div className="flex items-center justify-between p-3 sm:p-4 bg-black/70" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-gray-300" data-testid="lightbox-close-btn">
           <X size={22} />
@@ -193,11 +198,12 @@ function Lightbox({ photo, onClose, onDelete }) {
         {photo.note && <div className="text-xs text-gray-500 font-chakra mt-1">{photo.note}</div>}
       </div>
     </div>
-  );
+  ), document.body);
 }
 
-function CompareSlider({ first, last, onClose }) {
+function CompareSlider({ first, last, userName, onClose }) {
   const [pct, setPct] = useState(50);
+  const [shareOpen, setShareOpen] = useState(false);
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -213,14 +219,30 @@ function CompareSlider({ first, last, onClose }) {
     setPct(Math.max(0, Math.min(100, (x / rect.width) * 100)));
   };
 
-  return (
-    <div className="fixed inset-0 z-[70] bg-black flex flex-col" data-testid="compare-slider-modal">
+  const daysBetween = () => {
+    try {
+      const a = new Date(first.created_at).getTime();
+      const b = new Date(last.created_at).getTime();
+      return Math.max(0, Math.round((b - a) / 86_400_000));
+    } catch { return 0; }
+  };
+
+  return createPortal((
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col" data-testid="compare-slider-modal">
       <div className="flex items-center justify-between p-3 sm:p-4 bg-black/70">
         <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-gray-300" data-testid="compare-close-btn">
           <X size={22} />
         </button>
         <div className="font-teko text-lg sm:text-xl chrome-text tracking-widest">VORHER / NACHHER</div>
-        <div className="w-11" />
+        <button
+          type="button"
+          onClick={() => setShareOpen(true)}
+          className="w-11 h-11 flex items-center justify-center text-[#00BFFF] hover:text-[#00E5FF]"
+          data-testid="compare-share-btn"
+          title="Teilen"
+        >
+          <Share2 size={20} />
+        </button>
       </div>
       <div className="flex-1 flex items-center justify-center px-3 sm:px-6 pb-4 overflow-hidden">
         <div
@@ -251,6 +273,201 @@ function CompareSlider({ first, last, onClose }) {
       <div className="bg-black/80 p-4 text-center">
         <div className="text-xs text-gray-400 font-chakra">Schiebe den Regler nach links oder rechts</div>
       </div>
+
+      {shareOpen && (
+        <ShareCard
+          first={first}
+          last={last}
+          userName={userName}
+          days={daysBetween()}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </div>
-  );
+  ), document.body);
+}
+
+function ShareCard({ first, last, userName, days, onClose }) {
+  const cardRef = useRef(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  if (!first || !last) {
+    return createPortal((
+      <div className="fixed inset-0 z-[110] bg-black flex items-center justify-center" onClick={onClose} data-testid="share-card-modal">
+        <div className="text-gray-400 font-chakra">Fotos werden geladen…</div>
+      </div>
+    ), document.body);
+  }
+
+  const weightDelta = (last.weight_kg != null && first.weight_kg != null)
+    ? Math.round((last.weight_kg - first.weight_kg) * 10) / 10
+    : null;
+
+  const periodLabel = days >= 365
+    ? `${Math.floor(days / 365)} Jahr${Math.floor(days / 365) === 1 ? "" : "e"}`
+    : days >= 60
+    ? `${Math.round(days / 30)} Monate`
+    : days >= 14
+    ? `${Math.round(days / 7)} Wochen`
+    : `${days} Tag${days === 1 ? "" : "e"}`;
+
+  const sharePng = async () => {
+    if (!cardRef.current) return;
+    setBusy(true);
+    try {
+      const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 3, backgroundColor: "#000000" });
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], `alpha-fit-progress.png`, { type: "image/png" });
+      const text = weightDelta != null
+        ? `${periodLabel} Alpha-Fit. ${weightDelta > 0 ? "+" : ""}${weightDelta} kg. Du gegen dein Ich von gestern. 💪`
+        : `${periodLabel} Alpha-Fit. Du gegen dein Ich von gestern. 💪`;
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Mein Fortschritt @ alpha-fit",
+          text,
+        });
+      } else {
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = "alpha-fit-progress.png";
+        a.click();
+        toast.success("Vergleich gespeichert!");
+      }
+    } catch (e) {
+      if (e.name !== "AbortError") toast.error("Teilen fehlgeschlagen");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const downloadPng = async () => {
+    if (!cardRef.current) return;
+    setBusy(true);
+    try {
+      const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 3, backgroundColor: "#000000" });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = "alpha-fit-progress.png";
+      a.click();
+      toast.success("Bild gespeichert!");
+    } catch {
+      toast.error("Download fehlgeschlagen");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return createPortal((
+    <div className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 overflow-y-auto" data-testid="share-card-modal">
+      <button onClick={onClose} className="absolute top-3 right-3 w-11 h-11 flex items-center justify-center text-gray-300 hover:text-white" data-testid="share-close-btn">
+        <X size={24} />
+      </button>
+
+      {/* The actual shareable card (rendered visible, used by toPng) */}
+      <div className="mb-4 max-w-sm w-full" data-testid="share-card-preview">
+        <div
+          ref={cardRef}
+          className="relative w-full aspect-[4/5] bg-black overflow-hidden"
+          style={{
+            backgroundImage: "linear-gradient(180deg, #0a0a14 0%, #050508 100%)",
+            border: "2px solid rgba(0,191,255,0.4)",
+            boxShadow: "inset 0 0 60px rgba(0,191,255,0.15)",
+          }}
+        >
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 p-3 flex items-center justify-between z-10" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.85), transparent)" }}>
+            <div>
+              <div className="text-[10px] tracking-[0.3em] text-[#FFD700] font-bold" style={{ fontFamily: '"Teko", sans-serif' }}>ALPHA<span className="text-[#00BFFF]">FIT</span></div>
+              <div className="text-[9px] text-gray-400 tracking-widest uppercase">{userName}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] text-[#00BFFF] tracking-[0.25em] uppercase font-bold">{periodLabel}</div>
+              <div className="text-[8px] text-gray-500 uppercase tracking-widest">Transformation</div>
+            </div>
+          </div>
+
+          {/* Two photos side by side */}
+          <div className="absolute inset-0 grid grid-cols-2 gap-[2px] pt-[58px] pb-[80px]">
+            <div className="relative overflow-hidden">
+              <img src={imgSrc(first)} alt="before" className="w-full h-full object-cover"  />
+              <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] font-bold tracking-[0.2em] text-gray-300" style={{ fontFamily: '"Chakra Petch", monospace' }}>
+                VORHER
+              </div>
+              {first.weight_kg != null && (
+                <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[10px] text-gray-300" style={{ fontFamily: '"Chakra Petch", monospace' }}>
+                  {first.weight_kg} kg
+                </div>
+              )}
+            </div>
+            <div className="relative overflow-hidden">
+              <img src={imgSrc(last)} alt="after" className="w-full h-full object-cover"  />
+              <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#00FF7F]/20 border border-[#00FF7F]/60 text-[9px] font-bold tracking-[0.2em] text-[#00FF7F]" style={{ fontFamily: '"Chakra Petch", monospace' }}>
+                NACHHER
+              </div>
+              {last.weight_kg != null && (
+                <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/80 text-[10px] text-[#00FF7F] font-bold" style={{ fontFamily: '"Chakra Petch", monospace' }}>
+                  {last.weight_kg} kg
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 z-10 text-center" style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.95), transparent)" }}>
+            {weightDelta != null && (
+              <div className="mb-1">
+                <span className="text-2xl font-bold" style={{
+                  fontFamily: '"Teko", sans-serif',
+                  color: weightDelta < 0 ? "#00FF7F" : weightDelta > 0 ? "#FFD700" : "#ffffff",
+                  textShadow: `0 0 20px ${weightDelta < 0 ? "#00FF7F" : weightDelta > 0 ? "#FFD700" : "#fff"}66`,
+                }}>
+                  {weightDelta > 0 ? "+" : ""}{weightDelta} kg
+                </span>
+              </div>
+            )}
+            <div className="text-[10px] tracking-[0.3em] uppercase font-bold text-[#00BFFF]" style={{ fontFamily: '"Chakra Petch", monospace' }}>
+              alpha-fit.fitness
+            </div>
+          </div>
+
+          {/* Vignette */}
+          <div className="pointer-events-none absolute inset-0" style={{
+            background: "radial-gradient(circle at 50% 50%, transparent 50%, rgba(0,0,0,0.5) 100%)",
+          }} />
+        </div>
+      </div>
+
+      <div className="flex gap-2 w-full max-w-sm">
+        <button
+          onClick={downloadPng}
+          disabled={busy}
+          className="btn-outline flex-1 flex items-center justify-center gap-1.5 text-xs disabled:opacity-50"
+          data-testid="share-download-btn"
+        >
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+          BILD SPEICHERN
+        </button>
+        <button
+          onClick={sharePng}
+          disabled={busy}
+          className="btn-primary flex-1 flex items-center justify-center gap-1.5 text-xs disabled:opacity-50"
+          data-testid="share-action-btn"
+        >
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <Share2 size={14} />}
+          TEILEN
+        </button>
+      </div>
+
+      <div className="text-[10px] text-gray-500 font-chakra mt-3 text-center max-w-xs">
+        Teile auf Instagram, WhatsApp oder als Story — automatisch mit Alpha-Fit-Branding.
+      </div>
+    </div>
+  ), document.body);
 }

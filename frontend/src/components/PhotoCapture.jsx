@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Camera, RotateCw, Check, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import api from "../lib/api";
@@ -111,8 +112,8 @@ export default function PhotoCapture({ onSaved, onClose, defaultPose = "front", 
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[80] bg-black flex flex-col" data-testid="photo-capture-modal">
+  return createPortal((
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col" data-testid="photo-capture-modal">
       {/* Top bar */}
       <div className="flex items-center justify-between p-3 sm:p-4 bg-black/70 backdrop-blur-sm border-b border-[#1A1A24]">
         <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-gray-300 hover:text-white" data-testid="capture-close-btn">
@@ -206,7 +207,7 @@ export default function PhotoCapture({ onSaved, onClose, defaultPose = "front", 
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 }
 
 // Simple SVG silhouette guides per pose
