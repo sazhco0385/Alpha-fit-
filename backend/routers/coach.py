@@ -179,18 +179,24 @@ async def chat_history(user: dict = Depends(get_current_user)):
 
 @router.get("/coach/insights")
 async def coach_insights(user: dict = Depends(get_current_user)):
-    """Alpha Coach 2.0 - proaktive Wochen-Insights mit Stats & Empfehlungen."""
+    """Alpha Coach 2.0 - proaktive Wochen-Insights mit Stats & Empfehlungen.
+    Verwendet KALENDERWOCHE (Mo 00:00 UTC bis Mo 00:00 UTC der Folgewoche) statt rollender 7 Tage,
+    damit die Zählung mit der echten Wahrnehmung des Users übereinstimmt."""
     now = datetime.now(timezone.utc)
-    week_ago = (now - timedelta(days=7)).isoformat()
-    two_weeks_ago = (now - timedelta(days=14)).isoformat()
+    # Start of current calendar week (Monday 00:00 UTC)
+    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today - timedelta(days=today.weekday())  # weekday(): Mon=0
+    last_week_start = week_start - timedelta(days=7)
+    week_start_iso = week_start.isoformat()
+    last_week_start_iso = last_week_start.isoformat()
 
     this_week = await db.workout_sessions.find(
-        {"user_id": user["id"], "status": "completed", "completed_at": {"$gte": week_ago}},
+        {"user_id": user["id"], "status": "completed", "completed_at": {"$gte": week_start_iso}},
         {"_id": 0}
     ).to_list(50)
     last_week = await db.workout_sessions.find(
         {"user_id": user["id"], "status": "completed",
-         "completed_at": {"$gte": two_weeks_ago, "$lt": week_ago}},
+         "completed_at": {"$gte": last_week_start_iso, "$lt": week_start_iso}},
         {"_id": 0}
     ).to_list(50)
 
