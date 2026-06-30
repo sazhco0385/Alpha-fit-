@@ -213,7 +213,9 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - Refactor server.py monolith — Phase 1 DONE (formcheck/payments/push extracted, server.py 2201 lines). Phase 2 backlog: extract /coach/*, /nutrition/*, /sessions/*, /bodyscan/*, /admin/* into routers.
 
 ## P2 Backlog
-- Social: friends, challenges, leaderboards
-- Apple Health / Google Fit sync
-- Wearable integration
+- Social: friends, challenges, leaderboards ✅ DONE
+- Apple Health Import + iOS Shortcut Auto-Sync ✅ DONE (Feb 2026)
+- **Health Connect (Android) Export-Upload** — WAITING auf Google ZIP-Export-Feature (Android 15+). Generischer Token-Endpoint `/integrations/apple-health/weight` ist ready und funktioniert via Tasker/MacroDroid für Power-User.
+- Apple-Workouts importieren (Phase 2 nach BodyMass)
+- Wearable integration (Apple Watch / Wear OS)
 - Body scan auto-adjust training plan based on weak_points
