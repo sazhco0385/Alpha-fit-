@@ -6,6 +6,7 @@ import {
   isPushSupported, getPushPermission, subscribePush, unsubscribePush,
   getCurrentSubscription, updatePushSettings, sendTestPush,
 } from "../lib/push";
+import AppleHealthCard from "../components/AppleHealthCard";
 import { Bell, BellOff, Loader2, Check, X, Send, AlertTriangle, Settings as Cog, Flame, Calendar, BarChart3, Volume2, VolumeX, Mail, AlertCircle, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
 import { isSoundEnabled, setSoundEnabled, playRestOverChime } from "../lib/sound";
@@ -136,6 +137,9 @@ export default function Settings() {
         <Cog size={28} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text">EINSTELLUNGEN</h1>
       </div>
+
+      {/* Apple Health integration */}
+      <AppleHealthCard apiBaseUrl={process.env.REACT_APP_BACKEND_URL} />
 
       {/* Sound block */}
       <div className="af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6" data-testid="settings-sound">
