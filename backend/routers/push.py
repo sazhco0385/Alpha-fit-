@@ -29,6 +29,22 @@ class PushPrefs(BaseModel):
     weekly_review: bool = Field(default=True, description="Sunday weekly review push")
 
 
+def _to_bool(v, default: bool = True) -> bool:
+    """Coerce common JSON values to bool — strings, ints, etc."""
+    if v is None:
+        return default
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, (int, float)):
+        return bool(v)
+    if isinstance(v, str):
+        s = v.strip().lower()
+        if s in ("false", "0", "no", "off", "", "null", "none"):
+            return False
+        return True
+    return bool(v)
+
+
 class NotificationPreferences(BaseModel):
     """Unified email + push trigger preferences for the current user.
     Same shape on GET and PUT."""
@@ -122,11 +138,27 @@ async def notifications_get_preferences(user: dict = Depends(get_current_user)) 
 
 @router.put("/notifications/preferences", response_model=NotificationPreferences)
 async def notifications_set_preferences(
-    payload: NotificationPreferences,
+    payload: dict,
     user: dict = Depends(get_current_user),
 ) -> NotificationPreferences:
     """Update which email + push triggers the user wants to receive.
-    Pydantic validates types automatically; missing keys default to True."""
-    new_prefs = payload.model_dump()
+    Forgiving: accepts strings/ints, coerces to bool. Missing keys keep their previous value (or default True)."""
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Body must be a JSON object")
+    current = user.get("notification_prefs") or {}
+    cur_email = {**DEFAULT_EMAIL_PREFS, **(current.get("email") or {})}
+    cur_push = {**DEFAULT_PUSH_PREFS, **(current.get("push") or {})}
+
+    in_email = payload.get("email") or {}
+    in_push = payload.get("push") or {}
+    if not isinstance(in_email, dict):
+        in_email = {}
+    if not isinstance(in_push, dict):
+        in_push = {}
+
+    new_email = {k: _to_bool(in_email.get(k, cur_email[k]), default=cur_email[k]) for k in DEFAULT_EMAIL_PREFS.keys()}
+    new_push = {k: _to_bool(in_push.get(k, cur_push[k]), default=cur_push[k]) for k in DEFAULT_PUSH_PREFS.keys()}
+
+    new_prefs = {"email": new_email, "push": new_push}
     await db.users.update_one({"id": user["id"]}, {"$set": {"notification_prefs": new_prefs}})
-    return payload
+    return NotificationPreferences(email=EmailPrefs(**new_email), push=PushPrefs(**new_push))

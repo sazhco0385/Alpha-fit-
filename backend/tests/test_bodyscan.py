@@ -244,7 +244,7 @@ def test_image_not_persisted_in_db(first_scan):
         finally:
             client.close()
 
-    asyncio.get_event_loop().run_until_complete(_check())
+    asyncio.run(_check())
 
 
 # ===== Delete cleanup =====

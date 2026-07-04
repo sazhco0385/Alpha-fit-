@@ -219,3 +219,10 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - Apple-Workouts importieren (Phase 2 nach BodyMass)
 - Wearable integration (Apple Watch / Wear OS)
 - Body scan auto-adjust training plan based on weak_points
+
+
+## Play Store Pre-Release Regression (2026-02-16) ✅
+- **Full pytest suite executed against live preview backend**: 278 passed, 1 skipped, 0 failed
+- Fixed `test_bodyscan.py::test_image_not_persisted_in_db`: replaced deprecated `asyncio.get_event_loop().run_until_complete()` with `asyncio.run()` (Python 3.10+ compatibility)
+- The previously reported `test_challenges.py` failures (`test_lazy_resolve_when_end_at_past`, `test_progress_workouts_metric_counts_completed_sessions`) were **collection-time failures due to missing REACT_APP_BACKEND_URL env** in the pytest shell — with env correctly set, all 18 challenge tests pass.
+- **App status**: green for Google Play Store testing. Backend routers + all critical flows verified.
