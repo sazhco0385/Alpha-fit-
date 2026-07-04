@@ -19,7 +19,7 @@ BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 ADMIN_EMAIL = "sazhco0385@gmail.com"
 ADMIN_PASS = "Bellakiki1"
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
-DB_NAME = os.environ.get("DB_NAME", "test_database")
+DB_NAME = os.environ.get("DB_NAME", "alphafit_db")
 
 assert BASE_URL, "REACT_APP_BACKEND_URL must be set"
 

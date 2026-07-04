@@ -226,3 +226,15 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - Fixed `test_bodyscan.py::test_image_not_persisted_in_db`: replaced deprecated `asyncio.get_event_loop().run_until_complete()` with `asyncio.run()` (Python 3.10+ compatibility)
 - The previously reported `test_challenges.py` failures (`test_lazy_resolve_when_end_at_past`, `test_progress_workouts_metric_counts_completed_sessions`) were **collection-time failures due to missing REACT_APP_BACKEND_URL env** in the pytest shell — with env correctly set, all 18 challenge tests pass.
 - **App status**: green for Google Play Store testing. Backend routers + all critical flows verified.
+
+
+## Bug Fix (2026-02-16) — "KI anpassen" Button + Orphaned Adjust Jobs ✅
+- **User Report**: Button zeigt Fehler, Plan wurde 2 Wochen nicht auto-angepasst (stuck auf v2).
+- **Root Cause**: Ein "pending" plan-adjust job vom 2026-06-19 war orphan geworden (`asyncio.create_task` starb beim Backend-Restart). Der `/coach/adjust-plan/start` Dedup-Guard hat den toten job_id zurückgegeben → Frontend polled bis Timeout → 'Fehler'.
+- **Fixes**:
+  1. `/coach/adjust-plan/start` (`routers/coach.py`): Pending-Jobs > 5 Min → auf 'error' sweepen, dann frischen Job starten.
+  2. Neuer Startup-Hook `sweep_orphaned_adjust_jobs` (`server.py`): Beim Backend-Boot alle pending > 10 Min auf 'error' setzen (defense-in-depth).
+  3. Manual `/start` schreibt jetzt auch `users.last_auto_adjust_at` → Auto-Trigger respektiert manuellen Cooldown.
+  4. Test-Cleanup: 11 TEST_ prefix workout_sessions aus Admin-DB entfernt (Regression-Test-Leakage).
+  5. `test_challenges.py` DB_NAME-Default `test_database` → `alphafit_db` (verhinderte spurious Test-Fails).
+- **Verified**: 68/68 Tests grün (6 neue + 62 regression). E2E manueller Adjust läuft in ~20s durch, Plan von v2 → v4 hochgezogen.
