@@ -226,28 +226,43 @@ User-Profil: {json.dumps(user.get('profile'))}
 
 Passe den Plan progressiv an. Erhöhe Gewichte wo Athlet die Ziel-Wiederholungen geschafft hat (2.5-5kg). Verringere wo unterschritten (-2.5-5kg). Anzahl Tage und Übungen beibehalten falls möglich, aber du darfst Übungen variieren wenn sinnvoll.
 
-Gib NUR JSON zurück im Format:
+Gib NUR JSON zurück im Format (WICHTIG: 'name' OHNE Versions-Suffix wie 'v2' – die Version wird vom System vergeben):
 {{
-  "name": "Plan-Name v2",
+  "name": "Plan-Name",
   "weeks": 4,
   "progression_notes": "Was wurde angepasst",
   "days": [...]
 }}
 """
-    text = await call_llm(build_coach_system(), prompt, f"adjust-{user['id']}-{uuid.uuid4()}")
+    try:
+        text = await call_llm(build_coach_system(), prompt, f"adjust-{user['id']}-{uuid.uuid4()}")
+    except Exception as e:
+        err_str = str(e)
+        logger.error(f"plan-adjust LLM call failed: {err_str}")
+        if "quota" in err_str.lower() or "budget" in err_str.lower() or "429" in err_str or "exceeded" in err_str.lower():
+            raise HTTPException(status_code=402, detail="KI-Budget aufgebraucht - Support kontaktieren")
+        raise HTTPException(status_code=502, detail=f"KI nicht erreichbar: {err_str[:120]}")
     plan_data = parse_json_from_llm(text)
     if not plan_data:
-        raise HTTPException(status_code=500, detail="Konnte Plan nicht aktualisieren")
+        logger.error(f"plan-adjust: LLM returned unparseable JSON (first 300 chars): {str(text)[:300]}")
+        raise HTTPException(status_code=502, detail="KI hat unlesbare Antwort gesendet - bitte erneut versuchen")
+
+    new_version = plan.get("version", 1) + 1
+    # Strip any 'vN' / 'V N' suffix the LLM might still add, then append the real version
+    raw_name = plan_data.get("name", "Alpha Plan")
+    import re
+    clean_name = re.sub(r"\s+v\s*\d+\s*$", "", str(raw_name), flags=re.IGNORECASE).strip() or "Alpha Plan"
+    final_name = f"{clean_name} v{new_version}"
 
     new_plan = {
         "id": str(uuid.uuid4()),
         "user_id": user["id"],
-        "name": plan_data.get("name", "Alpha Plan v2"),
+        "name": final_name,
         "weeks": plan_data.get("weeks", 4),
         "progression_notes": plan_data.get("progression_notes", ""),
         "days": plan_data.get("days", []),
         "created_at": now_iso(),
-        "version": plan.get("version", 1) + 1,
+        "version": new_version,
         "previous_plan_id": plan["id"],
     }
     await db.training_plans.insert_one(new_plan)
@@ -279,10 +294,15 @@ async def _run_adjust_job(job_id: str, user: dict, plan: dict) -> None:
             {"$set": {"status": "error", "error": he.detail, "finished_at": now_iso()}},
         )
     except Exception as e:
-        logger.error(f"adjust job {job_id} failed: {e}")
+        logger.error(f"adjust job {job_id} failed: {type(e).__name__}: {e}")
+        err_msg = f"KI-Anpassung fehlgeschlagen: {type(e).__name__}"
+        try:
+            err_msg = f"KI-Anpassung fehlgeschlagen: {str(e)[:150]}"
+        except Exception:
+            pass
         await db.plan_adjust_jobs.update_one(
             {"id": job_id},
-            {"$set": {"status": "error", "error": "KI-Anpassung fehlgeschlagen", "finished_at": now_iso()}},
+            {"$set": {"status": "error", "error": err_msg, "finished_at": now_iso()}},
         )
 
 

@@ -1,0 +1,35 @@
+{
+  "summary": "Backend regression + new monkeypatch tests for plan-adjust bugfix (version-suffix stripping + LLM error surfacing). Created /app/backend/tests/test_plan_adjust_llm_errors.py with 11 tests (8 regex unit tests, 2 monkeypatch tests hitting _run_adjust_job directly, 1 real E2E). All 21 tests pass (6 previous plan_adjust_bugfix + 4 plan_adjust_status + 11 new). E2E confirmed: admin's plan.name went from an unknown prior state to 'Alpha Hypertrophie 4-Tage Split v12', with plan.version bumping 11 -> 12 (exactly previous+1). No stray 'v2' anywhere in the final name.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "N/A (test tooling)", "issue": "pytest-asyncio 1.4.0 defaults async tests to function-scoped event loops, which invalidates motor's AsyncIOMotorClient (bound at server.py import). Fixed in this test file by decorating the two async tests with @pytest.mark.asyncio(loop_scope='module'). Consider adding a top-level conftest.py with `asyncio_default_test_loop_scope = 'session'` (via pytest.ini/pyproject.toml) so future async tests using module-level motor connections don't hit 'Event loop is closed'."},
+      {"endpoint": "services/llm_coach.py imports", "issue": "Circular import: services/llm_coach.py does `from server import db, EMERGENT_LLM_KEY, now_iso`, and server.py does `from services.llm_coach import ...`. Direct `from services import llm_coach` in a test triggers ImportError unless server is imported first. Worked around by importing `server` at the top of the test module. Long-term: move db/EMERGENT_LLM_KEY/now_iso into a small `core.py` (or `db.py`) that both server.py and services/llm_coach.py import — breaking the cycle."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_plan_adjust_llm_errors.py",
+    "/app/test_reports/pytest/plan_adjust_llm_errors.xml",
+    "/app/test_reports/pytest/iteration_13_regression.xml"
+  ],
+  "action_items": [
+    "Optional: break the server<->services.llm_coach circular import by extracting shared globals (db, EMERGENT_LLM_KEY, now_iso) into a lightweight core module. Not blocking — tests import server first as workaround.",
+    "Optional: add pytest-asyncio config `asyncio_default_test_loop_scope = 'session'` in pyproject.toml or a top-level conftest.py to prevent future 'Event loop is closed' surprises when tests share the module-level motor client."
+  ],
+  "critical_code_review_comments": [
+    "services/llm_coach.py:250-255 — the version-strip regex `\\s+v\\s*\\d+\\s*$` correctly handles 'Plan v2', 'Plan V 3', 'Plan v2 ' (trailing space). Confirmed via 8 parametrized regex tests. Edge case NOT stripped: a name that is JUST 'v5' (no leading whitespace) — because the pattern requires `\\s+` before `v`. In practice the LLM never returns a bare version-only name, so this is safe. If defensive coverage desired, change to `(?:^|\\s)v\\s*\\d+\\s*$` — but this is minor.",
+    "services/llm_coach.py:237-244 — the try/except around call_llm classifies quota/budget/429/exceeded keywords -> HTTPException 402 with German 'KI-Budget aufgebraucht'. `_run_adjust_job` catches HTTPException and writes `he.detail` to job.error, so users see the friendly message. Verified in monkeypatch test.",
+    "services/llm_coach.py:246-248 — unparseable LLM JSON now raises HTTPException 502 with 'KI hat unlesbare Antwort gesendet - bitte erneut versuchen'. Also logs first 300 chars for debugging. Verified in monkeypatch test.",
+    "services/llm_coach.py:296-306 — the generic Exception handler now writes `type(e).__name__: str(e)[:150]` to job.error, which is a huge improvement for debuggability. Good.",
+    "Consider extracting the version-suffix strip regex into a module-level constant instead of `import re` + `re.sub(...)` inside the function — micro-perf and cleanliness."
+  ],
+  "updated_files": ["/app/backend/tests/test_plan_adjust_llm_errors.py (NEW - 11 tests)"],
+  "success_rate": {"backend": "100% (21/21: 11 new + 10 regression)", "frontend": "not tested (backend-only per request)"},
+  "test_credentials": "Admin sazhco0385@gmail.com / Bellakiki1 (from /app/memory/test_credentials.md).",
+  "seed_data_creation": "Real E2E test triggered 1 live Emergent LLM plan-adjust job (~15-30s of budget). Admin's current plan is now version 12, name='Alpha Hypertrophie 4-Tage Split v12'. Monkeypatch tests inserted+deleted 2 TEST_-prefixed job docs (cleaned up in finally block).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "For any async test that uses server's module-level motor `db`, decorate with `@pytest.mark.asyncio(loop_scope=\"module\")` OR add pytest-asyncio session-scope config, otherwise you'll hit 'Event loop is closed' on the 2nd async test. Also always `import server` before `from services import llm_coach` to avoid circular import. Env vars for reliable runs: REACT_APP_BACKEND_URL=https://fitness-ai-premium.preview.emergentagent.com MONGO_URL=mongodb://localhost:27017 DB_NAME=alphafit_db.",
+  "rca of the issue": "User's 'immer noch v2' bug: LLM prompt example contained the literal string 'Plan-Name v2', so gpt-5.5 echoed 'v2' back into the JSON's `name` field on every adjust call, and the code appended nothing more (only the numeric `version` field was bumped, but that's not what the Dashboard displays). FIX verified: (1) prompt now explicitly instructs LLM to omit any version suffix, (2) the returned name is regex-stripped of trailing ' vN' (case-insensitive, whitespace-tolerant), (3) the actual `v{new_version}` is deterministically appended by the server. E2E result: version 11 -> 12, name = 'Alpha Hypertrophie 4-Tage Split v12' (clean, single trailing suffix, no stray v2). User's opaque-error bug: LLM failures previously wrote generic 'KI-Anpassung fehlgeschlagen' to job.error with no diagnostic info. FIX verified via monkeypatch: (a) a fake `Exception('rate limit exceeded 429')` now yields job.error='KI-Budget aufgebraucht - Support kontaktieren' (mapped to HTTP 402 by keyword-match, then written verbatim to job.error); (b) a non-JSON LLM response now yields job.error='KI hat unlesbare Antwort gesendet - bitte erneut versuchen' (with first 300 chars logged server-side). Production deployment still on older code — user must redeploy the app for these fixes to reach the Play Store build."
+}
