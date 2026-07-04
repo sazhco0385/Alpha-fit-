@@ -238,3 +238,18 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
   4. Test-Cleanup: 11 TEST_ prefix workout_sessions aus Admin-DB entfernt (Regression-Test-Leakage).
   5. `test_challenges.py` DB_NAME-Default `test_database` → `alphafit_db` (verhinderte spurious Test-Fails).
 - **Verified**: 68/68 Tests grün (6 neue + 62 regression). E2E manueller Adjust läuft in ~20s durch, Plan von v2 → v4 hochgezogen.
+
+
+## Bug Fix (2026-02-16, Iter 13) — Plan-Name "v2 for ever" + Opaque LLM Errors ✅
+- **User Report**: "Immer noch V2 und wie du siehst fehlgeschlagen das darf absolut nicht sein" — Plan-Name zeigte immer "v2", Adjust-Button warf leere "KI-Anpassung fehlgeschlagen".
+- **Root Causes**:
+  1. LLM-Prompt-Beispiel enthielt wörtlich `"name": "Plan-Name v2"` → GPT-5.5 hat "v2" bei jedem Adjust in den Namen kopiert. Interne `version` wurde hochgezählt (v4, v5, v6…), aber Dashboard zeigt nur `plan.name` → User sah "v2" für immer.
+  2. Alle LLM-Fehler (Rate-Limit, Budget, malformed JSON) wurden zu generischem "KI-Anpassung fehlgeschlagen" → weder User noch Support konnten diagnostizieren.
+- **Fixes** (`services/llm_coach.py`):
+  1. Prompt weist LLM explizit an, KEIN Versions-Suffix zu setzen.
+  2. Regex `\s+v\s*\d+\s*$` strippt jeglichen `vN`-Tail aus dem LLM-Namen; Server hängt deterministisch `v{new_version}` an.
+  3. `call_llm` in try/except → Quota/Budget/429/exceeded-Keywords werden zu HTTP 402 "KI-Budget aufgebraucht" gemappt.
+  4. Nicht-parsebare LLM-Response → HTTP 502 "KI hat unlesbare Antwort gesendet".
+  5. Generic Exception schreibt jetzt `type(e).__name__: str(e)[:150]` in `job.error`.
+- **Verified**: 21/21 Tests grün. E2E: Plan v11 → v12 mit Name "Alpha Hypertrophie 4-Tage Split v12" (clean, korrektes Suffix).
+- **Prod-Redeploy erforderlich** damit User in Play-Store-App die Fixes sieht.
