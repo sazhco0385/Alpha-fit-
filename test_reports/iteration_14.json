@@ -1,0 +1,22 @@
+{
+  "summary": "Verified the stale-job sweep in _maybe_trigger_auto_plan_adjust (routers/sessions.py). Created a new pytest that (a) inserts a stale (10 min old) pending job for the admin, monkeypatches asyncio.create_task, and calls the function in-process — asserts stale job is marked 'error' with 'Server-Neustart' message and a NEW pending job is spawned; (b) verifies that a <5min-old pending job is untouched (idempotency preserved). All 23 tests pass (2 new + 21 regression from prior iterations).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_auto_adjust_stale_sweep.py",
+    "/app/test_reports/pytest/iter14_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "The sweep block in sessions.py lines 341-357 is a near-verbatim copy of the block in coach.py lines 137-153. Consider extracting into a small helper like `_sweep_stale_pending_plan_adjust_job(user_id) -> bool` to remove duplication (DRY).",
+    "server.py still uses deprecated @app.on_event startup/shutdown — non-blocking but should migrate to lifespan handlers."
+  ],
+  "updated_files": ["/app/backend/tests/test_auto_adjust_stale_sweep.py"],
+  "success_rate": {"backend": "100%", "frontend": "not tested"},
+  "test_credentials": "Admin sazhco0385@gmail.com / Bellakiki1 (from review_request)",
+  "seed_data_creation": "Test inserts TEST_-prefixed workout_sessions and plan_adjust_jobs; teardown removes/marks them so no lingering state.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Async tests must use pytest_asyncio.fixture(loop_scope='session') AND @pytest.mark.asyncio(loop_scope='session') due to server.py's module-level motor client. Also, tests using in-process DB calls should create their own AsyncIOMotorClient bound to the current loop (see admin_user fixture) — otherwise 'Event loop is closed' errors surface when combined with sync HTTP tests.",
+  "rca of the issue": "N/A — no bug found; the ported sweep logic behaves identically to the coach.py reference."
+}

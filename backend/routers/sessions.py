@@ -338,12 +338,23 @@ async def _maybe_trigger_auto_plan_adjust(user: dict) -> None:
         if not (full_cycle or partial_with_volume):
             return  # not enough data yet
 
-        # Avoid spawning a duplicate job
+        # Avoid spawning a duplicate job — but sweep stale ones (>5 min = orphaned by server restart)
         existing = await db.plan_adjust_jobs.find_one(
             {"user_id": user["id"], "status": "pending"}, {"_id": 0}
         )
         if existing:
-            return
+            try:
+                created = datetime.fromisoformat(str(existing.get("created_at", "")).replace("Z", "+00:00"))
+                age_seconds = (datetime.now(timezone.utc) - created).total_seconds()
+            except Exception:
+                age_seconds = 99999
+            if age_seconds < 5 * 60:
+                return
+            # Sweep the stale job so we can spawn a fresh one
+            await db.plan_adjust_jobs.update_one(
+                {"id": existing["id"]},
+                {"$set": {"status": "error", "error": "Job abgebrochen (Server-Neustart). Erneut versuchen.", "finished_at": now_iso()}},
+            )
 
         job_id = str(uuid.uuid4())
         await db.plan_adjust_jobs.insert_one({
