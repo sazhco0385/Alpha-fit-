@@ -122,7 +122,11 @@ async def coach_adjust(user: dict = Depends(get_current_user)):
 
 @router.post("/coach/adjust-plan/start")
 async def coach_adjust_start(user: dict = Depends(get_current_user)):
-    """Start an async plan-adjust job. Returns instantly with a job_id; poll /status/{job_id}."""
+    """Start an async plan-adjust job. Returns instantly with a job_id; poll /status/{job_id}.
+
+    Stale-job safety: if an existing 'pending' job is older than 5 minutes, it's
+    considered orphaned (server restart lost the asyncio task) and we mark it as
+    errored + start a fresh one. This prevents the button from being 'stuck' forever."""
     plan_id = user.get("current_plan_id")
     if not plan_id:
         raise HTTPException(status_code=400, detail="Kein aktiver Plan")
@@ -134,7 +138,19 @@ async def coach_adjust_start(user: dict = Depends(get_current_user)):
         {"user_id": user["id"], "status": "pending"}, {"_id": 0}
     )
     if existing:
-        return {"job_id": existing["id"], "status": "pending"}
+        # Consider a pending job older than 5 minutes orphaned (server restart / crashed worker)
+        try:
+            created = datetime.fromisoformat(str(existing.get("created_at", "")).replace("Z", "+00:00"))
+            age_seconds = (datetime.now(timezone.utc) - created).total_seconds()
+        except Exception:
+            age_seconds = 99999
+        if age_seconds < 5 * 60:
+            return {"job_id": existing["id"], "status": "pending"}
+        # Sweep the stale job
+        await db.plan_adjust_jobs.update_one(
+            {"id": existing["id"]},
+            {"$set": {"status": "error", "error": "Job abgebrochen (Server-Neustart). Erneut versuchen.", "finished_at": now_iso()}},
+        )
 
     job_id = str(uuid.uuid4())
     await db.plan_adjust_jobs.insert_one({
@@ -144,6 +160,11 @@ async def coach_adjust_start(user: dict = Depends(get_current_user)):
         "created_at": now_iso(),
         "plan_id": plan_id,
     })
+    # Update last_auto_adjust_at so the auto-trigger respects the manual adjust cooldown too
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"last_auto_adjust_at": now_iso()}},
+    )
     asyncio.create_task(_run_adjust_job(job_id, user, plan))
     return {"job_id": job_id, "status": "pending"}
 

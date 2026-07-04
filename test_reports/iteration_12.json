@@ -1,0 +1,40 @@
+{
+  "summary": "Backend-only regression for the 'KI anpassen' plan-adjust orphaned-job bugfix. Built new pytest file test_plan_adjust_bugfix.py (6 tests) and ran the requested regression suite (test_challenges.py, test_plan_adjust_status.py, test_phase2_routers.py). All 6 new tests + 62 regression tests pass (68/68 with proper DB_NAME env var). The fix works end-to-end: manual /api/coach/adjust-plan/start returns a job_id, poll to status='done' inside ~30s, DB shows plan.version incremented and users.last_auto_adjust_at updated. Rapid double-call dedupes to same job_id (stale-guard only kicks in >5 min). The old 2026-06-19 orphaned 'pending' job is now 'error' in db.plan_adjust_jobs. plan-adjust-status returns cooldown with last_adjust_at populated.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "N/A (test-tooling)", "issue": "test_challenges.py hardcodes DB_NAME default='test_database'; if DB_NAME env var isn't exported at pytest invocation the async motor writes go to the wrong DB and 2 tests (test_progress_workouts_metric_counts_completed_sessions, test_lazy_resolve_when_end_at_past) fail with confusing assertions ('expected completed, got active'). Recommend defaulting to os.environ.get('DB_NAME', 'alphafit_db') to match backend/.env, or reading directly from backend/.env via python-dotenv."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_plan_adjust_bugfix.py",
+    "/app/test_reports/pytest/plan_adjust_bugfix.xml",
+    "/app/test_reports/pytest/regression.xml"
+  ],
+  "action_items": [
+    "None — the plan-adjust fix is verified working. Optional polish: update DB_NAME default in test_challenges.py (see minor issue) so future test runs don't silently write to the wrong DB when the env var is omitted."
+  ],
+  "critical_code_review_comments": [
+    "coach.py stale-job sweep (lines 137-153): correctly parses created_at with Z->+00:00 replacement and falls back to age=99999 on parse errors, ensuring malformed timestamps are treated as stale (safe default).",
+    "coach.py last_auto_adjust_at write (lines 164-167) is set BEFORE _run_adjust_job kicks off — good, this means even if the LLM call later fails, the cooldown still holds (prevents users hammering the button).",
+    "server.py sweep_orphaned_adjust_jobs (lines 289-307): 10-min cutoff is more conservative than the /start endpoint's 5-min cutoff, which is fine (startup sweep catches truly-abandoned jobs; /start sweep catches per-user stalls). Wrapped in try/except so it never blocks server startup.",
+    "Consider adding an index on db.plan_adjust_jobs {user_id: 1, status: 1} — the /start dedup query and the startup sweep both hit this collection on every backend boot / adjust request.",
+    "The dedup guard returns {job_id, status:'pending'} but does NOT re-update last_auto_adjust_at on the second call — this is correct (idempotent), just worth noting.",
+    "server.py startup hooks use @app.on_event('startup') which is deprecated in newer FastAPI (>=0.93 prefers lifespan). Non-blocking; consider migrating during future cleanup."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_plan_adjust_bugfix.py (NEW - 6 tests)"
+  ],
+  "success_rate": {"backend": "100% (6/6 new + 62/62 regression)", "frontend": "not tested (backend-only per request)"},
+  "test_credentials": "Admin sazhco0385@gmail.com / Bellakiki1 (from /app/memory/test_credentials.md).",
+  "seed_data_creation": "The end-to-end adjust test triggers 2 real LLM plan-adjust jobs against production Emergent GPT-5.2 (each ~20-40s of LLM tokens). Admin's current_plan_id now points to the freshly generated plan (last observed version=4 after this test run). Cooldown last_auto_adjust_at is updated to the test run timestamp — auto-adjust will not fire again for ~6 days without manual intervention.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "IMPORTANT: Always export DB_NAME=alphafit_db and MONGO_URL=mongodb://localhost:27017 before running backend tests, otherwise test_challenges.py's async motor client falls through to DB_NAME='test_database' and 2 tests fail spuriously. Command that reliably passes everything: `REACT_APP_BACKEND_URL=https://fitness-ai-premium.preview.emergentagent.com MONGO_URL=mongodb://localhost:27017 DB_NAME=alphafit_db pytest backend/tests/test_challenges.py backend/tests/test_plan_adjust_status.py backend/tests/test_phase2_routers.py backend/tests/test_plan_adjust_bugfix.py -v`. The plan-adjust E2E test consumes real Emergent LLM budget (~15-40s per call) — do not add to every CI run.",
+  "rca of the issue": "The user's stuck 'KI anpassen' button was caused by an orphaned 'pending' job in db.plan_adjust_jobs from 2026-06-19. Its asyncio.create_task worker died with a previous backend process, so it stayed 'pending' forever. The /api/coach/adjust-plan/start dedup guard blindly returned that stale job_id on every retry, so the Dashboard's 2s polling never saw a state change and eventually timed out with 'Fehler'. The fix has three layers: (1) /start now checks created_at age — if >5min, sweeps the stale job to 'error' and spawns a fresh one; (2) new startup hook sweep_orphaned_adjust_jobs marks all pending>10min jobs as 'error' on every backend boot (defense-in-depth against crash-loops); (3) /start now updates users.last_auto_adjust_at so the auto-trigger honors the same cooldown as the manual button. Verified: DB now shows the 2026-06-19 job as status='error' with error='Job abgebrochen (Server-Neustart).'; new manual adjust completes in ~19s to version 4; double-tap on /start returns same job_id (dedup working)."
+}

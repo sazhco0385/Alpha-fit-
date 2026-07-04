@@ -286,6 +286,26 @@ async def start_email_dispatcher():
     else:
         logger.warning("RESEND_API_KEY missing - email dispatcher NOT started")
 
+@app.on_event("startup")
+async def sweep_orphaned_adjust_jobs():
+    """Mark plan-adjust jobs that were 'pending' at server restart as errored.
+    Their asyncio.create_task(...) worker died with the previous process, so they
+    would otherwise hang forever and block new adjust attempts."""
+    try:
+        cutoff = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+        res = await db.plan_adjust_jobs.update_many(
+            {"status": "pending", "created_at": {"$lt": cutoff}},
+            {"$set": {
+                "status": "error",
+                "error": "Job abgebrochen (Server-Neustart).",
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+            }},
+        )
+        if res.modified_count:
+            logger.info(f"Swept {res.modified_count} orphaned plan-adjust job(s)")
+    except Exception as e:
+        logger.warning(f"orphan sweep failed: {e}")
+
 def is_recently_active(last_active: Optional[str]) -> bool:
     if not last_active:
         return False
