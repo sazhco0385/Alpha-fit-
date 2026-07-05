@@ -382,6 +382,7 @@ from routers import streak as _streak_router  # noqa: E402
 from routers import funnel as _funnel_router  # noqa: E402
 from routers import progress_photos as _progress_photos_router  # noqa: E402
 from routers import apple_health as _apple_health_router  # noqa: E402
+from routers import training_days as _training_days_router  # noqa: E402
 
 api_router.include_router(_formcheck_router.router)
 api_router.include_router(_payments_router.router)
@@ -405,6 +406,7 @@ api_router.include_router(_streak_router.router)
 api_router.include_router(_funnel_router.router)
 api_router.include_router(_progress_photos_router.router)
 api_router.include_router(_apple_health_router.router)
+api_router.include_router(_training_days_router.router)
 
 # Include router & CORS
 app.include_router(api_router)

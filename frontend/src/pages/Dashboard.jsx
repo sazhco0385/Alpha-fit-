@@ -5,6 +5,7 @@ import BadgeGlow from "../components/BadgeGlow";
 import CoachInsights from "../components/CoachInsights";
 import DailySummary from "../components/DailySummary";
 import StreakFreezeWidget from "../components/StreakFreezeWidget";
+import WeekSchedule from "../components/WeekSchedule";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Dumbbell, Brain, TrendingUp, Crown, Play, Calendar, Flame, Award, RefreshCw, Loader2, Weight, Scan, Sparkles, BookOpen, ChevronRight } from "lucide-react";
@@ -152,6 +153,19 @@ export default function Dashboard() {
 
       {/* Daily Summary (motivation, calories, weight, next workout) */}
       <DailySummary plan={plan} sessions={sessions} />
+
+      {/* Week Schedule (Mo-So with rest days) */}
+      <WeekSchedule
+        plan={plan}
+        completedTodayDayIndex={(() => {
+          const today = new Date().toISOString().slice(0, 10);
+          const s = (sessions || []).find(
+            (x) => x.status === "completed" && (x.completed_at || "").slice(0, 10) === today
+          );
+          return s?.day_index ?? null;
+        })()}
+        onStartDay={startDay}
+      />
 
       {/* Stats Bento */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">

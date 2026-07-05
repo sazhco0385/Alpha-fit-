@@ -1,0 +1,23 @@
+{
+  "summary": "Iteration 15: New /api/profile/training-days router + Dashboard WeekSchedule widget fully tested. 8/8 new backend tests pass, 37/37 regression tests (plan_adjust_bugfix + plan_adjust_llm_errors + auto_adjust_stale_sweep + challenges) pass. Frontend e2e: login → dashboard → week-schedule visible with 7 slots, edit flow (open editor → toggle Sa/So → save) works, toast 'Trainingstage aktualisiert' shown, widget re-renders with new selection (T4 slot appears on Sa). Today (Sunday) slot has ring highlight as designed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_training_days.py",
+    "/app/test_reports/pytest/iter15_training_days.xml",
+    "/app/test_reports/pytest/iter15_regression.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor: WeekSchedule uses sortedTraining.length instead of days_per_week for the '3 Trainingstage' subtitle — this is intentional/correct (reflects user's actual selection), but the subtitle drifts from days_per_week (e.g. user had days_per_week=3 but selected 5 weekdays; header still says 5 Trainingstage). Consider showing a soft warning when weekdays.length != days_per_week so plan generation and weekday selection stay coherent.",
+    "Minor: In WeekSchedule.jsx the initial fetch's catch falls back to hardcoded [0,1,3,4] regardless of user's actual days_per_week — should ideally show nothing or a retry state.",
+    "Router uses `from server import db, get_current_user` (import-cycle-prone) — works today but future refactors should move shared deps into a `deps.py`."
+  ],
+  "updated_files": ["/app/backend/tests/test_training_days.py"],
+  "success_rate": {"backend": "100% (8/8 new + 37/37 regression)", "frontend": "100%"},
+  "test_credentials": "sazhco0385@gmail.com / Bellakiki1 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "reset_training_weekdays fixture unsets profile.training_weekdays on admin before tests; tests leave [1,2,3] as final state (deduplication test). Frontend test then set/reset via UI — final state may differ from before.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "New router /api/profile/training-days (GET+PUT). Component data-testids: week-schedule, week-slot-0..6, edit-training-days-btn, training-days-editor, edit-day-0..6, save-training-days-btn, cancel-edit-days-btn. Admin lands on /admin after login (not /dashboard); testing agent must navigate to /dashboard explicitly."
+}
