@@ -4,9 +4,10 @@ import Layout from "../components/Layout";
 import CoachInsights from "../components/CoachInsights";
 import DailySummary from "../components/DailySummary";
 import WeekSchedule from "../components/WeekSchedule";
+import CollapsibleSection from "../components/CollapsibleSection";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { Brain, Crown, Play, Calendar, Flame, RefreshCw, Loader2, Weight, Scan, BookOpen } from "lucide-react";
+import { Brain, Crown, Play, Calendar, Flame, RefreshCw, Loader2, Weight, Scan, BookOpen, Sparkles, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -109,13 +110,29 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Alpha Coach Insights (compact) */}
-      <CoachInsights compact />
+      {/* Alpha Coach Insights (collapsible) */}
+      <CollapsibleSection
+        title="Alpha Coach"
+        icon={Brain}
+        hint="Deine Wochen-Analyse"
+        defaultOpen={false}
+        testid="section-coach"
+      >
+        <CoachInsights compact />
+      </CollapsibleSection>
 
-      {/* Daily Summary (motivation, calories, weight, next workout) */}
-      <DailySummary plan={plan} sessions={sessions} />
+      {/* Daily Summary (collapsible) */}
+      <CollapsibleSection
+        title="Heute"
+        icon={Sparkles}
+        hint="Motivation · Kalorien · Gewicht"
+        defaultOpen={false}
+        testid="section-daily"
+      >
+        <DailySummary plan={plan} sessions={sessions} />
+      </CollapsibleSection>
 
-      {/* Week Schedule (Mo-So with rest days) */}
+      {/* Week Schedule (always visible - primary today-focus) */}
       <WeekSchedule
         plan={plan}
         completedTodayDayIndex={(() => {
@@ -128,13 +145,21 @@ export default function Dashboard() {
         onStartDay={startDay}
       />
 
-      {/* Stats Bento */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <StatCard icon={Flame} label="Workouts" value={stats.total_completed} testid="stat-workouts" />
-        <StatCard icon={Calendar} label="Streak (Tage)" value={stats.current_streak} highlight={stats.current_streak >= 3} testid="stat-streak" />
-        <StatCard icon={Weight} label="Volumen (kg)" value={formatVolume(stats.total_volume_kg)} testid="stat-volume" />
-        <StatCard icon={Crown} label="Status" value={user?.is_premium ? "PREMIUM" : "FREE"} highlight={user?.is_premium} gold={user?.is_premium} testid="stat-status" />
-      </div>
+      {/* Stats Bento (collapsible) */}
+      <CollapsibleSection
+        title="Statistik"
+        icon={TrendingUp}
+        hint={`${stats.total_completed} Workouts · Streak ${stats.current_streak}`}
+        defaultOpen={false}
+        testid="section-stats"
+      >
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <StatCard icon={Flame} label="Workouts" value={stats.total_completed} testid="stat-workouts" />
+          <StatCard icon={Calendar} label="Streak (Tage)" value={stats.current_streak} highlight={stats.current_streak >= 3} testid="stat-streak" />
+          <StatCard icon={Weight} label="Volumen (kg)" value={formatVolume(stats.total_volume_kg)} testid="stat-volume" />
+          <StatCard icon={Crown} label="Status" value={user?.is_premium ? "PREMIUM" : "FREE"} highlight={user?.is_premium} gold={user?.is_premium} testid="stat-status" />
+        </div>
+      </CollapsibleSection>
 
       {/* Training Plan */}
       <section className="mb-6 sm:mb-8">
