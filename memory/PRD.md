@@ -267,3 +267,13 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **Backend**: Neuer Endpoint `PUT /api/profile/plan-day-assignments` mit Validierung (Restday-Guard, Duplicate-Guard). GET liefert `plan_day_assignments`; PUT training-days filtert stale Entries.
 - **Frontend**: WeekSchedule mit HTML5-DnD. Swap-on-Drop. Grüner Drop-Hover-Ring. `RESET`-Button für Sequential-Reset. Optimistic-Toast-Bug gefixt.
 - **Verified**: 38 Backend-Tests grün (6 neue), Frontend-E2E via dispatchEvent-DnD (Swap + Persist + Reset).
+
+## UI Cleanup (2026-02-16, Iter 17) — Dashboard entrümpelt ✅
+- **User Feedback**: "sieht so geklatscht aus … die Badges können ruhig bei Statistik bleiben".
+- **Änderungen** (`pages/Dashboard.jsx`):
+  - Komplette BADGES-Sektion (30+ Chips) entfernt — bleibt auf `/progress` verfügbar.
+  - StreakFreezeWidget aus Dashboard entfernt (dupliziert Streak-Banner).
+  - Body-Scan + Bibliothek CTAs von großen Cards auf schlanke 2-col Icon-Zeile geschrumpft.
+  - Ungenutzte Imports (BadgeGlow, StreakFreezeWidget, Dumbbell, TrendingUp, Award, Sparkles, ChevronRight) + `nextBadges`-Array aufgeräumt.
+- **Verified**: Frontend-Testing-Agent 100 % — Badges weg, StreakFreeze weg, alle CTAs & WeekSchedule & KI-Adjust funktionieren, 0 Console-Errors, `/progress` zeigt Badges weiterhin.
+
