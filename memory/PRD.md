@@ -253,3 +253,10 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
   5. Generic Exception schreibt jetzt `type(e).__name__: str(e)[:150]` in `job.error`.
 - **Verified**: 21/21 Tests grün. E2E: Plan v11 → v12 mit Name "Alpha Hypertrophie 4-Tage Split v12" (clean, korrektes Suffix).
 - **Prod-Redeploy erforderlich** damit User in Play-Store-App die Fixes sieht.
+
+
+## Feature (2026-02-16, Iter 15) — Wochen-Schedule mit Restday ✅
+- **User Wunsch**: "Restday anzeigen bei nicht Trainingstage".
+- **Backend** (`routers/training_days.py`, neu): `GET/PUT /api/profile/training-days`. Default aus `days_per_week` (4 → Mo/Di/Do/Fr). Validierung: dedup, range 0-6, min. 1 Tag.
+- **Frontend** (`components/WeekSchedule.jsx`, neu, im Dashboard nach `DailySummary`): 7 Slots Mo-So. Training: Dumbbell+T{N}. Rest: Moon+REST. Heute mit Blue-Ring. Completed-heute: grüner Check + "GESCHAFFT". Inline-Editor via `ANPASSEN`.
+- **Verified**: 45 Tests grün (8 neu + 37 regression). Frontend E2E ok.
