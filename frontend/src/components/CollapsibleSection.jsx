@@ -1,22 +1,43 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-/** Collapsible section wrapper for the Dashboard. Header stays visible; body toggles. */
+/** Collapsible section wrapper for the Dashboard. Header stays visible; body toggles.
+ *  Optional `storageKey` persists open/closed state to localStorage across sessions. */
 export default function CollapsibleSection({
   title,
   icon: Icon,
   hint,
   defaultOpen = false,
+  storageKey,
   children,
   testid,
   headerRight = null,
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(() => {
+    if (storageKey) {
+      try {
+        const raw = localStorage.getItem(`af_cs_${storageKey}`);
+        if (raw === "1") return true;
+        if (raw === "0") return false;
+      } catch (_e) { /* localStorage unavailable */ }
+    }
+    return defaultOpen;
+  });
+
+  const toggle = () => {
+    setOpen((v) => {
+      const next = !v;
+      if (storageKey) {
+        try { localStorage.setItem(`af_cs_${storageKey}`, next ? "1" : "0"); } catch (_e) { /* ignore */ }
+      }
+      return next;
+    });
+  };
   return (
     <section className="mb-4 sm:mb-5" data-testid={testid}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         className="w-full flex items-center justify-between gap-3 py-2 px-1 group"
         data-testid={`${testid}-toggle`}
         aria-expanded={open}

@@ -116,6 +116,7 @@ export default function Dashboard() {
         icon={Brain}
         hint="Deine Wochen-Analyse"
         defaultOpen={false}
+        storageKey="coach"
         testid="section-coach"
       >
         <CoachInsights compact />
@@ -127,6 +128,7 @@ export default function Dashboard() {
         icon={Sparkles}
         hint="Motivation · Kalorien · Gewicht"
         defaultOpen={false}
+        storageKey="daily"
         testid="section-daily"
       >
         <DailySummary plan={plan} sessions={sessions} />
@@ -151,6 +153,7 @@ export default function Dashboard() {
         icon={TrendingUp}
         hint={`${stats.total_completed} Workouts · Streak ${stats.current_streak}`}
         defaultOpen={false}
+        storageKey="stats"
         testid="section-stats"
       >
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">

@@ -285,3 +285,9 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **Wrapper auf Dashboard**: `Alpha Coach`, `Heute` (DailySummary), `Statistik` (Stats-Bento) — alle Default CLOSED.
 - **Immer sichtbar**: WeekSchedule, Training Plan, Resume-Banner, Streak-Banner, Quick-Actions-Row.
 - **Verified**: Frontend-Testing-Agent 100 % — Initial-Zustand closed, Expand/Collapse-Cycle korrekt, aria-expanded toggelt, 0 Console-Errors.
+
+
+## Quick-Win (2026-02-16, Iter 19) — Collapsible-State per localStorage persistiert ✅
+- `CollapsibleSection` unterstützt optional `storageKey` → `af_cs_{key}` in localStorage.
+- Dashboard-Sektionen mit Keys: `coach`, `daily`, `stats`.
+- **Verified** via Playwright: Coach+Stats öffnen → localStorage `1,1,None` → Reload → Zustand bleibt.
