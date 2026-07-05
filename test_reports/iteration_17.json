@@ -1,0 +1,31 @@
+{
+  "summary": "Frontend-only smoke test after Dashboard UI cleanup (badges + StreakFreezeWidget removed). All assertions pass, zero console errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "admin_login": "PASS (email/password on /auth → lands /admin, then /dashboard reachable)",
+    "dashboard_badges_removed": "PASS (h2:has-text('BADGES') count = 0 on /dashboard)",
+    "dashboard_streakfreeze_removed": "PASS (text 'STREAK-FREEZE' count = 0 on /dashboard)",
+    "dashboard_bodyscan_cta": "PASS ([data-testid=dashboard-bodyscan-cta] present)",
+    "dashboard_library_cta": "PASS ([data-testid=dashboard-library-cta] present)",
+    "adjust_plan_btn": "PASS ([data-testid=adjust-plan-btn] present)",
+    "week_schedule_slots": "PASS (7 slots rendered)",
+    "progress_badges_still_present": "PASS ('DEINE BADGES' section with badge grid visible on /progress, 2 BADGES text matches, 4/28 progress shown)",
+    "console_errors": "0 console errors during full flow"
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100%"},
+  "test_credentials": "Admin sazhco0385@gmail.com / Bellakiki1 — works via /auth page (not /login which redirects to landing)",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Login flow: navigate to /auth (or click LOGIN top-right on landing). Use [data-testid=auth-email-input] and [data-testid=auth-password-input]. Admin lands on /admin, then navigate explicitly to /dashboard. Screenshot saved at /tmp/dash_after_cleanup.png shows the cleaned dashboard.",
+  "screenshots": ["/tmp/dash_after_cleanup.png", "/tmp/progress.png"]
+}

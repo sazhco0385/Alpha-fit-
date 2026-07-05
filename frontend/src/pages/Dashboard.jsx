@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
-import BadgeGlow from "../components/BadgeGlow";
 import CoachInsights from "../components/CoachInsights";
 import DailySummary from "../components/DailySummary";
-import StreakFreezeWidget from "../components/StreakFreezeWidget";
 import WeekSchedule from "../components/WeekSchedule";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { Dumbbell, Brain, TrendingUp, Crown, Play, Calendar, Flame, Award, RefreshCw, Loader2, Weight, Scan, Sparkles, BookOpen, ChevronRight } from "lucide-react";
+import { Brain, Crown, Play, Calendar, Flame, RefreshCw, Loader2, Weight, Scan, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -71,41 +69,6 @@ export default function Dashboard() {
     }
   };
 
-  const nextBadges = [
-    // Workout count
-    { id: "first_workout", title: "Erstes Blut", description: "1 Training", threshold: 1 },
-    { id: "warm_up", title: "Aufgewärmt", description: "3 Trainings", threshold: 3 },
-    { id: "five_workouts", title: "5er Streak", description: "5 Trainings", threshold: 5 },
-    { id: "ten_workouts", title: "Eisenwille", description: "10 Trainings", threshold: 10 },
-    { id: "fifteen", title: "Stahlhart", description: "15 Trainings", threshold: 15 },
-    { id: "warrior", title: "Krieger", description: "25 Trainings", threshold: 25 },
-    { id: "granite", title: "Granit", description: "40 Trainings", threshold: 40 },
-    { id: "alpha", title: "Alpha", description: "50 Trainings", threshold: 50 },
-    { id: "titan", title: "Titan", description: "75 Trainings", threshold: 75 },
-    { id: "centurion", title: "Zenturio", description: "100 Trainings", threshold: 100 },
-    { id: "spartan", title: "Spartaner", description: "150 Trainings", threshold: 150 },
-    { id: "olympian", title: "Olympier", description: "200 Trainings", threshold: 200 },
-    { id: "demigod", title: "Halbgott", description: "300 Trainings", threshold: 300 },
-    { id: "year_warrior", title: "Jahres-Krieger", description: "365 Trainings", threshold: 365 },
-    { id: "immortal", title: "Unsterblich", description: "500 Trainings", threshold: 500 },
-    { id: "myth", title: "Mythos", description: "750 Trainings", threshold: 750 },
-    { id: "legend", title: "Legende", description: "1000 Trainings", threshold: 1000 },
-    // Streak
-    { id: "streak_3", title: "3-Tage Streak", description: "3 Tage Folge" },
-    { id: "streak_7", title: "Wochen-Krieger", description: "7 Tage Folge" },
-    { id: "streak_14", title: "Zwei-Wochen Fokus", description: "14 Tage Folge" },
-    { id: "streak_30", title: "Monats-Beast", description: "30 Tage Folge" },
-    { id: "streak_60", title: "Konsistenz-King", description: "60 Tage Folge" },
-    { id: "streak_100", title: "Eiserne Disziplin", description: "100 Tage Folge" },
-    // Volume
-    { id: "vol_10t", title: "10 Tonnen", description: "10.000 kg gehoben" },
-    { id: "vol_50t", title: "50 Tonnen", description: "50.000 kg gehoben" },
-    { id: "vol_100t", title: "100 Tonnen", description: "100.000 kg gehoben" },
-    { id: "vol_250t", title: "Quarter Million", description: "250.000 kg gehoben" },
-    { id: "vol_500t", title: "Halbe Million", description: "500.000 kg gehoben" },
-    { id: "vol_1m", title: "Millionär", description: "1.000.000 kg gehoben" },
-  ];
-
   return (
     <Layout>
       {/* Hero greeting */}
@@ -148,8 +111,6 @@ export default function Dashboard() {
 
       {/* Alpha Coach Insights (compact) */}
       <CoachInsights compact />
-
-      <div className="mb-5"><StreakFreezeWidget /></div>
 
       {/* Daily Summary (motivation, calories, weight, next workout) */}
       <DailySummary plan={plan} sessions={sessions} />
@@ -229,51 +190,30 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* Body Scan CTA */}
-      <section className="mb-6 sm:mb-8 grid sm:grid-cols-2 gap-3 sm:gap-4">
+      {/* Quick Actions (compact) */}
+      <section className="mb-6 sm:mb-8 grid grid-cols-2 gap-3" data-testid="quick-actions">
         <button
           onClick={() => navigate("/bodyscan")}
-          className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition w-full text-left flex items-center gap-4 group"
+          className="af-card p-3 sm:p-4 clip-corner-tl-br hover:border-[#00BFFF] transition w-full text-left flex items-center gap-3"
           data-testid="dashboard-bodyscan-cta"
         >
-          <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 flex items-center justify-center border border-[#00BFFF]/50 bg-[#00BFFF]/5 group-hover:bg-[#00BFFF]/10 transition">
-            <Scan size={26} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 10px rgba(0,191,255,0.6))" }} />
-          </div>
+          <Scan size={20} className="text-[#00BFFF] flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.5))" }} />
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="font-teko text-2xl sm:text-3xl chrome-text">AI BODY SCAN</h2>
-              <span className="text-[10px] text-[#00BFFF] border border-[#00BFFF]/50 px-2 py-0.5 font-chakra uppercase tracking-widest">PREMIUM</span>
-            </div>
-            <div className="text-xs sm:text-sm text-body-muted font-chakra">Foto · KI analysiert Muskeln & Symmetrie</div>
+            <div className="font-teko text-base sm:text-lg chrome-text tracking-wide leading-tight">BODY SCAN</div>
+            <div className="text-[10px] sm:text-[11px] text-gray-500 font-chakra uppercase tracking-widest">KI-Analyse</div>
           </div>
-          <Sparkles size={20} className="text-[#00BFFF] flex-shrink-0" />
         </button>
-
         <button
           onClick={() => navigate("/library")}
-          className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition w-full text-left flex items-center gap-4 group"
+          className="af-card p-3 sm:p-4 clip-corner-tl-br hover:border-[#00BFFF] transition w-full text-left flex items-center gap-3"
           data-testid="dashboard-library-cta"
         >
-          <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 flex items-center justify-center border border-[#00BFFF]/50 bg-[#00BFFF]/5 group-hover:bg-[#00BFFF]/10 transition">
-            <BookOpen size={26} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 10px rgba(0,191,255,0.6))" }} />
-          </div>
+          <BookOpen size={20} className="text-[#00BFFF] flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.5))" }} />
           <div className="flex-1 min-w-0">
-            <h2 className="font-teko text-2xl sm:text-3xl chrome-text">ÜBUNGS-BIBLIOTHEK</h2>
-            <div className="text-xs sm:text-sm text-body-muted font-chakra">54 Übungen · Tipps zur Ausführung</div>
+            <div className="font-teko text-base sm:text-lg chrome-text tracking-wide leading-tight">BIBLIOTHEK</div>
+            <div className="text-[10px] sm:text-[11px] text-gray-500 font-chakra uppercase tracking-widest">54 Übungen</div>
           </div>
-          <ChevronRight size={20} className="text-[#00BFFF] flex-shrink-0" />
         </button>
-      </section>
-
-      {/* Badges */}
-      <section>
-        <h2 className="font-teko text-2xl sm:text-3xl tracking-wide chrome-text mb-4">BADGES</h2>
-        <div className="flex flex-wrap gap-4 sm:gap-6 af-card p-4 sm:p-6 justify-center sm:justify-start">
-          {nextBadges.map((b) => {
-            const earned = user?.badges?.find((ub) => ub.id === b.id);
-            return <BadgeGlow key={b.id} badge={earned || b} locked={!earned} />;
-          })}
-        </div>
       </section>
     </Layout>
   );
