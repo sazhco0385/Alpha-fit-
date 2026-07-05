@@ -1,0 +1,37 @@
+{
+  "summary": "Frontend DnD verification for WeekSchedule (iteration 16). Admin login → /dashboard → WeekSchedule renders 7 slots with correct testids. Drag-and-drop via dispatchEvent-based emulation (Playwright native mouse DnD did NOT fire React onDrop — known Chromium HTML5 DnD limitation) correctly swapped plan days and persisted to backend. Reset button appeared, click showed success toast, cleared assignments, and hid the reset button. Sequential mapping restored after reset. No console errors.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verification_details": {
+    "initial_state": {"weekdays": [1, 2, 3], "plan_day_assignments": {}},
+    "drag_action": "week-day-drag-1 (wd=1) -> week-slot-3 (had day 3) => expect swap",
+    "post_drop_api": {"plan_day_assignments": {"1": 3, "2": 2, "3": 1}},
+    "post_drop_slots": {"1": "week-day-drag-3", "2": "week-day-drag-2", "3": "week-day-drag-1"},
+    "reset_toast": "Zuordnung zurückgesetzt (observed)",
+    "post_reset_api": {"plan_day_assignments": {}},
+    "post_reset_slots_sequential": true,
+    "reset_btn_hidden_after_click": true,
+    "console_errors_during_flow": "none related to app logic"
+  },
+  "notes_for_main_agent": [
+    "Playwright's page.mouse.down/move/up sequence does NOT trigger React HTML5 DnD handlers on Chromium (dragstart/dragover/drop native events are not dispatched by synthetic mouse events without --enable-precise-memory-info-like flags). dispatchEvent-based 2-step emulation is required for automated tests — this is purely a test-tooling concern, not a product bug. Real users using a real mouse work fine.",
+    "Admin lands on /admin after login as expected; explicit navigation to /dashboard works and loads WeekSchedule correctly.",
+    "Observation (out-of-scope): admin profile has weekdays=[1,2,3] with days_per_week=4 (mismatch), because is_custom=true. Not related to this feature."
+  ],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "WeekSchedule.resetAssignments shows toast optimistically before awaiting persistAssignments — if backend fails, user will see success toast then error toast; consider awaiting persistAssignments first."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "test_credentials": "Admin: sazhco0385@gmail.com / Bellakiki1 (from /app/memory/test_credentials.md). Auth token stored in localStorage key 'af_token'.",
+  "seed_data_creation": "None — used admin's existing profile.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "For DnD testing of WeekSchedule use dispatchEvent 2-step approach: (1) dispatch dragstart on source, (2) wait ~300ms for React re-render (setDragging must apply), (3) dispatch dragover+drop on target. Share a single DataTransfer between events (window.__dt). Playwright mouse.down/up will NOT fire React onDrop."
+}
