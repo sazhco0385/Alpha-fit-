@@ -277,3 +277,11 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
   - Ungenutzte Imports (BadgeGlow, StreakFreezeWidget, Dumbbell, TrendingUp, Award, Sparkles, ChevronRight) + `nextBadges`-Array aufgeräumt.
 - **Verified**: Frontend-Testing-Agent 100 % — Badges weg, StreakFreeze weg, alle CTAs & WeekSchedule & KI-Adjust funktionieren, 0 Console-Errors, `/progress` zeigt Badges weiterhin.
 
+
+
+## UI Enhancement (2026-02-16, Iter 18) — Dashboard Collapsibles ✅
+- **User Wunsch**: "Ja" — Sektionen collapsible machen, damit Alex fokussierter scrollt.
+- **Neue Komponente** `components/CollapsibleSection.jsx`: Header + Chevron + Hint bei collapsed + smoother max-height Transition + `aria-expanded` a11y.
+- **Wrapper auf Dashboard**: `Alpha Coach`, `Heute` (DailySummary), `Statistik` (Stats-Bento) — alle Default CLOSED.
+- **Immer sichtbar**: WeekSchedule, Training Plan, Resume-Banner, Streak-Banner, Quick-Actions-Row.
+- **Verified**: Frontend-Testing-Agent 100 % — Initial-Zustand closed, Expand/Collapse-Cycle korrekt, aria-expanded toggelt, 0 Console-Errors.
