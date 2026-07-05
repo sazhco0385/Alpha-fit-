@@ -106,9 +106,13 @@ export default function WeekSchedule({ plan, completedTodayDayIndex, onStartDay 
     }
   };
 
-  const resetAssignments = () => {
-    persistAssignments({});
-    toast.success("Zuordnung zurückgesetzt");
+  const resetAssignments = async () => {
+    try {
+      await persistAssignments({});
+      toast.success("Zuordnung zurückgesetzt");
+    } catch {
+      // persistAssignments already surfaces its own error toast
+    }
   };
 
   // Handle drop: place `draggedDayIndex` on `targetWeekday`. If that weekday was already used,

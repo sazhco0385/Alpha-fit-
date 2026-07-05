@@ -260,3 +260,10 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **Backend** (`routers/training_days.py`, neu): `GET/PUT /api/profile/training-days`. Default aus `days_per_week` (4 → Mo/Di/Do/Fr). Validierung: dedup, range 0-6, min. 1 Tag.
 - **Frontend** (`components/WeekSchedule.jsx`, neu, im Dashboard nach `DailySummary`): 7 Slots Mo-So. Training: Dumbbell+T{N}. Rest: Moon+REST. Heute mit Blue-Ring. Completed-heute: grüner Check + "GESCHAFFT". Inline-Editor via `ANPASSEN`.
 - **Verified**: 45 Tests grün (8 neu + 37 regression). Frontend E2E ok.
+
+
+## Feature (2026-02-16, Iter 16) — Drag & Drop Plan-Zuordnung ✅
+- **User Wunsch**: Bestimmte Plan-Tage (z.B. Tag 3 - Beine) gezielt auf bestimmte Wochentage legen.
+- **Backend**: Neuer Endpoint `PUT /api/profile/plan-day-assignments` mit Validierung (Restday-Guard, Duplicate-Guard). GET liefert `plan_day_assignments`; PUT training-days filtert stale Entries.
+- **Frontend**: WeekSchedule mit HTML5-DnD. Swap-on-Drop. Grüner Drop-Hover-Ring. `RESET`-Button für Sequential-Reset. Optimistic-Toast-Bug gefixt.
+- **Verified**: 38 Backend-Tests grün (6 neue), Frontend-E2E via dispatchEvent-DnD (Swap + Persist + Reset).
