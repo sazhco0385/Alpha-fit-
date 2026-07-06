@@ -40,7 +40,7 @@ export default function SplashScreen() {
         <div className="splash-helmet-wrap">
           <div className="splash-helmet-glow" />
           <img
-            src="/alphafit-helmet.png?v=2"
+            src="/alphafit-helmet.png?v=4"
             alt="alpha-fit"
             className="splash-helmet"
             data-testid="splash-helmet"

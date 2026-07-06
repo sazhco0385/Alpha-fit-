@@ -291,3 +291,17 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - `CollapsibleSection` unterstützt optional `storageKey` → `af_cs_{key}` in localStorage.
 - Dashboard-Sektionen mit Keys: `coach`, `daily`, `stats`.
 - **Verified** via Playwright: Coach+Stats öffnen → localStorage `1,1,None` → Reload → Zustand bleibt.
+
+## Logo-Refresh (2026-02-16, Iter 20) — Neues finales Logo ✅
+- **User Asset**: Neues Logo mit metallischem A + Bizeps-Armen + Blitz-Motiv (2 MB PNG, `job_fitness-ai-premium/…yx3zdgx8_file_…088c7246b7bec2caf3b0d779.png`).
+- **Prozess** (`/tmp/logo_work/process_logo.py`):
+  1. Corner-Flood-Fill (tol=55) entfernt den rounded-square Card-Rahmen → Emblem sitzt auf Transparenz.
+  2. Alpha-Threshold-Cleanup (α >= 180 oder neon-blue mask) entfernt Stray-Pixel.
+  3. Zwei Varianten generiert: `logo` (mit ALPHAFIT-Text) + `helmet` (Emblem only).
+- **Dateien in `/app/frontend/public/`** aktualisiert:
+  - `alphafit-logo.png` (512, mit Text) + `-192.png` + `-512.png`
+  - `alphafit-helmet.png` (Emblem-only) + `-256.png` + `-192.png`
+  - `manifest.json`: PWA-Icons zeigen jetzt auf korrekt-gesizte Files.
+- **Frontend**: `?v=4` Cache-Bust überall. Header-Logo-Größe 32 → 40 px. Stärkerer `drop-shadow` Glow (12px `#00BFFF`).
+- **Verified via Screenshot**: Dashboard-Header + Landing-Hero + Auth-Page zeigen neues Logo mit blauem Neon-Glow.
+

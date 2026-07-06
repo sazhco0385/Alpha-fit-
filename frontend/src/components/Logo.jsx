@@ -3,9 +3,14 @@ export default function Logo({ size = 40, withText = true, square = false }) {
   if (square) {
     return (
       <img
-        src="/alphafit-logo.png?v=2"
+        src="/alphafit-logo.png?v=4"
         alt="alpha-fit"
-        style={{ width: size, height: size, objectFit: "contain" }}
+        style={{
+          width: size,
+          height: size,
+          objectFit: "contain",
+          filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))",
+        }}
         data-testid="alphafit-logo"
       />
     );
@@ -13,13 +18,13 @@ export default function Logo({ size = 40, withText = true, square = false }) {
   return (
     <div className="flex items-center gap-2" data-testid="alphafit-logo">
       <img
-        src="/alphafit-helmet.png?v=2"
+        src="/alphafit-helmet.png?v=4"
         alt="alpha-fit"
         style={{
           width: size,
           height: size,
           objectFit: "contain",
-          filter: "drop-shadow(0 0 10px rgba(0,191,255,0.55))",
+          filter: "drop-shadow(0 0 12px rgba(0,191,255,0.65))",
         }}
       />
       {withText && (

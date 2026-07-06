@@ -71,7 +71,7 @@ export default function Landing() {
               background: "radial-gradient(circle, rgba(0,191,255,0.4) 0%, transparent 70%)",
             }} />
             <img
-              src="/alphafit-logo.png?v=2"
+              src="/alphafit-logo.png?v=4"
               alt="alpha-fit"
               className="relative z-10 w-full h-full object-contain"
               style={{ filter: "drop-shadow(0 0 40px rgba(0,191,255,0.6))" }}

@@ -29,7 +29,7 @@ export default function Layout({ children }) {
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-black/70 border-b border-[#1A1A24]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 h-14 sm:h-16 flex items-center justify-between gap-2">
           <button onClick={() => navigate("/dashboard")} className="flex items-center min-w-0" data-testid="header-logo-btn">
-            <Logo size={32} />
+            <Logo size={40} />
           </button>
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {user?.is_premium && (
