@@ -305,3 +305,11 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **Frontend**: `?v=4` Cache-Bust überall. Header-Logo-Größe 32 → 40 px. Stärkerer `drop-shadow` Glow (12px `#00BFFF`).
 - **Verified via Screenshot**: Dashboard-Header + Landing-Hero + Auth-Page zeigen neues Logo mit blauem Neon-Glow.
 
+
+
+## Enhancement (2026-02-16, Iter 21) — Alpha-Logo Breathing Pulse ✅
+- **Neue CSS Keyframe** `alpha-logo-breath` in `index.css`: 3.2s ease-in-out infinite. Kombiniert `drop-shadow` (Glow-Intensität) + `transform: scale(1 → 1.04)`. `prefers-reduced-motion` respektiert.
+- **Logo-Component** neuer optionaler Prop `pulse` → aktiviert Klasse `alpha-logo-pulse` auf Image.
+- **Layout-Header**: `<Logo size={40} pulse />` — Header-Logo pulst jetzt kontinuierlich.
+- **Splash-Screen**: Pulse-Amplitude verstärkt (0.86 → 1.14 statt 0.92 → 1.08) + separate `splash-helmet-breath`-Keyframe (drop-shadow + scale) beginnt nach dem Entry-Animation (900ms delay). Splash sieht deutlich filmischer.
+- **Verified** via Screenshot: Splash-Emblem hat sichtbaren Neon-Halo mit weichem Puls, Header-Logo pulst subtil im Dashboard-Header.

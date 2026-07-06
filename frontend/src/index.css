@@ -123,6 +123,25 @@ h1, h2, h3, .heading {
 }
 .pulse-glow { animation: pulse-glow 2.4s ease-in-out infinite; }
 
+/* Alpha logo breathing pulse (used on Header + wherever we want an alive vibe) */
+@keyframes alpha-logo-breath {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(0,191,255,0.45)) drop-shadow(0 0 18px rgba(0,191,255,0.15));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 14px rgba(0,229,255,0.85)) drop-shadow(0 0 32px rgba(0,191,255,0.4));
+    transform: scale(1.04);
+  }
+}
+.alpha-logo-pulse {
+  animation: alpha-logo-breath 3.2s ease-in-out infinite;
+  will-change: filter, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .alpha-logo-pulse { animation: none !important; }
+}
+
 @keyframes scanline {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100%); }

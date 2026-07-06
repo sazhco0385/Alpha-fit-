@@ -120,7 +120,7 @@ export default function SplashScreen() {
           inset: -25%;
           background: radial-gradient(circle, rgba(0,191,255,0.55) 0%, rgba(0,191,255,0.15) 35%, transparent 70%);
           filter: blur(8px);
-          animation: splash-pulse 1.6s ease-in-out infinite;
+          animation: splash-pulse 1.4s ease-in-out infinite;
         }
         .splash-helmet {
           position: relative;
@@ -130,7 +130,9 @@ export default function SplashScreen() {
           filter:
             drop-shadow(0 0 18px rgba(0,191,255,0.75))
             drop-shadow(0 0 38px rgba(0,191,255,0.35));
-          animation: splash-helmet-in 900ms cubic-bezier(.16,1,.3,1) both;
+          animation:
+            splash-helmet-in 900ms cubic-bezier(.16,1,.3,1) both,
+            splash-helmet-breath 1.4s ease-in-out infinite 900ms;
         }
 
         .splash-title {
@@ -211,13 +213,23 @@ export default function SplashScreen() {
           100% { top: 100%; }
         }
         @keyframes splash-pulse {
-          0%, 100% { opacity: 0.65; transform: scale(0.92); }
-          50%      { opacity: 1;    transform: scale(1.08); }
+          0%, 100% { opacity: 0.55; transform: scale(0.86); }
+          50%      { opacity: 1;    transform: scale(1.14); }
         }
         @keyframes splash-helmet-in {
           0%   { opacity: 0; transform: scale(0.6) translateY(8px); filter: drop-shadow(0 0 0 rgba(0,191,255,0)); }
           60%  { opacity: 1; transform: scale(1.05); }
           100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes splash-helmet-breath {
+          0%, 100% {
+            transform: scale(1);
+            filter: drop-shadow(0 0 18px rgba(0,191,255,0.75)) drop-shadow(0 0 38px rgba(0,191,255,0.35));
+          }
+          50% {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 28px rgba(0,229,255,0.95)) drop-shadow(0 0 60px rgba(0,191,255,0.55));
+          }
         }
         @keyframes splash-bar {
           0%   { width: 0; }

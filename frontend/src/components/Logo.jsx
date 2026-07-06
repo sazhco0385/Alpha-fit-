@@ -1,10 +1,11 @@
-export default function Logo({ size = 40, withText = true, square = false }) {
+export default function Logo({ size = 40, withText = true, square = false, pulse = false }) {
   // For "square" usage (favicons/big hero), show the full logo image (with text)
   if (square) {
     return (
       <img
         src="/alphafit-logo.png?v=4"
         alt="alpha-fit"
+        className={pulse ? "alpha-logo-pulse" : ""}
         style={{
           width: size,
           height: size,
@@ -20,6 +21,7 @@ export default function Logo({ size = 40, withText = true, square = false }) {
       <img
         src="/alphafit-helmet.png?v=4"
         alt="alpha-fit"
+        className={pulse ? "alpha-logo-pulse" : ""}
         style={{
           width: size,
           height: size,
