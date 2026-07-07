@@ -313,3 +313,9 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **Layout-Header**: `<Logo size={40} pulse />` — Header-Logo pulst jetzt kontinuierlich.
 - **Splash-Screen**: Pulse-Amplitude verstärkt (0.86 → 1.14 statt 0.92 → 1.08) + separate `splash-helmet-breath`-Keyframe (drop-shadow + scale) beginnt nach dem Entry-Animation (900ms delay). Splash sieht deutlich filmischer.
 - **Verified** via Screenshot: Splash-Emblem hat sichtbaren Neon-Halo mit weichem Puls, Header-Logo pulst subtil im Dashboard-Header.
+
+
+## Bug Fix (2026-02-16, Iter 19) — GESCHAFFT-Badge Woche für Woche ✅
+- **User Report**: Completed-Badge verschwand nach 1 Tag statt Woche zu bleiben.
+- **Fix** (`WeekSchedule.jsx`): Prop `completedTodayDayIndex` → `sessions` Array. Neue Logik `startOfWeek` = Montag 00:00 Local + `completedThisWeek` Set (day_index Filter). Auto-Reset am Montag 00:00.
+- **Testing**: 100 % Frontend-Test grün (2 seed sessions: aktuelle Woche persistiert, vergangene Woche nicht).

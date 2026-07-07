@@ -75,14 +75,12 @@ export default function WeekSchedule({ plan, sessions, onStartDay }) {
   })();
   // Set of day_indices completed since start of the week + their weekday
   const completedThisWeek = new Set();
-  const completedWeekdays = new Set();
   (sessions || []).forEach((s) => {
-    if (s.status !== "completed" || !s.completed_at || !s.day_index) return;
+    if (s.status !== "completed" || !s.completed_at || s.day_index == null) return;
     const d = new Date(s.completed_at);
     if (isNaN(d.getTime())) return;
     if (d >= startOfWeek) {
       completedThisWeek.add(s.day_index);
-      completedWeekdays.add(jsDayToMondayZero(d.getDay()));
     }
   });
 
