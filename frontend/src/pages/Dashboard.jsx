@@ -137,13 +137,7 @@ export default function Dashboard() {
       {/* Week Schedule (always visible - primary today-focus) */}
       <WeekSchedule
         plan={plan}
-        completedTodayDayIndex={(() => {
-          const today = new Date().toISOString().slice(0, 10);
-          const s = (sessions || []).find(
-            (x) => x.status === "completed" && (x.completed_at || "").slice(0, 10) === today
-          );
-          return s?.day_index ?? null;
-        })()}
+        sessions={sessions}
         onStartDay={startDay}
       />
 

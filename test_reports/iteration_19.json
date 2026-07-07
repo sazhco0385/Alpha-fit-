@@ -1,0 +1,25 @@
+{
+  "summary": "Frontend-only verification of WeekSchedule 'GESCHAFFT persists all week' fix. Seeded 2 test sessions for admin (day_index=2 completed 2026-07-06 within current week; day_index=3 completed 2026-06-27 previous week). Logged in as admin, opened /dashboard. Result: slot Mi (day_index=2) shows GESCHAFFT + green ✓ + green Dumbbell even though today is Tuesday - proving the badge persists past the completion day. Slot Do (day_index=3, older session) shows normal T3 label - previous-week session correctly excluded by startOfWeek boundary. No console errors. Seed data cleaned up.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "WeekSchedule.jsx line 80: filter `!s.day_index` uses truthy check - a plan_day with day_index=0 would be silently ignored. Current plans use 1-based indices so no impact today, but consider `s.day_index == null` for safety.",
+    "startOfWeek uses local browser time via new Date() + jsDayToMondayZero(getDay()) - correct behavior; auto-resets Monday 00:00 local as intended.",
+    "completedWeekdays Set is computed but never used in render - dead code, can be removed.",
+    "GESCHAFFT badge is anchored to plan_day.day_index (not to the actual weekday it was completed on) - this matches the requested behavior: the specific plan day stays marked done regardless of which weekday the user is currently viewing."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100%"},
+  "test_credentials": "sazhco0385@gmail.com / Bellakiki1 (admin)",
+  "seed_data_creation": "Inserted 2 workout_sessions with test_marker='WS_WEEK_TEST' (day_index=2 completed_at=2026-07-06T14:00Z; day_index=3 completed_at=2026-06-27T14:00Z). Both deleted after verification.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Browser env runs in UTC (tzOffset=0). Today was Tue 2026-07-07 UTC, so start-of-week Monday=2026-07-06 00:00 UTC. Admin plan has 3 training days (Di/Mi/Do) mapped to day_indices 1/2/3. To test WeekSchedule GESCHAFFT again, insert a workout_sessions doc with status='completed', a valid day_index that matches a plan day, and completed_at in ISO format within the current week.",
+  "rca of the issue": "N/A - verifying fix; behavior confirmed correct."
+}

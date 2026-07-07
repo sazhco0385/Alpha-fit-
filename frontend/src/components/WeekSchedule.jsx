@@ -41,7 +41,7 @@ function computeDayIndexByWeekday(plan, weekdays, assignments) {
   return map;
 }
 
-export default function WeekSchedule({ plan, completedTodayDayIndex, onStartDay }) {
+export default function WeekSchedule({ plan, sessions, onStartDay }) {
   const [weekdays, setWeekdays] = useState(null);
   const [assignments, setAssignments] = useState({}); // { "1": 0, "2": 3, ... }
   const [editing, setEditing] = useState(false);
@@ -64,6 +64,27 @@ export default function WeekSchedule({ plan, completedTodayDayIndex, onStartDay 
   };
 
   const todayMon = jsDayToMondayZero(new Date().getDay());
+
+  // Compute Monday 00:00 of the current calendar week (local time)
+  const startOfWeek = (() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    const offset = jsDayToMondayZero(d.getDay());
+    d.setDate(d.getDate() - offset);
+    return d;
+  })();
+  // Set of day_indices completed since start of the week + their weekday
+  const completedThisWeek = new Set();
+  const completedWeekdays = new Set();
+  (sessions || []).forEach((s) => {
+    if (s.status !== "completed" || !s.completed_at || !s.day_index) return;
+    const d = new Date(s.completed_at);
+    if (isNaN(d.getTime())) return;
+    if (d >= startOfWeek) {
+      completedThisWeek.add(s.day_index);
+      completedWeekdays.add(jsDayToMondayZero(d.getDay()));
+    }
+  });
 
   const startEdit = () => {
     setDraft([...(weekdays || [])]);
@@ -229,7 +250,9 @@ export default function WeekSchedule({ plan, completedTodayDayIndex, onStartDay 
             const isTrainingDay = weekdays.includes(d);
             const planDay = dayIndexByWeekday[d];
             const isToday = d === todayMon;
-            const isCompletedToday = isToday && planDay && completedTodayDayIndex === planDay.day_index;
+            // "GESCHAFFT" persists for the whole calendar week:
+            // if the plan_day mapped to this weekday was completed anywhere between Mo and now, show ✓.
+            const isCompletedThisWeek = planDay && completedThisWeek.has(planDay.day_index);
             const isDropTarget = dragging != null && isTrainingDay;
             const isDropHover = dropHover === d;
 
@@ -249,7 +272,7 @@ export default function WeekSchedule({ plan, completedTodayDayIndex, onStartDay 
                   if (isDropTarget) handleDrop(d);
                 }}
                 onClick={() => {
-                  if (isTrainingDay && planDay && !isCompletedToday && isToday && !dragging) onStartDay?.(planDay.day_index);
+                  if (isTrainingDay && planDay && !isCompletedThisWeek && isToday && !dragging) onStartDay?.(planDay.day_index);
                 }}
                 className={`af-card relative p-2 sm:p-3 flex flex-col items-center justify-between text-center min-h-[96px] transition ${
                   isToday ? "ring-1 ring-[#00BFFF] shadow-[0_0_14px_rgba(0,191,255,0.35)]" : ""
@@ -266,20 +289,20 @@ export default function WeekSchedule({ plan, completedTodayDayIndex, onStartDay 
                     draggable
                     onDragStart={(e) => {
                       setDragging(planDay.day_index);
-                      try { e.dataTransfer.effectAllowed = "move"; } catch {}
+                      try { e.dataTransfer.effectAllowed = "move"; } catch (_err) { /* ignore */ }
                     }}
                     onDragEnd={() => { setDragging(null); setDropHover(null); }}
                     data-testid={`week-day-drag-${planDay.day_index}`}
                   >
                     <div className="flex items-center gap-0.5 text-gray-500">
                       <GripVertical size={10} />
-                      <Dumbbell size={16} className={isCompletedToday ? "text-[#00FF7F]" : "text-[#00BFFF]"} />
+                      <Dumbbell size={16} className={isCompletedThisWeek ? "text-[#00FF7F]" : "text-[#00BFFF]"} />
                     </div>
-                    <div className={`text-[10px] sm:text-[11px] font-chakra leading-tight break-words px-1 ${isCompletedToday ? "text-[#00FF7F]" : "text-gray-300"}`}>
-                      {isCompletedToday ? "GESCHAFFT" : (planDay.focus || `T${planDay.day_index}`)}
+                    <div className={`text-[10px] sm:text-[11px] font-chakra leading-tight break-words px-1 ${isCompletedThisWeek ? "text-[#00FF7F]" : "text-gray-300"}`}>
+                      {isCompletedThisWeek ? "GESCHAFFT" : (planDay.focus || `T${planDay.day_index}`)}
                     </div>
                     <div className="text-[9px] text-gray-600 font-chakra">TAG {planDay.day_index}</div>
-                    {isCompletedToday && <Check size={12} className="absolute top-1 right-1 text-[#00FF7F]" />}
+                    {isCompletedThisWeek && <Check size={12} className="absolute top-1 right-1 text-[#00FF7F]" />}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-1 flex-1 justify-center">
