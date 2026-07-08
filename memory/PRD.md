@@ -353,3 +353,15 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **Verified**: Testing-Agent **18 Backend-Tests grün** (8 neue Diagnostics + 10 Email-Verification-Regression).
 
 - **Verified**: Testing-Agent **13/13 grün** + 3 optionale Verbesserungen umgesetzt.
+
+
+## Emergency Bypass (2026-02-16, Iter 23) — Email-Verify Feature-Flag ✅
+- **User Report**: "Kein Plan kommen keine Mails an" — Beta-User steckten auf Production fest, konnten nicht mehr registrieren/einloggen.
+- **Root Cause (Preview verifiziert)**: Resend akzeptiert alle Sends mit valider ID + 200 Status + kein Error. Empfänger-Gmail dropped die Mail silent (DKIM/DMARC/SPF-Alignment-Problem).
+- **Fix (Emergency Bypass)**:
+  - Neue Env-Var `EMAIL_VERIFICATION_REQUIRED` (default `true`). Bei `false`: Register issued sofort JWT + markiert `email_verified=true`, Login skippt 403-Check.
+  - Neuer Admin-Endpoint `POST /admin/verify-user` mit `{email}` → manueller Bypass falls User in strict-Phase gestrandet.
+  - Neuer Admin-Endpoint `GET /admin/auth-config` → zeigt aktuellen Flag-Status + Resend-Config.
+  - `.env` auf `EMAIL_VERIFICATION_REQUIRED=false` gesetzt damit Beta sofort läuft.
+  - Old `test_email_verification.py` bekommt Skip-Marker wenn Flag off (strict-mode Tests laufen nur wenn Flag on).
+- **Verified**: Testing-Agent **24 grün + 10 skipped** (16 neue Flag-Tests + 8 Diagnostik-Tests + 10 alte strict-Tests korrekt skipped).

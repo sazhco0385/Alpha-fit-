@@ -22,6 +22,29 @@ def _fresh_email():
     return f"TEST_verify_{int(time.time()*1000)}_{uuid.uuid4().hex[:6]}@example.com"
 
 
+# Ensure strict mode for this suite. If the running backend has EMAIL_VERIFICATION_REQUIRED=false,
+# these tests are skipped since register auto-issues tokens (behavior tested in test_email_verification_flag.py).
+def _flag_strict() -> bool:
+    try:
+        r = requests.post(f"{API}/auth/login", json={"email": "sazhco0385@gmail.com", "password": "Bellakiki1"}, timeout=10)
+        if r.status_code != 200:
+            return True  # can't verify → assume strict
+        token = r.json().get("token")
+        cfg = requests.get(f"{API}/admin/auth-config", headers={"Authorization": f"Bearer {token}"}, timeout=10)
+        if cfg.status_code == 200:
+            return bool(cfg.json().get("email_verification_required"))
+    except Exception:
+        pass
+    return True
+
+
+pytestmark = pytest.mark.skipif(
+    not _flag_strict(),
+    reason="EMAIL_VERIFICATION_REQUIRED is currently disabled — strict-mode tests are covered in test_email_verification_flag.py",
+)
+
+
+
 @pytest.fixture(scope="module")
 def created_emails():
     emails = []
