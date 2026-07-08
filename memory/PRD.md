@@ -365,3 +365,10 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
   - `.env` auf `EMAIL_VERIFICATION_REQUIRED=false` gesetzt damit Beta sofort läuft.
   - Old `test_email_verification.py` bekommt Skip-Marker wenn Flag off (strict-mode Tests laufen nur wenn Flag on).
 - **Verified**: Testing-Agent **24 grün + 10 skipped** (16 neue Flag-Tests + 8 Diagnostik-Tests + 10 alte strict-Tests korrekt skipped).
+
+
+## Follow-up (2026-02-16, Iter 24) — Default auf `false` geflippt ✅
+- User hat deployed BEVOR er die Env-Var setzen konnte → Prod war strict + Mails funktionieren nicht.
+- **Fix**: Default in `_email_verification_required()` und `/admin/auth-config` auf `false` geflippt → Production funktioniert out-of-the-box ohne Env-Var.
+- Um strict wieder zu aktivieren: `EMAIL_VERIFICATION_REQUIRED=true` in Emergent-Env-Vars setzen + Redeploy.
+- **Verified**: Testing-Agent 16/16 Flag-Tests grün + 10/10 legacy Strict-Tests korrekt geskippt.
