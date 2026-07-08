@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import api from "./api";
+import api, { getStoredToken, clearStoredToken } from "./api";
 
 const AuthCtx = createContext(null);
 
@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const token = localStorage.getItem("af_token");
+    const token = getStoredToken();
     if (!token) {
       setUser(null);
       setLoading(false);
@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
       setUser(data);
       return data;
     } catch {
-      localStorage.removeItem("af_token");
+      clearStoredToken();
       setUser(null);
       return null;
     } finally {
@@ -40,9 +40,19 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(id);
   }, [user]);
 
-  const login = async (email, password) => {
+  const _saveToken = (token, stayLoggedIn) => {
+    // Clear any previous token from either storage
+    clearStoredToken();
+    if (stayLoggedIn) {
+      localStorage.setItem("af_token", token);
+    } else {
+      sessionStorage.setItem("af_token", token);
+    }
+  };
+
+  const login = async (email, password, stayLoggedIn = true) => {
     const { data } = await api.post("/auth/login", { email, password });
-    localStorage.setItem("af_token", data.token);
+    _saveToken(data.token, stayLoggedIn);
     setUser(data.user);
     return data.user;
   };
@@ -54,7 +64,7 @@ export const AuthProvider = ({ children }) => {
       return { pendingVerification: true, email: data.email, message: data.message };
     }
     if (data?.token) {
-      localStorage.setItem("af_token", data.token);
+      _saveToken(data.token, true);
       setUser(data.user);
       return data.user;
     }
@@ -62,7 +72,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem("af_token");
+    clearStoredToken();
     setUser(null);
   };
 

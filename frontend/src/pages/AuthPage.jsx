@@ -4,7 +4,7 @@ import Logo from "../components/Logo";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
 import { toast } from "sonner";
-import { Loader2, MailCheck, Send } from "lucide-react";
+import { Loader2, MailCheck, Send, Eye, EyeOff } from "lucide-react";
 import { trackConversion } from "../lib/gads";
 
 export default function AuthPage() {
@@ -13,6 +13,8 @@ export default function AuthPage() {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ email: "", password: "", name: "" });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [stayLoggedIn, setStayLoggedIn] = useState(true);
   // Pending-verification state: shown after register OR when login returns 403 email_not_verified
   const [pendingEmail, setPendingEmail] = useState(null);
   const [resendLoading, setResendLoading] = useState(false);
@@ -55,7 +57,7 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (mode === "login") {
-        const user = await login(form.email, form.password);
+        const user = await login(form.email, form.password, stayLoggedIn);
         toast.success("Willkommen zurück, Alpha.");
         if (!user.onboarding_completed) navigate("/onboarding");
         else if (user.is_admin) navigate("/admin");
@@ -167,16 +169,41 @@ export default function AuthPage() {
               </div>
               <div>
                 <label className="block text-xs text-gray-500 font-chakra uppercase tracking-widest mb-2">Passwort</label>
-                <input
-                  type="password"
-                  className="af-input"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
-                  minLength={6}
-                  data-testid="auth-password-input"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="af-input pr-11"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    required
+                    minLength={6}
+                    data-testid="auth-password-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-[#00BFFF] transition"
+                    data-testid="toggle-password-visibility"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
+
+              {mode === "login" && (
+                <label className="flex items-center gap-2 cursor-pointer select-none" data-testid="stay-logged-in-wrapper">
+                  <input
+                    type="checkbox"
+                    checked={stayLoggedIn}
+                    onChange={(e) => setStayLoggedIn(e.target.checked)}
+                    className="w-4 h-4 accent-[#00BFFF] cursor-pointer"
+                    data-testid="stay-logged-in-checkbox"
+                  />
+                  <span className="text-xs font-chakra text-gray-400 uppercase tracking-wider">Angemeldet bleiben</span>
+                </label>
+              )}
 
               <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2" data-testid="auth-submit-btn">
                 {loading && <Loader2 size={16} className="animate-spin" />}

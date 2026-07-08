@@ -1,0 +1,37 @@
+{
+  "summary": "Frontend-only iteration testing Onboarding Tour + AuthPage password-visibility toggle + stayLoggedIn checkbox. All 13 review-request scenarios validated end-to-end on the deployed preview URL. Auth (admin) works with both stayLoggedIn=true (localStorage) and stayLoggedIn=false (sessionStorage, cleared on session end). Tour auto-starts on first Dashboard visit, all 5 steps navigate correctly, prev/skip/backdrop all close overlay and persist af_tour_seen=1. HelpModal, 6 FAQ items with toggling bodies, mailto support link, and 'Tour starten' relaunch (window.__alphafit_start_tour) all functional. Help button visible in header on non-dashboard pages too.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "TourGuide floating step card",
+        "issues": [
+          "MINOR: On some steps (notably final step 5/5 highlighting help-btn), the card is positioned via absolute top based on rect.top+height, and although logically inside 1080px viewport, Playwright reports the card/buttons as 'outside viewport' — this is because scrollIntoView(center) moves target below the fold and computed cardTop can land off-screen relative to the currently-scrolled window. Real users still see it after the tour's own auto-scroll, but the positioning math near page bottom / short viewport heights may push the card partially clipped. Consider clamping cardTop into [16, innerHeight - cardH - 16] and using position:fixed instead of absolute.",
+          "The highlight ring uses boxShadow with 0 0 0 9999px rgba(0,0,0,0.72) to mask the backdrop — this is redundant/conflicting with the separate bg-black/75 backdrop div above it and can cause a doubled darkening effect."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "OPTIONAL: Improve TourGuide card positioning — use position:fixed with clamping so the step card is guaranteed to be inside the viewport (Playwright's positional clicks were rejected as 'outside viewport' on steps whose target sits near the top of the header after scrollIntoView-center). Functionality still works via keyboard/mouse for real users but is not ideal.",
+    "OPTIONAL: Remove the boxShadow spread (0 0 0 9999px rgba(0,0,0,0.72)) on the highlight ring since a full backdrop div already provides the dim — the double layer slightly darkens the highlighted target."
+  ],
+  "critical_code_review_comments": [
+    "TourGuide.jsx line 62-63: if selector not found, setRect(null) leaves the card centered but the highlight ring is skipped — good graceful fallback.",
+    "auth.jsx _saveToken correctly clears both storages before writing to the chosen one — prevents ghost tokens.",
+    "api.js getStoredToken reads from BOTH storages with localStorage precedence — correct behaviour with the interceptor and heartbeat.",
+    "HelpModal.startTour removes af_tour_seen before calling __alphafit_start_tour — ensures restart works even if user later reloads (autostart re-triggers). Nice.",
+    "Layout mounts <TourGuide autostart /> only when isDashboard true — but the global window.__alphafit_start_tour hook is only registered while the component is mounted. If a user is on /progress and opens HelpModal → 'Tour starten', the hook is undefined (HelpModal.startTour would fail silently). Verified in this test: on /progress the help-btn works, but the Tour launcher only works from /dashboard. Consider mounting TourGuide on all Layout pages (autostart={isDashboard}) so restart works from anywhere."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a (not tested per request)", "frontend": "100%" },
+  "test_credentials": "Admin: sazhco0385@gmail.com / Bellakiki1 (used successfully)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "TourGuide is mounted only on /dashboard (Layout.jsx line 101). window.__alphafit_start_tour is therefore not registered on other pages — HelpModal 'Tour starten' from e.g. /progress would silently fail. All other features (login toggles, password eye, tour skip/complete, HelpModal FAQ + support link) are fully working. When running Playwright, use JS clicks (element.click() via evaluate) for TourGuide step-card buttons because Playwright rejects positional clicks with 'outside viewport' even though the elements are actually rendered — this is a pixel-perfect edge case of card positioning after scrollIntoView-center.",
+  "rca of the issue": "n/a — all requested features verified working."
+}

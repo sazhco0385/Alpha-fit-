@@ -1,11 +1,17 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import { Home, Dumbbell, Brain, TrendingUp, Crown, Shield, LogOut, Apple, Users, Settings as Cog } from "lucide-react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Home, Dumbbell, Brain, TrendingUp, Crown, Shield, LogOut, Apple, Users, Settings as Cog, HelpCircle } from "lucide-react";
 import Logo from "./Logo";
 import { useAuth } from "../lib/auth";
+import HelpModal from "./HelpModal";
+import TourGuide from "./TourGuide";
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [helpOpen, setHelpOpen] = useState(false);
+  const isDashboard = location.pathname === "/dashboard";
 
   const navItems = [
     { to: "/dashboard", icon: Home, label: "Start", testid: "nav-dashboard" },
@@ -37,6 +43,9 @@ export default function Layout({ children }) {
                 <Crown size={12} /> <span className="hidden sm:inline">PREMIUM</span><span className="sm:hidden">PRO</span>
               </span>
             )}
+            <button onClick={() => setHelpOpen(true)} className="text-gray-400 hover:text-[#00BFFF] transition w-11 h-11 flex items-center justify-center" data-testid="help-btn" aria-label="Hilfe">
+              <HelpCircle size={18} />
+            </button>
             <button onClick={() => navigate("/settings")} className="text-gray-400 hover:text-[#00BFFF] transition w-11 h-11 flex items-center justify-center" data-testid="settings-btn" aria-label="Einstellungen">
               <Cog size={18} />
             </button>
@@ -86,6 +95,10 @@ export default function Layout({ children }) {
           ))}
         </div>
       </nav>
+
+      {/* Help modal + Tour (Tour autostarts on Dashboard for first-time users) */}
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+      {isDashboard && <TourGuide autostart />}
     </div>
   );
 }
