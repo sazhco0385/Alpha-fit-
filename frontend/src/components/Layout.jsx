@@ -96,9 +96,9 @@ export default function Layout({ children }) {
         </div>
       </nav>
 
-      {/* Help modal + Tour (Tour autostarts on Dashboard for first-time users) */}
+      {/* Help modal + Tour available on ALL Layout pages so restart works from anywhere */}
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
-      {isDashboard && <TourGuide autostart />}
+      <TourGuide autostart={isDashboard} />
     </div>
   );
 }

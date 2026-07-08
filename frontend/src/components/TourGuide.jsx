@@ -106,40 +106,44 @@ export default function TourGuide({ onFinish, autostart = false, storageKey = "a
   if (!active) return null;
 
   const cur = TOUR_STEPS[step];
-  // Compute card position: below the highlighted rect if possible, else above
+  // Compute card position: prefer below the highlighted rect. Clamp into viewport.
   const cardW = 320;
-  const cardH = 200;
-  let cardTop = rect ? rect.top + rect.height + 12 : window.innerHeight / 2 - cardH / 2;
-  let cardLeft = rect ? Math.max(12, Math.min(window.innerWidth - cardW - 12, rect.left + rect.width / 2 - cardW / 2)) : window.innerWidth / 2 - cardW / 2;
-  if (rect && cardTop + cardH > window.innerHeight - 20) {
-    cardTop = Math.max(20, rect.top - cardH - 12);
+  const cardH = 220;
+  const margin = 16;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  let cardTop = rect ? rect.top + rect.height + 12 : vh / 2 - cardH / 2;
+  let cardLeft = rect ? rect.left + rect.width / 2 - cardW / 2 : vw / 2 - cardW / 2;
+  if (rect && cardTop + cardH > vh - margin) {
+    // Not enough space below — try above
+    cardTop = rect.top - cardH - 12;
   }
+  // Final clamp so the card is ALWAYS inside the viewport
+  cardTop = Math.max(margin, Math.min(vh - cardH - margin, cardTop));
+  cardLeft = Math.max(margin, Math.min(vw - cardW - margin, cardLeft));
 
   return createPortal(
     <div className="fixed inset-0 z-[9999]" data-testid="tour-overlay" aria-modal="true" role="dialog">
-      {/* Dark backdrop with a "hole" over the target rect (implemented via 4 divs framing the rect) */}
+      {/* Dark backdrop click-to-skip */}
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={skip} />
       {rect && (
-        <>
-          {/* Highlight ring around target */}
-          <div
-            className="absolute pointer-events-none rounded-md"
-            style={{
-              top: rect.top - 6,
-              left: rect.left - 6,
-              width: rect.width + 12,
-              height: rect.height + 12,
-              boxShadow: "0 0 0 3px #00BFFF, 0 0 22px rgba(0,191,255,0.75), 0 0 0 9999px rgba(0,0,0,0.72)",
-              borderRadius: 10,
-            }}
-          />
-        </>
+        <div
+          className="fixed pointer-events-none rounded-md"
+          style={{
+            top: rect.top - 6,
+            left: rect.left - 6,
+            width: rect.width + 12,
+            height: rect.height + 12,
+            boxShadow: "0 0 0 3px #00BFFF, 0 0 22px rgba(0,191,255,0.75)",
+            borderRadius: 10,
+          }}
+        />
       )}
 
-      {/* Step card */}
+      {/* Step card — position:fixed + clamped so it never leaves the viewport */}
       <div
         ref={cardRef}
-        className="absolute af-card p-4 shadow-[0_0_28px_rgba(0,191,255,0.35)]"
+        className="fixed af-card p-4 shadow-[0_0_28px_rgba(0,191,255,0.35)]"
         style={{ top: cardTop, left: cardLeft, width: cardW }}
         data-testid={`tour-step-${step}`}
       >

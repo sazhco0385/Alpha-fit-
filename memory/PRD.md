@@ -334,3 +334,12 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
   - Neue Page `pages/VerifyEmail.jsx` unter `/verify-email?token=` mit Loading/Success/Already/Error States.
   - `lib/auth.jsx` `register()` returned `{pendingVerification:true}` statt Auto-Login.
 - **Verified**: Testing-Agent **15/15 Tests grün** (10 Backend + 5 Frontend). Regression-Test unter `/app/backend/tests/test_email_verification.py`.
+
+
+## Feature (2026-02-16, Iter 21) — Login-Polish + Onboarding-Tour + Hilfe ✅
+- **AuthPage**: Eye-Toggle (`toggle-password-visibility`) + "Angemeldet bleiben"-Checkbox (Default checked) → Token in `localStorage` bzw `sessionStorage`.
+- **`lib/api.js`**: `getStoredToken`/`clearStoredToken` liest aus beiden Storages.
+- **`lib/auth.jsx`**: `login(email, password, stayLoggedIn=true)` schreibt entsprechend.
+- **`TourGuide.jsx`** (neu): 5 Steps auf Dashboard (Alpha Coach, Deine Woche, KI-Anpassung, Body Scan, Hilfe). Auto-Start wenn `af_tour_seen !== "1"`. Skip / Backdrop / Fertig. Progress-Dots. position:fixed + Viewport-Clamping. Globaler Hook `window.__alphafit_start_tour`.
+- **`HelpModal.jsx`** (neu): `?`-Button im Layout-Header. Tour-Launcher + Support-Mail-Link + 6 FAQ-Items.
+- **Verified**: Testing-Agent **13/13 grün** + 3 optionale Verbesserungen umgesetzt.
