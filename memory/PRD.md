@@ -342,4 +342,14 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **`lib/auth.jsx`**: `login(email, password, stayLoggedIn=true)` schreibt entsprechend.
 - **`TourGuide.jsx`** (neu): 5 Steps auf Dashboard (Alpha Coach, Deine Woche, KI-Anpassung, Body Scan, Hilfe). Auto-Start wenn `af_tour_seen !== "1"`. Skip / Backdrop / Fertig. Progress-Dots. position:fixed + Viewport-Clamping. Globaler Hook `window.__alphafit_start_tour`.
 - **`HelpModal.jsx`** (neu): `?`-Button im Layout-Header. Tour-Launcher + Support-Mail-Link + 6 FAQ-Items.
+
+## Diagnostic (2026-02-16, Iter 22) — Email-Delivery-Diagnostik ✅
+- **User Report**: Verifizierungs-Mails kommen nicht an (nicht mal im Spam) auf Production.
+- **Setup-Info**: Resend-Domain `alpha-fit.fitness` verifiziert ✅, API-Key vorhanden, Preview-Test-Send an `bellakiki283@gmail.com` erfolgreich mit ID (Resend akzeptiert). Root Cause daher wahrscheinlich außerhalb der App (DNS SPF/DKIM/DMARC oder Resend Domain-Delivery-Config).
+- **Neu**:
+  - `email_service.send_email` schreibt jetzt jeden Send-Versuch mit voller Diagnostik in `db.email_log_raw` (sender, error, raw response, timestamp).
+  - Neuer Endpoint `GET /api/admin/email-diagnostics` (admin-only): liefert letzte N raw sends + template log + config summary.
+  - Neuer Endpoint `POST /api/admin/email-test` sendet Test-Verifizierungsmail mit voller Response.
+- **Verified**: Testing-Agent **18 Backend-Tests grün** (8 neue Diagnostics + 10 Email-Verification-Regression).
+
 - **Verified**: Testing-Agent **13/13 grün** + 3 optionale Verbesserungen umgesetzt.

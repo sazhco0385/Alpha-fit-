@@ -40,8 +40,11 @@ async def send_email(to_email: str, subject: str, html: str, tag: str = "") -> O
         diag["raw"] = str(result)[:500] if result is not None else None
         if isinstance(result, dict):
             eid = result.get("id")
-            err = result.get("error") or result.get("message") if result.get("statusCode") and int(result.get("statusCode", 200)) >= 400 else None
-            if eid and not err:
+            status_code = result.get("statusCode")
+            has_error = bool(result.get("error")) or (
+                status_code is not None and int(status_code) >= 400
+            )
+            if eid and not has_error:
                 diag["ok"] = True
                 diag["email_id"] = eid
             else:
