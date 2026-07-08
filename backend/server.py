@@ -306,6 +306,21 @@ async def sweep_orphaned_adjust_jobs():
     except Exception as e:
         logger.warning(f"orphan sweep failed: {e}")
 
+@app.on_event("startup")
+async def grandfather_existing_users_email_verified():
+    """One-time migration: mark all users lacking `email_verified` as verified (grandfathering).
+    Idempotent — safe to run on every startup."""
+    try:
+        res = await db.users.update_many(
+            {"email_verified": {"$exists": False}},
+            {"$set": {"email_verified": True, "email_verified_at": None}},
+        )
+        if res.modified_count:
+            logger.info(f"grandfathered {res.modified_count} existing user(s) as email_verified")
+    except Exception as e:
+        logger.warning(f"grandfather migration failed: {e}")
+
+
 def is_recently_active(last_active: Optional[str]) -> bool:
     if not last_active:
         return False
@@ -383,6 +398,7 @@ from routers import funnel as _funnel_router  # noqa: E402
 from routers import progress_photos as _progress_photos_router  # noqa: E402
 from routers import apple_health as _apple_health_router  # noqa: E402
 from routers import training_days as _training_days_router  # noqa: E402
+from routers import email_verify as _email_verify_router  # noqa: E402
 
 api_router.include_router(_formcheck_router.router)
 api_router.include_router(_payments_router.router)
@@ -407,6 +423,7 @@ api_router.include_router(_funnel_router.router)
 api_router.include_router(_progress_photos_router.router)
 api_router.include_router(_apple_health_router.router)
 api_router.include_router(_training_days_router.router)
+api_router.include_router(_email_verify_router.router)
 
 # Include router & CORS
 app.include_router(api_router)

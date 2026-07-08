@@ -49,9 +49,16 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (email, password, name) => {
     const { data } = await api.post("/auth/register", { email, password, name });
-    localStorage.setItem("af_token", data.token);
-    setUser(data.user);
-    return data.user;
+    // If backend requires email verification, do NOT auto-login. Return the pending state.
+    if (data?.email_verification_required) {
+      return { pendingVerification: true, email: data.email, message: data.message };
+    }
+    if (data?.token) {
+      localStorage.setItem("af_token", data.token);
+      setUser(data.user);
+      return data.user;
+    }
+    return data;
   };
 
   const logout = () => {

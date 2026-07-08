@@ -103,6 +103,22 @@ def _layout(title: str, preheader: str, body_html: str, cta_text: str = "", cta_
 
 
 # ===== Templates =====
+def render_verify_email(name: str, verify_url: str) -> tuple[str, str]:
+    """Email verification link — sent after registration. NO unsub link (transactional)."""
+    subject = "Bestätige deine E-Mail bei alpha-fit"
+    preheader = "Ein Klick — dann kannst du loslegen. Link läuft in 24h ab."
+    body = f"""
+      <h1 style="font-size: 22px; font-weight: 800; color: #f4d27a; margin: 0 0 14px;">Nur noch ein Schritt, {name}.</h1>
+      <p style="margin: 0 0 14px;">Zur Sicherheit deines Accounts musst du deine E-Mail-Adresse bestätigen. Klick auf den Button unten — danach kannst du dich einloggen und dein 7-Tage Premium-Trial starten.</p>
+      <p style="margin: 0 0 14px; color: #999; font-size: 13px;">Der Link ist <strong style="color: #d4af37;">24 Stunden</strong> gültig und funktioniert nur einmal. Sollte er nicht funktionieren, kannst du auf der Login-Seite eine neue Mail anfordern.</p>
+      <p style="margin: 18px 0 6px; color: #999; font-size: 12px;">Fallback-Link (kopieren + einfügen):</p>
+      <p style="margin: 0 0 14px; word-break: break-all; font-size: 12px; color: #d4af37;">{verify_url}</p>
+      <p style="margin: 0; color: #999;">Wir sehen uns im Gym.<br>— Das alpha-fit Team</p>
+    """
+    # No unsub link because this is a purely transactional / security email.
+    return subject, _layout("E-Mail bestätigen", preheader, body, "E-Mail bestätigen", verify_url, "")
+
+
 def render_welcome(name: str, unsub_token: str = "") -> tuple[str, str]:
     subject = f"Willkommen bei alpha-fit, {name}! 🏆"
     preheader = "Dein 7-Tage-Trial startet jetzt. Hol dir den ersten Workout-Plan."
