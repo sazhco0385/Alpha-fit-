@@ -264,3 +264,30 @@ async def email_test(payload: dict, admin: dict = Depends(require_admin)):
     # Return the last raw log for THIS specific to
     latest = await db.email_log_raw.find_one({"to": to}, {"_id": 0}, sort=[("sent_at", -1)])
     return {"ok": bool(email_id), "email_id": email_id, "diagnostic": latest}
+
+
+@router.post("/admin/verify-user")
+async def admin_verify_user(payload: dict, admin: dict = Depends(require_admin)):
+    """Manually mark a user as email_verified — emergency bypass while mail delivery is broken."""
+    email = str(payload.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Ungültige E-Mail")
+    res = await db.users.update_one(
+        {"email": email},
+        {"$set": {"email_verified": True, "email_verified_at": now_iso(), "verified_by_admin": admin["email"]}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User nicht gefunden")
+    logger.info(f"admin {admin['email']} manually verified {email}")
+    return {"ok": True, "email": email, "modified": res.modified_count}
+
+
+@router.get("/admin/auth-config")
+async def admin_auth_config(admin: dict = Depends(require_admin)):
+    """Show current auth-related env config so admin can see if EMAIL_VERIFICATION_REQUIRED is on/off."""
+    import os as _os
+    return {
+        "email_verification_required": (_os.environ.get("EMAIL_VERIFICATION_REQUIRED", "true").lower() != "false"),
+        "resend_api_key_present": bool(_os.environ.get("RESEND_API_KEY")),
+        "resend_sender_email": _os.environ.get("RESEND_SENDER_EMAIL") or "onboarding@resend.dev",
+    }

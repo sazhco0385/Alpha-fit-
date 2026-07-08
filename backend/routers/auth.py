@@ -80,11 +80,17 @@ async def register(payload: RegisterRequest):
     }
     await db.users.insert_one(user)
     await log_activity(user["id"], user["name"], "registered", {})
-    # Send verification mail (welcome mail deferred until after verify)
+    asyncio.create_task(_notify_admin_new_signup(user))
+    # If verification is not required (feature flag off), auto-login + welcome mail like before
+    if not _email_verification_required():
+        asyncio.create_task(_send_welcome_email(user))
+        await db.users.update_one({"id": user["id"]}, {"$set": {"email_verified": True, "welcome_email_sent": True}})
+        user["email_verified"] = True
+        token = create_token(user["id"])
+        return {"token": token, "user": public_user(user)}
+    # Otherwise send verification mail; user must click link before login
     from routers.email_verify import create_and_send_verification
     asyncio.create_task(create_and_send_verification(user))
-    asyncio.create_task(_notify_admin_new_signup(user))
-    # NO token returned - user must verify email first
     return {
         "ok": True,
         "email_verification_required": True,
@@ -93,13 +99,20 @@ async def register(payload: RegisterRequest):
     }
 
 
+import os
+def _email_verification_required() -> bool:
+    """Env-var toggle. If 'false', login skips the email_verified check.
+    Emergency escape hatch when Resend delivery is broken (DNS/DKIM/DMARC issues)."""
+    return (os.environ.get("EMAIL_VERIFICATION_REQUIRED", "true").lower() != "false")
+
+
 @router.post("/auth/login")
 async def login(payload: LoginRequest):
     user = await db.users.find_one({"email": payload.email.lower()}, {"_id": 0})
     if not user or not verify_password(payload.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Ungültige Anmeldedaten")
     # Enforce email verification for new users (existing users are grandfathered via migration)
-    if not user.get("email_verified", False):
+    if _email_verification_required() and not user.get("email_verified", False):
         raise HTTPException(
             status_code=403,
             detail={
