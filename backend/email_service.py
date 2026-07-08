@@ -19,7 +19,8 @@ if RESEND_API_KEY:
 
 # ===== Generic sender =====
 async def send_email(to_email: str, subject: str, html: str, tag: str = "") -> Optional[str]:
-    """Non-blocking Resend send. Returns email id or None on failure."""
+    """Non-blocking Resend send. Returns email id or None on failure.
+    Also writes a detailed diagnostic log to db.email_log_raw for admin inspection."""
     if not RESEND_API_KEY:
         logger.warning("RESEND_API_KEY missing; email skipped")
         return None
@@ -32,12 +33,37 @@ async def send_email(to_email: str, subject: str, html: str, tag: str = "") -> O
     }
     if tag:
         params["tags"] = [{"name": "category", "value": tag}]
+
+    diag = {"to": to_email, "subject": subject, "tag": tag, "sender": SENDER_EMAIL, "sent_at": None, "ok": False, "email_id": None, "error": None, "raw": None}
     try:
         result = await asyncio.to_thread(resend.Emails.send, params)
-        return result.get("id") if isinstance(result, dict) else None
+        diag["raw"] = str(result)[:500] if result is not None else None
+        if isinstance(result, dict):
+            eid = result.get("id")
+            err = result.get("error") or result.get("message") if result.get("statusCode") and int(result.get("statusCode", 200)) >= 400 else None
+            if eid and not err:
+                diag["ok"] = True
+                diag["email_id"] = eid
+            else:
+                diag["error"] = f"resend returned non-id response: {result}"
+        else:
+            diag["error"] = f"non-dict result: {type(result).__name__}"
     except Exception as e:
+        diag["error"] = f"{type(e).__name__}: {e}"
         logger.error(f"Resend send failed ({tag}, to={to_email}): {e}")
-        return None
+
+    # Fire-and-forget: log to db so admin can inspect
+    try:
+        from datetime import datetime, timezone
+        diag["sent_at"] = datetime.now(timezone.utc).isoformat()
+        # Use motor client lazily to avoid circular import at module load
+        from motor.motor_asyncio import AsyncIOMotorClient
+        _db = AsyncIOMotorClient(os.environ.get("MONGO_URL"))[os.environ.get("DB_NAME") or "alphafit_db"]
+        await _db.email_log_raw.insert_one(diag)
+    except Exception as e:
+        logger.debug(f"failed to persist email diagnostic: {e}")
+
+    return diag["email_id"]
 
 
 # ===== Layout =====

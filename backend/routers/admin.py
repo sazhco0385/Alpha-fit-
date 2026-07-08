@@ -225,3 +225,42 @@ async def admin_funnel_trial_reminder(admin: dict = Depends(require_admin)):
         "rate_purchase": _rate(purchases, checkouts_started),
         "rate_overall": _rate(purchases, emails_sent),
     }
+
+
+
+# ===== Email diagnostics (admin-only) =====
+@router.get("/admin/email-diagnostics")
+async def email_diagnostics(admin: dict = Depends(require_admin), limit: int = 30, email: Optional[str] = None):
+    """Return the last N Resend send attempts with full diagnostic info.
+    Use ?email=user@example.com to filter by recipient."""
+    q = {}
+    if email:
+        q["to"] = email.lower()
+    raw = await db.email_log_raw.find(q, {"_id": 0}).sort("sent_at", -1).limit(min(limit, 100)).to_list(limit)
+    log = await db.email_log.find(q if not email else {"email": email.lower()}, {"_id": 0}).sort("sent_at", -1).limit(min(limit, 100)).to_list(limit)
+    # Sender config summary (masked)
+    import os as _os
+    sender_email = _os.environ.get("RESEND_SENDER_EMAIL") or "onboarding@resend.dev"
+    api_key_present = bool(_os.environ.get("RESEND_API_KEY"))
+    return {
+        "sender_email": sender_email,
+        "api_key_present": api_key_present,
+        "raw_sends": raw,
+        "template_log": log,
+        "raw_ok_count": sum(1 for r in raw if r.get("ok")),
+        "raw_error_count": sum(1 for r in raw if not r.get("ok")),
+    }
+
+
+@router.post("/admin/email-test")
+async def email_test(payload: dict, admin: dict = Depends(require_admin)):
+    """Send a test verification email to a specific address and return the raw diagnostic result."""
+    to = str(payload.get("email") or "").strip().lower()
+    if not to or "@" not in to:
+        raise HTTPException(status_code=400, detail="Ungültige E-Mail")
+    from email_service import send_email, render_verify_email, APP_URL
+    subject, html = render_verify_email("Test", f"{APP_URL}/verify-email?token=TEST_DIAG_TOKEN")
+    email_id = await send_email(to, subject, html, tag="admin_test")
+    # Return the last raw log for THIS specific to
+    latest = await db.email_log_raw.find_one({"to": to}, {"_id": 0}, sort=[("sent_at", -1)])
+    return {"ok": bool(email_id), "email_id": email_id, "diagnostic": latest}
