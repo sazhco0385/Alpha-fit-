@@ -287,7 +287,7 @@ async def admin_auth_config(admin: dict = Depends(require_admin)):
     """Show current auth-related env config so admin can see if EMAIL_VERIFICATION_REQUIRED is on/off."""
     import os as _os
     return {
-        "email_verification_required": (_os.environ.get("EMAIL_VERIFICATION_REQUIRED", "true").lower() != "false"),
+        "email_verification_required": (_os.environ.get("EMAIL_VERIFICATION_REQUIRED", "false").lower() == "true"),
         "resend_api_key_present": bool(_os.environ.get("RESEND_API_KEY")),
         "resend_sender_email": _os.environ.get("RESEND_SENDER_EMAIL") or "onboarding@resend.dev",
     }

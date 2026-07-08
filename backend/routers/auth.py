@@ -101,9 +101,10 @@ async def register(payload: RegisterRequest):
 
 import os
 def _email_verification_required() -> bool:
-    """Env-var toggle. If 'false', login skips the email_verified check.
-    Emergency escape hatch when Resend delivery is broken (DNS/DKIM/DMARC issues)."""
-    return (os.environ.get("EMAIL_VERIFICATION_REQUIRED", "true").lower() != "false")
+    """Env-var toggle. Default is 'false' (email verification OFF) to keep the app usable
+    while Resend/DKIM/DMARC delivery is being sorted out. Set EMAIL_VERIFICATION_REQUIRED=true
+    once your DNS records + Resend domain are fully wired up to re-enable strict verification."""
+    return (os.environ.get("EMAIL_VERIFICATION_REQUIRED", "false").lower() == "true")
 
 
 @router.post("/auth/login")
