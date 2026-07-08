@@ -319,3 +319,18 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **User Report**: Completed-Badge verschwand nach 1 Tag statt Woche zu bleiben.
 - **Fix** (`WeekSchedule.jsx`): Prop `completedTodayDayIndex` → `sessions` Array. Neue Logik `startOfWeek` = Montag 00:00 Local + `completedThisWeek` Set (day_index Filter). Auto-Reset am Montag 00:00.
 - **Testing**: 100 % Frontend-Test grün (2 seed sessions: aktuelle Woche persistiert, vergangene Woche nicht).
+
+
+## Security Feature (2026-02-16, Iter 20) — E-Mail-Verifizierung nach Registrierung ✅
+- **User Wunsch**: Fake-Account-Schutz durch verpflichtende E-Mail-Bestätigung.
+- **Backend**:
+  - Neuer Router `routers/email_verify.py`: `GET /auth/verify-email?token=`, `POST /auth/resend-verification` (60s Cooldown, Email-Enumeration-Schutz).
+  - `/auth/register` gibt jetzt KEINEN JWT-Token zurück, sondern `{email_verification_required:true}` + schickt Verify-Mail (Resend Tag `verify_email`, 24h TTL Token).
+  - `/auth/login` returned HTTP 403 mit `{code:"email_not_verified", email, message}` falls unverified.
+  - **Grandfather-Migration** als Startup-Hook: 312 bestehende User automatisch als `email_verified=true` markiert (idempotent).
+  - Welcome-Mail wird jetzt lazy beim ersten verified-Login getriggert.
+- **Frontend**:
+  - `AuthPage.jsx`: Neue `verify-pending-card` mit Resend-Button + 60s Countdown, Email-Enumeration nachverfolgt.
+  - Neue Page `pages/VerifyEmail.jsx` unter `/verify-email?token=` mit Loading/Success/Already/Error States.
+  - `lib/auth.jsx` `register()` returned `{pendingVerification:true}` statt Auto-Login.
+- **Verified**: Testing-Agent **15/15 Tests grün** (10 Backend + 5 Frontend). Regression-Test unter `/app/backend/tests/test_email_verification.py`.

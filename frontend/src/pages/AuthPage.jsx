@@ -91,6 +91,7 @@ export default function AuthPage() {
   const backToForm = () => {
     setPendingEmail(null);
     setResendCooldown(0);
+    setMode("login");
   };
 
   return (
