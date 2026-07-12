@@ -27,6 +27,7 @@ async def call_llm(system: str, user_text: str, session_id: str) -> str:
         api_key=EMERGENT_LLM_KEY,
         session_id=session_id,
         system_message=system,
+    # TODO(gpt-5.6): upgrade when Emergent playbook lists gpt-5.6 (currently 5.5 is newest)
     ).with_model("openai", "gpt-5.5")
     resp = await chat.send_message(UserMessage(text=user_text))
     return resp if isinstance(resp, str) else str(resp)

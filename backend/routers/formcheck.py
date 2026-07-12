@@ -75,6 +75,7 @@ Sei ehrlich aber konstruktiv. Wenn die Form bereits gut ist (score >= 8), feiere
         api_key=EMERGENT_LLM_KEY,
         session_id=f"formcheck-{user['id']}-{uuid.uuid4()}",
         system_message=sys,
+    # TODO(gpt-5.6): upgrade when Emergent playbook lists gpt-5.6 (currently 5.5 is newest)
     ).with_model("openai", "gpt-5.5")
 
     try:
