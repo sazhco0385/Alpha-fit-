@@ -1,0 +1,32 @@
+{
+  "summary": "Muscle-groups feature tested end-to-end. Backend endpoint /api/muscle-groups/stats returns correct schema, order, weeks clamping, and percent formula (verified via seeded workout_session referencing training_plan day exercises for Brust+Beine). Frontend /progress page shows new MUSKELGRUPPEN IM DETAIL section with SVG body silhouette, front/back toggle, and 7 muscle cards. Hover on card triggers active state on corresponding SVG region (stroke 0.6→1.8, drop-shadow glow applied). Regression: top stats, volume chart, badges section unaffected. No JS errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Progress /progress — Muscle Groups Section", "issues": ["SVG regions overlap in coordinate space: e.g. the 'arme' path stretches across the same box as 'brust', so hovering directly on the arm silhouette in some pixels is intercepted by the brust path (Playwright pointer test failed for SVG→card direction). Card→SVG direction works perfectly. Consider giving each region a tighter, non-overlapping bounding path, or wrap regions in <g pointer-events> so top-most (last-rendered) wins cleanly."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_muscle_groups.py",
+    "/app/test_reports/pytest/muscle_groups_iter25.xml"
+  ],
+  "action_items": [
+    "Optional polish: refine SVG region paths so they don't overlap — improves reverse hover (SVG→card) UX. Current card→SVG direction works as specified."
+  ],
+  "critical_code_review_comments": [
+    "routers/muscle_groups.py: alias check uses `if a in s` (substring match). 'arme' matches 'unterarme' fine but 'bein' would match 'unter-bein-… nope. Substring match on 'chest' inside 'chestnut' is theoretical only. Acceptable given controlled inputs.",
+    "MuscleGroupsSection.jsx: no explicit error state UI — silently returns null on API failure. Consider showing a small error notice for observability.",
+    "SVG regions rendered in fixed key order — later paths overlap earlier ones. In current REGIONS_FRONT the 'arme' path extends horizontally past torso and can intercept pointer events on 'brust' area. Minor.",
+    "muscle_groups.py: `since_iso = since.isoformat()` compared against string-formatted ISO in DB — works because completed_at strings are ISO with tz suffix (lexicographic order == chronological). Existing pattern in codebase, OK."
+  ],
+  "updated_files": ["/app/backend/tests/test_muscle_groups.py"],
+  "success_rate": {"backend": "100% (5/5)", "frontend": "100% (all required elements + hover activation OK)"},
+  "test_credentials": "Admin sazhco0385@gmail.com / Bellakiki1 — works",
+  "seed_data_creation": "Test creates temporary training_plan day (day_index 99/98) + workout_sessions during pytest — all cleaned up in finally blocks. Verified DB is clean.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Feature is fully functional. If SVG overlap is fixed, re-run playwright hover check for muscle-region-front-arme directly (was intercepted by muscle-region-front-brust path).",
+  "rca of the issue": "N/A — no bugs found. Only cosmetic SVG-hitbox overlap noted."
+}

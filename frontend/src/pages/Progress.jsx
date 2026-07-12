@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import api from "../lib/api";
 import BadgeGlow from "../components/BadgeGlow";
+import MuscleGroupsSection from "../components/MuscleGroupsSection";
 import { useAuth } from "../lib/auth";
 import { TrendingUp, Calendar, Dumbbell, Flame, Award, Weight, Lock, Trophy, Scale, Camera } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
@@ -82,6 +83,9 @@ export default function Progress() {
         <Stat icon={TrendingUp} label="Volumen (kg)" value={Math.round(totalVolume).toLocaleString()} testid="prog-volume" />
         <Stat icon={Dumbbell} label="Badges" value={user?.badges?.length || 0} testid="prog-badges" />
       </div>
+
+      {/* Muscle groups overview */}
+      <MuscleGroupsSection />
 
       {/* Chart */}
       <div className="af-card p-6 mb-8 clip-corner-tl-br" data-testid="progress-chart-card">
