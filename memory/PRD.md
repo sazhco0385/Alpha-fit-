@@ -372,3 +372,9 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **Fix**: Default in `_email_verification_required()` und `/admin/auth-config` auf `false` geflippt → Production funktioniert out-of-the-box ohne Env-Var.
 - Um strict wieder zu aktivieren: `EMAIL_VERIFICATION_REQUIRED=true` in Emergent-Env-Vars setzen + Redeploy.
 - **Verified**: Testing-Agent 16/16 Flag-Tests grün + 10/10 legacy Strict-Tests korrekt geskippt.
+
+
+## Feature (2026-02-16, Iter 25) — Muskelgruppen im Detail (Progress) ✅
+- **Backend** (`routers/muscle_groups.py`): `GET /api/muscle-groups/stats?weeks=4` — analysiert completed sessions letzter N Wochen, matched `target_muscle` gegen 7 canonical Gruppen, berechnet `percent` (Baseline 2 Sessions/Woche/Gruppe = 100 %).
+- **Frontend** (`MuscleGroupsSection.jsx`): Stylized SVG-Body mit Vorne/Hinten Toggle. Muskelregionen Fill an %-Value gekoppelt. Bidirektionaler Hover-Sync (Card ↔ Region). Progress-Balken Farbverlauf (Gold→Blau→Grün). Mounted auf `/progress`.
+- **Verified**: Testing-Agent 5/5 Backend + 100 % Frontend grün. Kleines SVG-Hitbox-Overlap-Item durch Z-Order-Sort gefixt.

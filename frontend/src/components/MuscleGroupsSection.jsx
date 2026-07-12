@@ -40,7 +40,13 @@ function BodySilhouette({ view, activeKey, groupPercents, onHover }) {
         <filter id="body-glow"><feGaussianBlur stdDeviation="2" /></filter>
       </defs>
       <path d={BODY_OUTLINE} fill="url(#body-fill)" stroke="#1e293b" strokeWidth="1" />
-      {Object.entries(regions).map(([key, d]) => {
+      {/* Render regions sorted so smaller/inner ones sit on top for cleaner hover-hit detection */}
+      {Object.entries(regions)
+        .sort(([a], [b]) => {
+          const order = ["brust", "ruecken", "gesaess", "bauch", "beine", "schultern", "arme"];
+          return order.indexOf(a) - order.indexOf(b);
+        })
+        .map(([key, d]) => {
         const pct = groupPercents[key] || 0;
         const isActive = activeKey === key;
         // Color intensity based on training %: 0=dim, 100=bright neon
