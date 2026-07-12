@@ -399,6 +399,7 @@ from routers import progress_photos as _progress_photos_router  # noqa: E402
 from routers import apple_health as _apple_health_router  # noqa: E402
 from routers import training_days as _training_days_router  # noqa: E402
 from routers import email_verify as _email_verify_router  # noqa: E402
+from routers import muscle_groups as _muscle_groups_router  # noqa: E402
 
 api_router.include_router(_formcheck_router.router)
 api_router.include_router(_payments_router.router)
@@ -424,6 +425,7 @@ api_router.include_router(_progress_photos_router.router)
 api_router.include_router(_apple_health_router.router)
 api_router.include_router(_training_days_router.router)
 api_router.include_router(_email_verify_router.router)
+api_router.include_router(_muscle_groups_router.router)
 
 # Include router & CORS
 app.include_router(api_router)
