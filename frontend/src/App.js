@@ -6,6 +6,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import AuthPage from "./pages/AuthPage";
 import VerifyEmail from "./pages/VerifyEmail";
+import PlanHistory from "./pages/PlanHistory";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Coach from "./pages/Coach";
@@ -58,6 +59,7 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/plan-history" element={<PlanHistory />} />
             <Route path="/onboarding" element={
               <ProtectedRoute requireOnboarding={false}><Onboarding /></ProtectedRoute>
             } />

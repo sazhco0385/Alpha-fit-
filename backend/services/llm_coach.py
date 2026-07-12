@@ -176,6 +176,34 @@ def fallback_plan(profile: dict) -> dict:
 
 
 
+def _plan_age_weeks(plan: dict) -> float:
+    """Rough age of the CURRENT plan chain in weeks. Uses `first_created_at` if
+    tracked, otherwise the plan's own `created_at`."""
+    from datetime import datetime, timezone
+    try:
+        ca = plan.get("first_created_at") or plan.get("created_at")
+        d = datetime.fromisoformat(str(ca).replace("Z", "+00:00"))
+        return max(0.0, (datetime.now(timezone.utc) - d).total_seconds() / (7 * 24 * 3600))
+    except Exception:
+        return 0.0
+
+
+def _variation_instruction(plan: dict) -> str:
+    """Progressive Overload first (weeks 1-3), then allow variation (from week 4)."""
+    weeks = _plan_age_weeks(plan)
+    if weeks < 4:
+        return (
+            f"Der Plan läuft erst seit ~{weeks:.1f} Wochen. Fokus auf PROGRESSIVE OVERLOAD: "
+            "erhöhe Gewichte wo Ziel-Reps geschafft (2.5-5kg), verringere wo unterschritten (-2.5-5kg). "
+            "Behalte ALLE Übungen identisch bei - noch KEINE neuen Übungen einführen. Nur Zahlen anpassen."
+        )
+    return (
+        f"Der Plan läuft schon ~{weeks:.1f} Wochen. Erhöhe Gewichte wo Ziel-Reps geschafft (2.5-5kg), "
+        "verringere wo unterschritten (-2.5-5kg). Anzahl Tage und Übungen beibehalten falls möglich, "
+        "aber du darfst Übungen variieren wenn sinnvoll (z.B. bei Plateau ≥3 Sessions oder Muskel-Ungleichgewicht)."
+    )
+
+
 async def _perform_plan_adjust(user: dict, plan: dict) -> dict:
     """Core LLM-driven plan adjustment. Returns the saved new plan dict."""
     # gather last 10 completed sessions
@@ -225,7 +253,7 @@ Performance der letzten Einheiten:
 
 User-Profil: {json.dumps(user.get('profile'))}
 
-Passe den Plan progressiv an. Erhöhe Gewichte wo Athlet die Ziel-Wiederholungen geschafft hat (2.5-5kg). Verringere wo unterschritten (-2.5-5kg). Anzahl Tage und Übungen beibehalten falls möglich, aber du darfst Übungen variieren wenn sinnvoll.
+{_variation_instruction(plan)}
 
 Gib NUR JSON zurück im Format (WICHTIG: 'name' OHNE Versions-Suffix wie 'v2' – die Version wird vom System vergeben):
 {{
@@ -265,6 +293,8 @@ Gib NUR JSON zurück im Format (WICHTIG: 'name' OHNE Versions-Suffix wie 'v2' �
         "created_at": now_iso(),
         "version": new_version,
         "previous_plan_id": plan["id"],
+        # Track the original creation date of this plan chain so the LLM can gate variation by age
+        "first_created_at": plan.get("first_created_at") or plan.get("created_at"),
     }
     await db.training_plans.insert_one(new_plan)
     new_plan.pop("_id", None)

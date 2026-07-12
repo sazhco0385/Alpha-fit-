@@ -168,6 +168,7 @@ export default function Dashboard() {
               KI&nbsp;ANPASSEN
             </button>
             <button onClick={() => navigate("/plan")} className="btn-outline text-xs whitespace-nowrap" data-testid="view-plan-btn">DETAILS</button>
+            <button onClick={() => navigate("/plan-history")} className="btn-outline text-xs whitespace-nowrap" data-testid="plan-history-btn">HISTORIE</button>
           </div>
         </div>
         {adjustStatus && adjustStatus.status !== "no_plan" && (

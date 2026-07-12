@@ -1,0 +1,34 @@
+{
+  "summary": "Iteration 26: Tested new /api/coach/plan-history GET + /api/coach/plan-rollback/{id} POST endpoints, LLM `_variation_instruction` gating helper, and frontend PlanHistory page. All 10 pytest cases pass; regression suite (muscle_groups + email_verification_flag = 21 tests) pass. Frontend loads /plan-history via dashboard [data-testid=plan-history-btn], renders 30 items, exactly 1 AKTIV badge, 29 rollback buttons.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/plan-history", "issues": ["Page is registered WITHOUT ProtectedRoute wrapper in App.js — unauthenticated users can visit the route (they see empty state because api call fails). Consider wrapping in <ProtectedRoute> for consistency."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_plan_history.py",
+    "/app/test_reports/pytest/plan_history_iter26.xml"
+  ],
+  "action_items": [
+    "Optional: wrap <PlanHistory/> route in <ProtectedRoute> in /app/frontend/src/App.js (line 62) to match other authenticated pages.",
+    "Optional: TourGuide overlay blocks [data-testid=plan-history-btn] click on fresh admin sessions — testing worked around it via ÜBERSPRINGEN. Users likely dismiss the tour naturally, but flag if e2e stability matters."
+  ],
+  "critical_code_review_comments": [
+    "plan_history.py router is clean (25 LOC), uses uuid IDs, excludes _id, proper ownership check via user_id filter in find_one.",
+    "_variation_instruction correctly gates at 4 weeks; uses first_created_at when available (falls back to created_at).",
+    "_perform_plan_adjust persists first_created_at on new plans → plan-chain age is tracked correctly across adjust iterations.",
+    "Minor: plan_history endpoint has no explicit /api prefix — relies on server.py include_router; verified live URL /api/coach/plan-history works.",
+    "PlanHistory.jsx uses window.confirm() (line 24) which is fine functionally but breaks the app's dark-themed UX; consider AlertDialog from shadcn."
+  ],
+  "updated_files": ["/app/backend/tests/test_plan_history.py (new)"],
+  "success_rate": { "backend": "100% (10/10 new + 21/21 regression)", "frontend": "100% (route + list + AKTIV + rollback btns verified)" },
+  "test_credentials": "Admin sazhco0385@gmail.com / Bellakiki1 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Rollback-other-user test synthesizes a temporary plan with fake user_id and cleans up in the finally block. Rollback-valid test restores admin current_plan_id in teardown.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Admin has 31 plans in DB. plan_history default limit=30; add ?limit=100 when you need to see the oldest. Rollback route always returns 200 for admin-owned plans; use finally-block teardown to reset current_plan_id. Circular import between server.py and services.llm_coach requires `import server` before `from services.llm_coach import ...` in unit tests.",
+  "rca of the issue": "N/A — no bugs found."
+}
