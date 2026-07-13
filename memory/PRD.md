@@ -378,3 +378,9 @@ Erstelle mir eine ultimative Fitness App namens alpha-fit (Logo: metallisches Ch
 - **Backend** (`routers/muscle_groups.py`): `GET /api/muscle-groups/stats?weeks=4` — analysiert completed sessions letzter N Wochen, matched `target_muscle` gegen 7 canonical Gruppen, berechnet `percent` (Baseline 2 Sessions/Woche/Gruppe = 100 %).
 - **Frontend** (`MuscleGroupsSection.jsx`): Stylized SVG-Body mit Vorne/Hinten Toggle. Muskelregionen Fill an %-Value gekoppelt. Bidirektionaler Hover-Sync (Card ↔ Region). Progress-Balken Farbverlauf (Gold→Blau→Grün). Mounted auf `/progress`.
 - **Verified**: Testing-Agent 5/5 Backend + 100 % Frontend grün. Kleines SVG-Hitbox-Overlap-Item durch Z-Order-Sort gefixt.
+
+
+## Feature (2026-02-16, Iter 26) — Plan-Historie + Variation-Gating ✅
+- **A) LLM-Prompt gated** (`services/llm_coach.py`): `_plan_age_weeks` + `_variation_instruction` — wenn Plan-Chain < 4 Wochen alt, nur Gewichte anpassen (KEINE neuen Übungen). Neue Pläne persistieren `first_created_at`.
+- **B) Historie**: `GET /coach/plan-history` + `POST /coach/plan-rollback/{plan_id}`. Frontend `PlanHistory.jsx` mit AKTIV-Badge + Rollback-Button. Dashboard-Button HISTORIE neben KI ANPASSEN. `<ProtectedRoute>` gewrapped.
+- **Verified**: Testing-Agent **31/31 grün** (10 neu + 21 regression).

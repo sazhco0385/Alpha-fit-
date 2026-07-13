@@ -59,7 +59,7 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/plan-history" element={<PlanHistory />} />
+            <Route path="/plan-history" element={<ProtectedRoute><PlanHistory /></ProtectedRoute>} />
             <Route path="/onboarding" element={
               <ProtectedRoute requireOnboarding={false}><Onboarding /></ProtectedRoute>
             } />
