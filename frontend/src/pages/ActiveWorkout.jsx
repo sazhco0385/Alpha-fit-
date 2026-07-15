@@ -8,6 +8,7 @@ import ExerciseVideoModal from "../components/ExerciseVideoModal";
 import BadgeGlow from "../components/BadgeGlow";
 import PRCard from "../components/PRCard";
 import { playCountdownBeep, playRestOverChime, isSoundEnabled } from "../lib/sound";
+import { getRestCategory } from "../lib/restCategory";
 
 export default function ActiveWorkout() {
   const { sessionId } = useParams();
@@ -207,6 +208,29 @@ export default function ActiveWorkout() {
               </div>
               <div className="text-base sm:text-2xl font-teko chrome-text tracking-widest">SEKUNDEN</div>
             </div>
+            {(() => {
+              const cat = getRestCategory(day.exercises[exIdx]);
+              if (!cat) return null;
+              return (
+                <div className="mx-auto max-w-md mb-4" data-testid="rest-category-badge">
+                  <div
+                    className="inline-flex items-center gap-2 px-3 py-1 border font-chakra text-[10px] sm:text-xs tracking-[0.25em] uppercase"
+                    style={{
+                      borderColor: cat.color,
+                      color: cat.color,
+                      background: `${cat.color}12`,
+                      boxShadow: `0 0 12px ${cat.color}55`,
+                    }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: cat.color, boxShadow: `0 0 6px ${cat.color}` }} />
+                    {cat.label}
+                  </div>
+                  <div className="text-gray-400 font-chakra text-xs sm:text-sm mt-2 px-2 leading-relaxed" data-testid="rest-category-hint">
+                    {cat.hint}
+                  </div>
+                </div>
+              );
+            })()}
             <div className="flex justify-center gap-2 sm:gap-3 mt-6 sm:mt-8 flex-wrap">
               <button onClick={() => setRestPaused(!restPaused)} className="btn-outline flex items-center gap-2" data-testid="rest-pause-btn">
                 {restPaused ? <Play size={16} /> : <Pause size={16} />}
