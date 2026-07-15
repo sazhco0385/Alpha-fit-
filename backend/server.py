@@ -321,6 +321,37 @@ async def grandfather_existing_users_email_verified():
         logger.warning(f"grandfather migration failed: {e}")
 
 
+@app.on_event("startup")
+async def migrate_plan_rest_seconds():
+    """Migration: normalize training plan exercises so every exercise carries a proper
+    `rest_seconds` field (legacy code stored `rest_sec` which the frontend ignored, causing
+    a fallback to a hardcoded 60s rest across the whole app). Idempotent."""
+    try:
+        from services.llm_coach import normalize_days_rest
+        cursor = db.training_plans.find({}, {"id": 1, "days": 1, "_id": 1})
+        fixed = 0
+        async for plan in cursor:
+            days = plan.get("days") or []
+            # Only touch plans that have any exercise missing rest_seconds or still using rest_sec
+            needs_fix = False
+            for d in days:
+                for ex in (d.get("exercises") or []):
+                    if "rest_seconds" not in ex or ex.get("rest_seconds") in (None, 0) or "rest_sec" in ex:
+                        needs_fix = True
+                        break
+                if needs_fix:
+                    break
+            if not needs_fix:
+                continue
+            new_days = normalize_days_rest(days)
+            await db.training_plans.update_one({"_id": plan["_id"]}, {"$set": {"days": new_days}})
+            fixed += 1
+        if fixed:
+            logger.info(f"normalized rest_seconds on {fixed} legacy training plan(s)")
+    except Exception as e:
+        logger.warning(f"rest_seconds migration failed: {e}")
+
+
 def is_recently_active(last_active: Optional[str]) -> bool:
     if not last_active:
         return False

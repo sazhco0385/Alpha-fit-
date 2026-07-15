@@ -71,13 +71,24 @@ Gib AUSSCHLIESSLICH valides JSON zurück (kein Markdown, keine Erklärungen), ge
   ]
 }}
 
-Erstelle exakt {profile.get('days_per_week')} Trainingstage. Jeder Tag 5-7 Übungen. Realistische Startgewichte basierend auf Erfahrung und Körpergewicht."""
+Erstelle exakt {profile.get('days_per_week')} Trainingstage. Jeder Tag 5-7 Übungen. Realistische Startgewichte basierend auf Erfahrung und Körpergewicht.
+
+WICHTIG - Pausenzeiten (rest_seconds) MÜSSEN pro Übung individuell und realistisch sein:
+- Schwere Grundübungen (Kniebeugen, Kreuzheben, Bankdrücken, Schulterdrücken, Langhantelrudern) bei 1-6 Wdh: 150-180s
+- Grundübungen bei 7-10 Wdh: 90-120s
+- Mittlere Compound-Übungen (Klimmzüge, Rudern, Beinpresse, Latzug, Dips) 8-12 Wdh: 75-90s
+- Isolationsübungen (Curls, Trizeps, Seitheben, Face Pulls, Wadenheben) 10-15 Wdh: 45-60s
+- Core/Ausdauer (Plank, Crunches, Farmer's Walk): 30-45s
+NIEMALS alle Übungen mit demselben rest_seconds Wert! Die Pause MUSS zur Intensität und zum Wdh-Bereich passen."""
 
     text = await call_llm(build_coach_system(), prompt, f"plan-{user_id}")
     # Try to extract JSON
     plan_data = parse_json_from_llm(text)
     if not plan_data:
         plan_data = fallback_plan(profile)
+
+    # Normalize rest times (fix uniform-60s slop + legacy rest_sec key)
+    plan_data["days"] = normalize_days_rest(plan_data.get("days", []))
 
     plan = {
         "id": str(uuid.uuid4()),
@@ -93,6 +104,97 @@ Erstelle exakt {profile.get('days_per_week')} Trainingstage. Jeder Tag 5-7 Übun
     plan.pop("_id", None)
     await db.users.update_one({"id": user_id}, {"$set": {"current_plan_id": plan["id"]}})
     return plan
+
+# ----- Rest-time helpers -----
+_COMPOUND_HEAVY_KEYWORDS = (
+    "kniebeug", "squat", "kreuzheb", "deadlift", "bankdr", "bench",
+    "schulterdr", "overhead", "military", "front squat", "hip thrust",
+    "langhantelrud", "barbell row",
+)
+_COMPOUND_MED_KEYWORDS = (
+    "klimm", "pull-up", "pull up", "dip", "beinpres", "leg press",
+    "rumän", "romanian", "ausfallschritt", "lunge", "rudern", "row",
+    "latzieh", "lat pull",
+)
+_ISOLATION_KEYWORDS = (
+    "curl", "trizep", "tricep", "seitheb", "lateral", "face pull",
+    "wadenheb", "calf", "reverse fly", "fly", "kickback", "extension",
+    "leg curl", "beincurl", "shrug",
+)
+_CORE_KEYWORDS = ("plank", "crunch", "sit-up", "situp", "russian twist", "hollow", "l-sit", "hanging")
+
+
+def _smart_rest_default(ex: dict) -> int:
+    """Return a science-based rest time (seconds) for an exercise when the LLM omits it."""
+    name = str(ex.get("name") or "").lower()
+    reps_raw = ex.get("reps")
+    # Parse reps range like "5-8" -> take upper bound
+    try:
+        if isinstance(reps_raw, str) and "-" in reps_raw:
+            reps = int(reps_raw.split("-")[-1].strip())
+        else:
+            reps = int(reps_raw)
+    except Exception:
+        reps = 10
+    # Core / endurance
+    if any(k in name for k in _CORE_KEYWORDS) or reps >= 20:
+        return 45
+    # Heavy compound
+    if any(k in name for k in _COMPOUND_HEAVY_KEYWORDS):
+        return 150 if reps <= 6 else 120
+    # Medium compound
+    if any(k in name for k in _COMPOUND_MED_KEYWORDS):
+        return 90
+    # Isolation
+    if any(k in name for k in _ISOLATION_KEYWORDS):
+        return 60 if reps <= 12 else 45
+    # Fallback by rep range
+    if reps <= 6:
+        return 150
+    if reps <= 10:
+        return 90
+    if reps <= 15:
+        return 60
+    return 45
+
+
+def normalize_days_rest(days: list) -> list:
+    """Ensure every exercise has a sane `rest_seconds` (int).
+    Accepts legacy `rest_sec`, drops it, clamps 0..600. Uses `_smart_rest_default` when missing/uniform.
+    Also breaks up unrealistic uniform rest patterns (e.g., LLM returning all 60s) by re-deriving values."""
+    if not isinstance(days, list):
+        return days
+    # Detect suspiciously uniform rests across the whole plan (LLM slop)
+    all_rests = []
+    for d in days:
+        for ex in (d.get("exercises") or []):
+            r = ex.get("rest_seconds")
+            if r is None:
+                r = ex.get("rest_sec")
+            all_rests.append(r)
+    is_uniform = (
+        len(all_rests) >= 4
+        and all(r is not None for r in all_rests)
+        and len(set(all_rests)) == 1
+    )
+    for d in days:
+        for ex in (d.get("exercises") or []):
+            raw = ex.get("rest_seconds")
+            if raw is None:
+                raw = ex.pop("rest_sec", None)
+            else:
+                # legacy key removal
+                ex.pop("rest_sec", None)
+            if raw is None or is_uniform:
+                val = _smart_rest_default(ex)
+            else:
+                try:
+                    val = int(round(float(raw)))
+                except Exception:
+                    val = _smart_rest_default(ex)
+            ex["rest_seconds"] = max(0, min(600, val))
+    return days
+
 
 def parse_json_from_llm(text: str) -> Optional[dict]:
     if not text:
@@ -239,7 +341,7 @@ async def _perform_plan_adjust(user: dict, plan: dict) -> dict:
                     "sets": ex.get("sets"),
                     "reps": ex.get("reps"),
                     "weight_kg": ex.get("weight_kg"),
-                    "rest_sec": ex.get("rest_sec", 90),
+                    "rest_seconds": ex.get("rest_seconds") or ex.get("rest_sec") or _smart_rest_default(ex),
                 }
                 for ex in (d.get("exercises") or [])
             ],
@@ -254,6 +356,13 @@ Performance der letzten Einheiten:
 User-Profil: {json.dumps(user.get('profile'))}
 
 {_variation_instruction(plan)}
+
+WICHTIG - Pausenzeiten (rest_seconds) individuell pro Übung:
+- Schwere Grundübungen 1-6 Wdh: 150-180s | 7-10 Wdh: 90-120s
+- Mittlere Compounds 8-12 Wdh: 75-90s
+- Isolation 10-15 Wdh: 45-60s
+- Core/Ausdauer: 30-45s
+NIEMALS alle Übungen mit identischer Pause. Nutze das Feld 'rest_seconds' (nicht 'rest_sec').
 
 Gib NUR JSON zurück im Format (WICHTIG: 'name' OHNE Versions-Suffix wie 'v2' – die Version wird vom System vergeben):
 {{
@@ -289,7 +398,7 @@ Gib NUR JSON zurück im Format (WICHTIG: 'name' OHNE Versions-Suffix wie 'v2' �
         "name": final_name,
         "weeks": plan_data.get("weeks", 4),
         "progression_notes": plan_data.get("progression_notes", ""),
-        "days": plan_data.get("days", []),
+        "days": normalize_days_rest(plan_data.get("days", [])),
         "created_at": now_iso(),
         "version": new_version,
         "previous_plan_id": plan["id"],

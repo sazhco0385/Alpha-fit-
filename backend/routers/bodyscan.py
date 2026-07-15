@@ -306,13 +306,15 @@ async def _run_bodyscan_plan_adjust(job_id: str, user: dict, plan: dict, scan: d
 
 
 async def _perform_bodyscan_plan_adjust(user: dict, plan: dict, scan: dict) -> dict:
+    from services.llm_coach import normalize_days_rest, _smart_rest_default
     slim_days = [{
         "day_index": d.get("day_index"),
         "name": d.get("name"),
         "exercises": [
             {"name": ex.get("name"), "target_muscle": ex.get("target_muscle"),
              "sets": ex.get("sets"), "reps": ex.get("reps"),
-             "weight_kg": ex.get("weight_kg"), "rest_sec": ex.get("rest_sec", 90)}
+             "weight_kg": ex.get("weight_kg"),
+             "rest_seconds": ex.get("rest_seconds") or ex.get("rest_sec") or _smart_rest_default(ex)}
             for ex in (d.get("exercises") or [])
         ],
     } for d in plan.get("days", [])]
@@ -334,6 +336,12 @@ User-Profil: {json.dumps(user.get('profile'))}
 
 Passe den Plan an die Schwachstellen aus dem Body-Scan an. Erhöhe Volumen / füge gezielte Übungen hinzu für die schwachen Muskelgruppen. Reduziere ggf. Volumen bei sehr gut entwickelten Bereichen. Anzahl Tage und grobe Struktur beibehalten.
 
+WICHTIG - Pausenzeiten individuell (Feld 'rest_seconds'):
+- Schwere Grundübungen 1-6 Wdh: 150-180s | 7-10 Wdh: 90-120s
+- Mittlere Compounds 8-12 Wdh: 75-90s | Isolation 10-15 Wdh: 45-60s
+- Core/Ausdauer: 30-45s
+Niemals alle Pausen gleich.
+
 Gib AUSSCHLIESSLICH dieses JSON zurück:
 {{
   "name": "Plan v3 - Schwachstellen-Fokus",
@@ -353,7 +361,7 @@ Gib AUSSCHLIESSLICH dieses JSON zurück:
         "name": plan_data.get("name", "Alpha Plan v3 - Body-Scan Anpassung"),
         "weeks": plan_data.get("weeks", 4),
         "progression_notes": plan_data.get("progression_notes", ""),
-        "days": plan_data.get("days", []),
+        "days": normalize_days_rest(plan_data.get("days", [])),
         "created_at": now_iso(),
         "version": plan.get("version", 1) + 1,
         "previous_plan_id": plan["id"],
