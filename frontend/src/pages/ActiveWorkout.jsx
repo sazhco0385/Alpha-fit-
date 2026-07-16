@@ -23,6 +23,7 @@ export default function ActiveWorkout() {
   const [showVideo, setShowVideo] = useState(false);
   const [resting, setResting] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
+  const [restTotal, setRestTotal] = useState(0);
   const [restPaused, setRestPaused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [finishing, setFinishing] = useState(false);
@@ -151,6 +152,7 @@ export default function ActiveWorkout() {
 
   const startRest = (sec) => {
     setRestLeft(sec);
+    setRestTotal(sec);
     setRestPaused(false);
     setResting(true);
   };
@@ -175,6 +177,9 @@ export default function ActiveWorkout() {
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-25" />
       <div className="absolute inset-0 bg-radial-blue" />
+      {/* Aurora backdrop — cranks up during rest */}
+      <div className={`workout-aurora ${resting ? "workout-aurora--rest" : ""}`} aria-hidden />
+      <div className="workout-grain" aria-hidden />
 
       {/* Top bar */}
       <div className="relative z-10 p-2 sm:p-6 flex items-center justify-between gap-2">
@@ -200,21 +205,24 @@ export default function ActiveWorkout() {
 
       <main className="relative z-10 max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-12">
         {resting ? (
-          <div className="text-center py-6" data-testid="rest-timer-view">
-            <div className="text-xs text-gray-500 uppercase tracking-[0.3em] font-chakra">PAUSE</div>
-            <div className="my-4 sm:my-6 relative inline-block max-w-full">
-              <div className="font-teko text-[6rem] sm:text-[10rem] md:text-[180px] electric-text glow-text leading-none whitespace-nowrap" data-testid="rest-countdown">
-                {restLeft}
-              </div>
-              <div className="text-base sm:text-2xl font-teko chrome-text tracking-widest">SEKUNDEN</div>
-            </div>
+          <div className="text-center py-2 sm:py-4" data-testid="rest-timer-view">
+            <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-[0.4em] font-chakra mb-4">PAUSE</div>
+
+            {/* ═══════ Rest-Timer Ring ═══════ */}
+            <RestTimerRing
+              value={restLeft}
+              total={restTotal || 1}
+              paused={restPaused}
+              category={getRestCategory(day.exercises[exIdx])}
+            />
+
             {(() => {
               const cat = getRestCategory(day.exercises[exIdx]);
               if (!cat) return null;
               return (
-                <div className="mx-auto max-w-md mb-4" data-testid="rest-category-badge">
+                <div className="mx-auto max-w-md mb-4 mt-6" data-testid="rest-category-badge">
                   <div
-                    className="inline-flex items-center gap-2 px-3 py-1 border font-chakra text-[10px] sm:text-xs tracking-[0.25em] uppercase"
+                    className="inline-flex items-center gap-2 px-3 py-1 border font-chakra text-[10px] sm:text-xs tracking-[0.25em] uppercase rounded-full"
                     style={{
                       borderColor: cat.color,
                       color: cat.color,
@@ -240,9 +248,9 @@ export default function ActiveWorkout() {
                 <ChevronRight size={18} /> SKIP & WEITER
               </button>
             </div>
-            <div className="mt-10 text-gray-500 font-chakra text-sm">
-              Nächste Übung: <span className="text-[#00BFFF]">{day.exercises[exIdx]?.name}</span>
-              <br />Satz {setIdx + 1} von {totalSets}
+            <div className="mt-8 text-gray-400 font-chakra text-xs sm:text-sm">
+              Nächste Übung: <span className="text-[#00BFFF] font-teko text-base tracking-wide">{day.exercises[exIdx]?.name}</span>
+              <br /><span className="text-gray-500">Satz {setIdx + 1} von {totalSets}</span>
             </div>
           </div>
         ) : (
@@ -445,6 +453,73 @@ function CompleteView({ newBadges, newPRs = [], onClose }) {
         )}
 
         <button onClick={onClose} className="btn-primary mt-8" data-testid="workout-done-btn">ZURÜCK ZUM DASHBOARD</button>
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════ Rest-Timer Ring ═══════════════════
+ * Circular SVG progress ring with animated gradient stroke,
+ * inner glow, and category-tinted breathing pulse. Mobile-first.
+ */
+function RestTimerRing({ value, total, paused, category }) {
+  const clamped = Math.max(0, Math.min(value, total));
+  const pct = 1 - clamped / Math.max(total, 1); // 0 = full, 1 = empty
+  const size = 260;
+  const stroke = 10;
+  const radius = (size - stroke) / 2;
+  const circ = 2 * Math.PI * radius;
+  const dashOffset = circ * pct;
+  const color = category?.color || "#00BFFF";
+  const urgent = clamped <= 5;
+
+  return (
+    <div
+      className={`rest-ring-wrap ${paused ? "rest-ring-wrap--paused" : ""} ${urgent ? "rest-ring-wrap--urgent" : ""}`}
+      style={{ "--ring-color": color }}
+      data-testid="rest-timer-ring"
+    >
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="rest-ring-svg">
+        <defs>
+          <linearGradient id="rt-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#00E5FF" />
+            <stop offset="50%" stopColor={color} />
+            <stop offset="100%" stopColor="#9333EA" />
+          </linearGradient>
+          <filter id="rt-glow">
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        {/* Track */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth={stroke}
+        />
+        {/* Progress */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="url(#rt-grad)"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circ}
+          strokeDashoffset={dashOffset}
+          filter="url(#rt-glow)"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ transition: "stroke-dashoffset 900ms cubic-bezier(0.4, 0, 0.2, 1)" }}
+        />
+      </svg>
+      <div className="rest-ring-center">
+        <div className="rest-ring-value" data-testid="rest-countdown">{clamped}</div>
+        <div className="rest-ring-label">SEK</div>
       </div>
     </div>
   );
