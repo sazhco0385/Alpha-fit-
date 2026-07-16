@@ -74,7 +74,7 @@ export default function Nutrition() {
   return (
     <Layout>
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <Apple size={28} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
+        <Apple size={28} className="text-[#FF4500]" style={{ filter: "drop-shadow(0 0 12px rgba(255,69,0,0.6))" }} />
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text">ERNÄHRUNG</h1>
       </div>
 
@@ -93,7 +93,7 @@ export default function Nutrition() {
           <div className="font-chakra text-xs text-gray-500 uppercase tracking-widest mt-1">
             / {g.calories} kcal
           </div>
-          <div className="text-[10px] text-[#00BFFF] mt-1">
+          <div className="text-[10px] text-[#FF4500] mt-1">
             Noch {Math.max(0, (g.calories || 0) - Math.round(t.calories || 0))} kcal verfügbar
           </div>
         </div>
@@ -102,7 +102,7 @@ export default function Nutrition() {
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <MacroBar icon={Beef} label="Protein" value={t.protein_g} goal={g.protein_g} unit="g" color="#FF5252" testid="macro-protein" />
           <MacroBar icon={Wheat} label="Kohlenh." value={t.carbs_g} goal={g.carbs_g} unit="g" color="#FFD740" testid="macro-carbs" />
-          <MacroBar icon={Droplet} label="Fett" value={t.fat_g} goal={g.fat_g} unit="g" color="#00E5FF" testid="macro-fat" />
+          <MacroBar icon={Droplet} label="Fett" value={t.fat_g} goal={g.fat_g} unit="g" color="#FF5A1F" testid="macro-fat" />
         </div>
 
         {/* Micros */}
@@ -122,9 +122,9 @@ export default function Nutrition() {
           data-testid="photo-scan-btn"
         >
           {analyzing ? (
-            <Loader2 size={28} className="mx-auto animate-spin text-[#00BFFF]" />
+            <Loader2 size={28} className="mx-auto animate-spin text-[#FF4500]" />
           ) : (
-            <Camera size={28} className="mx-auto text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.6))" }} />
+            <Camera size={28} className="mx-auto text-[#FF4500]" style={{ filter: "drop-shadow(0 0 8px rgba(255,69,0,0.6))" }} />
           )}
           <div className="font-teko text-base sm:text-lg mt-2 chrome-text">
             {analyzing ? "ANALYSIERE..." : "FOTO"}
@@ -136,7 +136,7 @@ export default function Nutrition() {
           className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition text-center"
           data-testid="barcode-scan-btn"
         >
-          <ScanLine size={28} className="mx-auto text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.6))" }} />
+          <ScanLine size={28} className="mx-auto text-[#FF4500]" style={{ filter: "drop-shadow(0 0 8px rgba(255,69,0,0.6))" }} />
           <div className="font-teko text-base sm:text-lg mt-2 chrome-text">BARCODE</div>
           <div className="text-[10px] text-gray-500 font-chakra mt-1">2 Mio. Produkte</div>
         </button>
@@ -145,7 +145,7 @@ export default function Nutrition() {
           className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition text-center"
           data-testid="manual-add-btn"
         >
-          <Plus size={28} className="mx-auto text-[#00BFFF]" />
+          <Plus size={28} className="mx-auto text-[#FF4500]" />
           <div className="font-teko text-base sm:text-lg mt-2 chrome-text">MANUELL</div>
           <div className="text-[10px] text-gray-500 font-chakra mt-1">+ AI-Schätzung</div>
         </button>
@@ -162,7 +162,7 @@ export default function Nutrition() {
         ) : (
           <div className="space-y-2">
             {data.entries.map((e) => (
-              <div key={e.id} className="flex items-center gap-3 p-3 bg-[#0A0A10] border border-[#1A1A24] hover:border-[#00BFFF]/40 transition" data-testid={`entry-${e.id}`}>
+              <div key={e.id} className="flex items-center gap-3 p-3 bg-[#0A0A10] border border-[#1A1A24] hover:border-[#FF4500]/40 transition" data-testid={`entry-${e.id}`}>
                 <div className="w-10 text-center flex-shrink-0">
                   <div className="font-teko text-2xl chrome-text">{Math.round(e.calories)}</div>
                   <div className="text-[9px] text-gray-500 font-chakra">kcal</div>
@@ -172,7 +172,7 @@ export default function Nutrition() {
                   <div className="text-[10px] text-gray-500 font-chakra">
                     {Math.round(e.portion_grams)}g · P {Math.round(e.protein_g)} · K {Math.round(e.carbs_g)} · F {Math.round(e.fat_g)}
                     {" · "}
-                    <span className="text-[#00BFFF] uppercase">{MEAL_TYPES.find(m => m.v === e.meal_type)?.l || e.meal_type}</span>
+                    <span className="text-[#FF4500] uppercase">{MEAL_TYPES.find(m => m.v === e.meal_type)?.l || e.meal_type}</span>
                   </div>
                 </div>
                 <button onClick={() => deleteEntry(e.id)} className="w-11 h-11 flex items-center justify-center text-red-400 hover:bg-red-500/10 transition flex-shrink-0" data-testid={`delete-entry-${e.id}`}>
@@ -378,21 +378,21 @@ function EditEntryModal({ initial, title, subtitle, onSave, onClose, showCompone
 
   return createPortal((
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/90 backdrop-blur-md p-0 sm:p-4 overflow-y-auto" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border-t-2 sm:border border-[#00BFFF]/40 sm:border-[#1A1A24] p-5 sm:p-6 max-w-lg w-full h-full sm:h-auto overflow-y-auto sm:clip-corner-tl-br sm:my-4 rounded-t-2xl sm:rounded-none" data-testid="edit-entry-modal">
+      <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border-t-2 sm:border border-[#FF4500]/40 sm:border-[#1A1A24] p-5 sm:p-6 max-w-lg w-full h-full sm:h-auto overflow-y-auto sm:clip-corner-tl-br sm:my-4 rounded-t-2xl sm:rounded-none" data-testid="edit-entry-modal">
         <div className="flex items-start justify-between mb-3 gap-2">
           <div className="min-w-0">
-            <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra">{title}</div>
+            <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra">{title}</div>
             <div className="font-teko text-2xl sm:text-3xl chrome-text mt-1 break-words">{form.food_name || "Neues Lebensmittel"}</div>
             {subtitle && <div className="text-xs text-gray-500 font-chakra mt-1">{subtitle}</div>}
           </div>
-          <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-gray-500 hover:text-[#00BFFF] flex-shrink-0" data-testid="edit-close-btn">
+          <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-gray-500 hover:text-[#FF4500] flex-shrink-0" data-testid="edit-close-btn">
             <X size={20} />
           </button>
         </div>
 
         {showComponents && form.components?.length > 0 && (
           <div className="text-[10px] text-gray-500 font-chakra mb-3">
-            Erkannt: <span className="text-[#00BFFF]">{form.components.join(", ")}</span>
+            Erkannt: <span className="text-[#FF4500]">{form.components.join(", ")}</span>
           </div>
         )}
 
@@ -425,7 +425,7 @@ function EditEntryModal({ initial, title, subtitle, onSave, onClose, showCompone
                   type="button"
                   onClick={autoFill}
                   disabled={aiLoading || (form.food_name || "").trim().length < 2}
-                  className="shrink-0 px-3 sm:px-4 border border-[#00BFFF]/60 text-[#00BFFF] font-chakra text-[11px] tracking-widest uppercase hover:bg-[#00BFFF]/10 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition"
+                  className="shrink-0 px-3 sm:px-4 border border-[#FF4500]/60 text-[#FF4500] font-chakra text-[11px] tracking-widest uppercase hover:bg-[#FF4500]/10 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition"
                   style={{ minHeight: 44 }}
                   data-testid="ai-autofill-btn"
                   title="Nährwerte automatisch schätzen"
@@ -445,7 +445,7 @@ function EditEntryModal({ initial, title, subtitle, onSave, onClose, showCompone
                     key={`${it.food_name}-${idx}`}
                     type="button"
                     onClick={() => pickRecent(it)}
-                    className="w-full text-left px-3 py-2.5 hover:bg-[#00BFFF]/10 border-b border-[#1A1A24] last:border-b-0 font-chakra transition flex items-center justify-between gap-2"
+                    className="w-full text-left px-3 py-2.5 hover:bg-[#FF4500]/10 border-b border-[#1A1A24] last:border-b-0 font-chakra transition flex items-center justify-between gap-2"
                     data-testid={`recent-food-${idx}`}
                   >
                     <div className="min-w-0 flex-1">
@@ -454,7 +454,7 @@ function EditEntryModal({ initial, title, subtitle, onSave, onClose, showCompone
                         {Math.round(it.calories || 0)} kcal · {Math.round(it.portion_grams || 0)} g · {it.count}× geloggt
                       </div>
                     </div>
-                    <ChevronRight size={14} className="text-[#00BFFF] shrink-0" />
+                    <ChevronRight size={14} className="text-[#FF4500] shrink-0" />
                   </button>
                 ))}
               </div>
@@ -510,7 +510,7 @@ function EditEntryModal({ initial, title, subtitle, onSave, onClose, showCompone
                   type="button"
                   onClick={() => setForm({ ...form, meal_type: m.v })}
                   className={`py-2 text-[11px] font-chakra uppercase tracking-widest border transition ${
-                    form.meal_type === m.v ? "border-[#00BFFF] text-[#00BFFF] glow-box" : "border-[#1A1A24] text-gray-400"
+                    form.meal_type === m.v ? "border-[#FF4500] text-[#FF4500] glow-box" : "border-[#1A1A24] text-gray-400"
                   }`}
                   data-testid={`meal-${m.v}`}
                 >

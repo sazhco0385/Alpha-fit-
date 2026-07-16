@@ -106,8 +106,8 @@ export default function AuthPage() {
       <div className="relative z-10 w-full max-w-md af-card p-6 sm:p-8 clip-corner-tl-br mt-16 sm:mt-0" data-testid="auth-card">
         {pendingEmail ? (
           <div className="text-center" data-testid="verify-pending-card">
-            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 border border-[#00BFFF]/60 bg-[#00BFFF]/10 rounded-full">
-              <MailCheck size={32} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 10px rgba(0,191,255,0.6))" }} />
+            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 border border-[#FF4500]/60 bg-[#FF4500]/10 rounded-full">
+              <MailCheck size={32} className="text-[#FF4500]" style={{ filter: "drop-shadow(0 0 10px rgba(255,69,0,0.6))" }} />
             </div>
             <h1 className="font-teko text-3xl sm:text-4xl chrome-text mb-2">E-MAIL BESTÄTIGEN</h1>
             <p className="text-gray-400 font-chakra text-sm mb-2">Wir haben dir eine Mail geschickt an:</p>
@@ -126,7 +126,7 @@ export default function AuthPage() {
             <button
               type="button"
               onClick={backToForm}
-              className="text-[#00BFFF] hover:text-[#00E5FF] glow-text-soft uppercase tracking-widest text-xs font-chakra"
+              className="text-[#FF4500] hover:text-[#FF5A1F] glow-text-soft uppercase tracking-widest text-xs font-chakra"
               data-testid="verify-back-btn"
             >
               Zurück zum Login
@@ -183,7 +183,7 @@ export default function AuthPage() {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-[#00BFFF] transition"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-[#FF4500] transition"
                     data-testid="toggle-password-visibility"
                     tabIndex={-1}
                   >
@@ -198,7 +198,7 @@ export default function AuthPage() {
                     type="checkbox"
                     checked={stayLoggedIn}
                     onChange={(e) => setStayLoggedIn(e.target.checked)}
-                    className="w-4 h-4 accent-[#00BFFF] cursor-pointer"
+                    className="w-4 h-4 accent-[#FF4500] cursor-pointer"
                     data-testid="stay-logged-in-checkbox"
                   />
                   <span className="text-xs font-chakra text-gray-400 uppercase tracking-wider">Angemeldet bleiben</span>
@@ -216,7 +216,7 @@ export default function AuthPage() {
               <button
                 type="button"
                 onClick={() => setMode(mode === "login" ? "register" : "login")}
-                className="text-[#00BFFF] hover:text-[#00E5FF] glow-text-soft uppercase tracking-widest text-xs"
+                className="text-[#FF4500] hover:text-[#FF5A1F] glow-text-soft uppercase tracking-widest text-xs"
                 data-testid="auth-toggle-mode"
               >
                 {mode === "login" ? "Registrieren" : "Login"}

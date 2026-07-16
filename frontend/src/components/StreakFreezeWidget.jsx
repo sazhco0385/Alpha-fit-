@@ -43,12 +43,12 @@ export default function StreakFreezeWidget() {
     <div className="af-card p-3 sm:p-4 clip-corner-tl-br" data-testid="streak-freeze-widget">
       <div className="flex items-center gap-3">
         <div className={`relative w-10 h-10 flex items-center justify-center rounded-lg flex-shrink-0 ${
-          has ? "bg-gradient-to-br from-[#00E5FF]/30 to-[#1A1A24]" : "bg-[#1A1A24]"
+          has ? "bg-gradient-to-br from-[#FF5A1F]/30 to-[#1A1A24]" : "bg-[#1A1A24]"
         }`}>
-          <Shield size={18} className={has ? "text-[#00E5FF]" : "text-gray-600"} style={has ? {filter: "drop-shadow(0 0 8px rgba(0,229,255,0.6))"} : {}} />
+          <Shield size={18} className={has ? "text-[#FF5A1F]" : "text-gray-600"} style={has ? {filter: "drop-shadow(0 0 8px rgba(255,90,31,0.6))"} : {}} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] uppercase tracking-[0.3em] font-chakra text-[#00BFFF]">STREAK-FREEZE</div>
+          <div className="text-[10px] uppercase tracking-[0.3em] font-chakra text-[#FF4500]">STREAK-FREEZE</div>
           <div className="font-teko text-base sm:text-lg chrome-text leading-tight">
             {has ? <><span className="electric-text">{data.freezes_available}</span> verfügbar</> : <span className="text-gray-500">Verbraucht</span>}
           </div>

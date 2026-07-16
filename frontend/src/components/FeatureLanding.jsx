@@ -83,8 +83,8 @@ export default function FeatureLanding({ title, description, path, hero, benefit
               const Icon = b.icon || CheckCircle2;
               return (
                 <div key={idx} className="af-card p-5 sm:p-6 clip-corner-tl-br" data-testid={`benefit-${idx}`}>
-                  <div className="w-10 h-10 mb-3 flex items-center justify-center rounded-lg bg-gradient-to-br from-[#00BFFF]/30 to-[#1A1A24]">
-                    <Icon size={20} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.6))" }} />
+                  <div className="w-10 h-10 mb-3 flex items-center justify-center rounded-lg bg-gradient-to-br from-[#FF4500]/30 to-[#1A1A24]">
+                    <Icon size={20} className="text-[#FF4500]" style={{ filter: "drop-shadow(0 0 8px rgba(255,69,0,0.6))" }} />
                   </div>
                   <div className="font-teko text-xl sm:text-2xl chrome-text leading-tight mb-2">{b.title}</div>
                   <p className="prose-af font-chakra text-sm leading-relaxed">{b.text}</p>
@@ -101,7 +101,7 @@ export default function FeatureLanding({ title, description, path, hero, benefit
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
         <div className="af-card p-5 sm:p-6 clip-corner-tl-br flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-center" data-testid="trust-strip">
           <div className="flex items-center gap-2">
-            <Shield size={18} className="text-[#00E5FF]" />
+            <Shield size={18} className="text-[#FF5A1F]" />
             <span className="font-chakra text-xs uppercase tracking-widest">SSL verschlüsselt</span>
           </div>
           <div className="hidden sm:block w-px h-6 bg-[#1A1A24]" />

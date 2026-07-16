@@ -48,11 +48,11 @@ export default function DailySummary({ plan, sessions }) {
       {/* Daily Quote */}
       <div className="af-card p-4 sm:p-5 clip-corner-tl-br relative overflow-hidden" data-testid="daily-quote">
         <div className="absolute -top-4 -right-4 opacity-10">
-          <Quote size={80} className="text-[#00BFFF]" />
+          <Quote size={80} className="text-[#FF4500]" />
         </div>
         <div className="relative">
-          <div className="text-[10px] text-[#00BFFF] uppercase tracking-[0.3em] font-chakra mb-2">SPRUCH DES TAGES</div>
-          <p className="font-teko text-lg sm:text-xl text-white leading-tight tracking-wide" style={{ textShadow: "0 0 12px rgba(0,191,255,0.25)" }}>
+          <div className="text-[10px] text-[#FF4500] uppercase tracking-[0.3em] font-chakra mb-2">SPRUCH DES TAGES</div>
+          <p className="font-teko text-lg sm:text-xl text-white leading-tight tracking-wide" style={{ textShadow: "0 0 12px rgba(255,69,0,0.25)" }}>
             „{quote.text}“
           </p>
           <div className="text-[10px] text-gray-500 uppercase tracking-[0.25em] font-chakra mt-3">— {quote.author}</div>
@@ -66,7 +66,7 @@ export default function DailySummary({ plan, sessions }) {
         data-testid="summary-calories"
       >
         <div className="flex items-center gap-2 mb-2">
-          <Apple size={16} className="text-[#00BFFF]" />
+          <Apple size={16} className="text-[#FF4500]" />
           <div className="text-[10px] text-gray-400 uppercase tracking-[0.25em] font-chakra">KCAL HEUTE</div>
         </div>
         {nutrition ? (
@@ -80,8 +80,8 @@ export default function DailySummary({ plan, sessions }) {
                 className="h-full"
                 style={{
                   width: `${Math.min(100, ((nutrition.totals?.calories || 0) / Math.max(1, nutrition.goals?.calories || 1)) * 100)}%`,
-                  background: "linear-gradient(90deg, #00BFFF, #00E5FF)",
-                  boxShadow: "0 0 8px rgba(0,191,255,0.6)",
+                  background: "linear-gradient(90deg, #FF4500, #FF5A1F)",
+                  boxShadow: "0 0 8px rgba(255,69,0,0.6)",
                 }}
               />
             </div>
@@ -101,7 +101,7 @@ export default function DailySummary({ plan, sessions }) {
       {/* Weight */}
       <div className="af-card p-4 sm:p-5 clip-corner-tl-br" data-testid="summary-weight">
         <div className="flex items-center gap-2 mb-2">
-          <Scale size={16} className="text-[#00BFFF]" />
+          <Scale size={16} className="text-[#FF4500]" />
           <div className="text-[10px] text-gray-400 uppercase tracking-[0.25em] font-chakra">GEWICHT</div>
         </div>
         <div className="font-teko text-3xl sm:text-4xl chrome-text leading-none">
@@ -131,7 +131,7 @@ export default function DailySummary({ plan, sessions }) {
         data-testid="summary-next-workout"
       >
         <div className="flex items-center gap-2 mb-2">
-          <Calendar size={16} className="text-[#00BFFF]" />
+          <Calendar size={16} className="text-[#FF4500]" />
           <div className="text-[10px] text-gray-400 uppercase tracking-[0.25em] font-chakra">NÄCHSTES WORKOUT</div>
         </div>
         {nextDay ? (
@@ -139,7 +139,7 @@ export default function DailySummary({ plan, sessions }) {
             <div className="font-teko text-xl sm:text-2xl chrome-text leading-tight break-words">
               {nextDay.name}
             </div>
-            <div className="text-xs text-[#00BFFF] font-chakra mt-1 flex items-center gap-1">
+            <div className="text-xs text-[#FF4500] font-chakra mt-1 flex items-center gap-1">
               <Flame size={12} /> TAG {nextDay.day_index} · {nextDay.exercises?.length || 0} Übungen
             </div>
             <div className="text-[10px] text-gray-400 font-chakra mt-2 flex items-center gap-1">
@@ -188,7 +188,7 @@ function Sparkline({ points }) {
   }).join(" ");
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-6" preserveAspectRatio="none">
-      <path d={d} stroke="#00BFFF" strokeWidth="1.5" fill="none" style={{ filter: "drop-shadow(0 0 4px rgba(0,191,255,0.6))" }} />
+      <path d={d} stroke="#FF4500" strokeWidth="1.5" fill="none" style={{ filter: "drop-shadow(0 0 4px rgba(255,69,0,0.6))" }} />
     </svg>
   );
 }

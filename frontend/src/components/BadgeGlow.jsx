@@ -40,9 +40,9 @@ function tierFor(id) {
     const palette = [
       { c1: "#4FC3F7", c2: "#01579B", icon: "#4FC3F7", glow: "rgba(79,195,247,0.5)" },
       { c1: "#29B6F6", c2: "#0277BD", icon: "#29B6F6", glow: "rgba(41,182,246,0.55)" },
-      { c1: "#00BFFF", c2: "#1E90FF", icon: "#00BFFF", glow: "rgba(0,191,255,0.65)" },
-      { c1: "#00E5FF", c2: "#0091EA", icon: "#00E5FF", glow: "rgba(0,229,255,0.7)" },
-      { c1: "#18FFFF", c2: "#006064", icon: "#18FFFF", glow: "rgba(24,255,255,0.75)", spark: "#00E5FF", highTier: true },
+      { c1: "#FF4500", c2: "#1E90FF", icon: "#FF4500", glow: "rgba(255,69,0,0.65)" },
+      { c1: "#FF5A1F", c2: "#0091EA", icon: "#FF5A1F", glow: "rgba(255,90,31,0.7)" },
+      { c1: "#18FFFF", c2: "#006064", icon: "#18FFFF", glow: "rgba(24,255,255,0.75)", spark: "#FF5A1F", highTier: true },
       { c1: "#84FFFF", c2: "#00838F", icon: "#84FFFF", glow: "rgba(132,255,255,0.8)", spark: "#84FFFF", highTier: true },
     ];
     return palette[VOLUME_IDS.indexOf(id)] || palette[0];
@@ -57,10 +57,10 @@ function tierFor(id) {
   if (bronze.includes(id))   return { c1: "#FFA94D", c2: "#7E3B0E", icon: "#FFA94D", glow: "rgba(199,112,38,0.55)" };
   if (silver.includes(id))   return { c1: "#F5F5F5", c2: "#707070", icon: "#E0E0E0", glow: "rgba(192,192,192,0.6)" };
   if (gold.includes(id))     return { c1: "#FFD700", c2: "#B8860B", icon: "#FFD700", glow: "rgba(255,215,0,0.65)", spark: "#FFE56C", highTier: true };
-  if (platinum.includes(id)) return { c1: "#00E5FF", c2: "#1E90FF", icon: "#00E5FF", glow: "rgba(0,229,255,0.7)", spark: "#FFFFFF", highTier: true };
+  if (platinum.includes(id)) return { c1: "#FF5A1F", c2: "#1E90FF", icon: "#FF5A1F", glow: "rgba(255,90,31,0.7)", spark: "#FFFFFF", highTier: true };
   if (diamond.includes(id))  return { c1: "#B388FF", c2: "#4A148C", icon: "#E1BEE7", glow: "rgba(179,136,255,0.75)", spark: "#E1BEE7", highTier: true };
   if (mythic.includes(id))   return { c1: "#FF1744", c2: "#4A148C", icon: "#FF5252", glow: "rgba(255,23,68,0.85)", spark: "#FFAB91", highTier: true };
-  return { c1: "#00E5FF", c2: "#1E90FF", icon: "#00E5FF", glow: "rgba(0,229,255,0.65)" };
+  return { c1: "#FF5A1F", c2: "#1E90FF", icon: "#FF5A1F", glow: "rgba(255,90,31,0.65)" };
 }
 
 export default function BadgeGlow({ badge, locked = false }) {

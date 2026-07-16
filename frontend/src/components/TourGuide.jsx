@@ -134,7 +134,7 @@ export default function TourGuide({ onFinish, autostart = false, storageKey = "a
             left: rect.left - 6,
             width: rect.width + 12,
             height: rect.height + 12,
-            boxShadow: "0 0 0 3px #00BFFF, 0 0 22px rgba(0,191,255,0.75)",
+            boxShadow: "0 0 0 3px #FF4500, 0 0 22px rgba(255,69,0,0.75)",
             borderRadius: 10,
           }}
         />
@@ -143,7 +143,7 @@ export default function TourGuide({ onFinish, autostart = false, storageKey = "a
       {/* Step card — position:fixed + clamped so it never leaves the viewport */}
       <div
         ref={cardRef}
-        className="fixed af-card p-4 shadow-[0_0_28px_rgba(0,191,255,0.35)]"
+        className="fixed af-card p-4 shadow-[0_0_28px_rgba(255,69,0,0.35)]"
         style={{ top: cardTop, left: cardLeft, width: cardW }}
         data-testid={`tour-step-${step}`}
       >
@@ -169,7 +169,7 @@ export default function TourGuide({ onFinish, autostart = false, storageKey = "a
           {TOUR_STEPS.map((_, i) => (
             <div
               key={i}
-              className={`h-1 flex-1 rounded ${i <= step ? "bg-[#00BFFF]" : "bg-gray-700"}`}
+              className={`h-1 flex-1 rounded ${i <= step ? "bg-[#FF4500]" : "bg-gray-700"}`}
             />
           ))}
         </div>

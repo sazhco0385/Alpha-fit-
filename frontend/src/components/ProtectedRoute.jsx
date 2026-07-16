@@ -5,7 +5,7 @@ export default function ProtectedRoute({ children, requireOnboarding = true, adm
   const { user, loading } = useAuth();
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-[#00BFFF] font-teko text-3xl tracking-widest glow-text">
+      <div className="min-h-screen flex items-center justify-center bg-black text-[#FF4500] font-teko text-3xl tracking-widest glow-text">
         LADE...
       </div>
     );

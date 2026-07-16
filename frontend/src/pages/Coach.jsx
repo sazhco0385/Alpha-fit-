@@ -70,12 +70,12 @@ export default function Coach() {
           {messages.length === 0 && (
             <div className="text-center py-8 sm:py-12 font-chakra">
               <div className="relative inline-block mb-4">
-                <div className="absolute inset-0 rounded-full blur-2xl opacity-60" style={{ background: "radial-gradient(circle, rgba(0,191,255,0.5), transparent 70%)" }} />
+                <div className="absolute inset-0 rounded-full blur-2xl opacity-60" style={{ background: "radial-gradient(circle, rgba(255,69,0,0.5), transparent 70%)" }} />
                 <img
                   src="/alphafit-helmet.png?v=4"
                   alt="Alpha Coach"
                   className="relative w-20 h-20 mx-auto"
-                  style={{ filter: "drop-shadow(0 0 14px rgba(0,191,255,0.7))" }}
+                  style={{ filter: "drop-shadow(0 0 14px rgba(255,69,0,0.7))" }}
                 />
               </div>
               <div className="font-teko text-2xl sm:text-3xl chrome-text">ALPHA COACH BEREIT</div>
@@ -89,11 +89,11 @@ export default function Coach() {
                   <button
                     key={text}
                     onClick={() => send(text)}
-                    className="group flex items-center gap-3 p-3 border border-[#1A1A24] hover:border-[#00BFFF]/60 hover:bg-[#001a2a]/40 transition text-left"
+                    className="group flex items-center gap-3 p-3 border border-[#1A1A24] hover:border-[#FF4500]/60 hover:bg-[#001a2a]/40 transition text-left"
                     data-testid={testid}
                   >
-                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-[#00BFFF]/30 group-hover:border-[#00BFFF] transition" style={{ borderRadius: "8px" }}>
-                      <Icon size={14} className="text-[#00BFFF]" />
+                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-[#FF4500]/30 group-hover:border-[#FF4500] transition" style={{ borderRadius: "8px" }}>
+                      <Icon size={14} className="text-[#FF4500]" />
                     </div>
                     <span className="text-sm text-body font-chakra group-hover:text-white transition">{text}</span>
                   </button>
@@ -117,7 +117,7 @@ export default function Coach() {
               <button
                 key={text}
                 onClick={() => send(text)}
-                className="flex-shrink-0 text-xs px-3 py-1.5 border border-[#00BFFF]/30 hover:border-[#00BFFF] hover:bg-[#001a2a]/40 transition text-[#00BFFF] font-chakra whitespace-nowrap"
+                className="flex-shrink-0 text-xs px-3 py-1.5 border border-[#FF4500]/30 hover:border-[#FF4500] hover:bg-[#001a2a]/40 transition text-[#FF4500] font-chakra whitespace-nowrap"
                 data-testid={`chip-${testid}`}
               >
                 {text}
@@ -164,12 +164,12 @@ function ChatMessage({ role, text, index }) {
   return (
     <div className="flex gap-2 sm:gap-3 justify-start" data-testid={`coach-msg-${index}`}>
       <div className="relative w-8 h-8 flex-shrink-0">
-        <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(circle, rgba(0,191,255,0.5), transparent 70%)", filter: "blur(6px)" }} />
+        <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(circle, rgba(255,69,0,0.5), transparent 70%)", filter: "blur(6px)" }} />
         <img
           src="/alphafit-helmet.png?v=4"
           alt="Alpha Coach"
           className="relative w-8 h-8 object-contain"
-          style={{ filter: "drop-shadow(0 0 6px rgba(0,191,255,0.6))" }}
+          style={{ filter: "drop-shadow(0 0 6px rgba(255,69,0,0.6))" }}
         />
       </div>
       <div className="max-w-[82%] sm:max-w-[70%] coach-bubble-ai font-chakra text-sm whitespace-pre-wrap break-words">
@@ -183,12 +183,12 @@ function TypingBubble() {
   return (
     <div className="flex gap-2 sm:gap-3 justify-start" data-testid="coach-typing">
       <div className="relative w-8 h-8 flex-shrink-0">
-        <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(circle, rgba(0,191,255,0.5), transparent 70%)", filter: "blur(6px)" }} />
+        <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(circle, rgba(255,69,0,0.5), transparent 70%)", filter: "blur(6px)" }} />
         <img
           src="/alphafit-helmet.png?v=4"
           alt="Alpha Coach"
           className="relative w-8 h-8 object-contain"
-          style={{ filter: "drop-shadow(0 0 6px rgba(0,191,255,0.6))" }}
+          style={{ filter: "drop-shadow(0 0 6px rgba(255,69,0,0.6))" }}
         />
       </div>
       <div className="coach-bubble-ai flex items-center gap-2 min-w-[80px]">

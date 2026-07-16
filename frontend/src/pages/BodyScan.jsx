@@ -153,7 +153,7 @@ export default function BodyScan() {
       <Layout>
         <PageHeader />
         <div className="af-card p-6 sm:p-10 clip-corner-tl-br text-center max-w-2xl mx-auto" data-testid="bodyscan-premium-gate">
-          <Crown size={48} className="mx-auto text-[#00BFFF] mb-4" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.7))" }} />
+          <Crown size={48} className="mx-auto text-[#FF4500] mb-4" style={{ filter: "drop-shadow(0 0 12px rgba(255,69,0,0.7))" }} />
           <h2 className="font-teko text-3xl sm:text-4xl chrome-text mb-2">PREMIUM FEATURE</h2>
           <p className="text-gray-400 font-chakra text-sm mb-6 leading-relaxed">
             AI Body Scan analysiert dein Foto, schätzt Muskelentwicklung,
@@ -181,12 +181,12 @@ export default function BodyScan() {
 
       {/* Disclaimer */}
       <div
-        className="border border-[#00BFFF]/30 bg-[#00BFFF]/5 p-3 sm:p-4 mb-5 sm:mb-6 flex gap-3 items-start"
+        className="border border-[#FF4500]/30 bg-[#FF4500]/5 p-3 sm:p-4 mb-5 sm:mb-6 flex gap-3 items-start"
         data-testid="bodyscan-disclaimer"
       >
-        <ShieldAlert size={18} className="text-[#00BFFF] flex-shrink-0 mt-0.5" />
+        <ShieldAlert size={18} className="text-[#FF4500] flex-shrink-0 mt-0.5" />
         <div className="text-xs sm:text-sm text-gray-300 font-chakra leading-relaxed">
-          <strong className="text-[#00BFFF]">Hinweis:</strong> Diese Analyse ist
+          <strong className="text-[#FF4500]">Hinweis:</strong> Diese Analyse ist
           eine <strong>Fitness-Einschätzung</strong>, keine medizinische Diagnose.
           Werte sind Schätzungen aus einem Foto – nutze sie zur Trendbeobachtung,
           nicht als absolute Wahrheit.
@@ -196,19 +196,19 @@ export default function BodyScan() {
       {/* Upload action */}
       <div className="af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6" data-testid="bodyscan-upload">
         <div className="flex items-center gap-3 mb-3">
-          <Sparkles size={20} className="text-[#00BFFF]" />
+          <Sparkles size={20} className="text-[#FF4500]" />
           <h2 className="font-teko text-2xl sm:text-3xl chrome-text">NEUER SCAN</h2>
         </div>
         <p className="text-xs sm:text-sm text-gray-400 font-chakra mb-4">
           Foto in Sportkleidung (T-Shirt/Tanktop & Shorts), gerade Pose, gute Beleuchtung.
-          Dein Foto wird <strong className="text-[#00BFFF]">nicht gespeichert</strong> – nur die Analyse.
+          Dein Foto wird <strong className="text-[#FF4500]">nicht gespeichert</strong> – nur die Analyse.
         </p>
 
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value.slice(0, 300))}
           placeholder="Notiz (optional): z.B. 'Nach 6 Wochen Cut'"
-          className="w-full bg-black border border-[#1A1A24] focus:border-[#00BFFF] outline-none p-3 text-sm font-chakra text-white mb-3 resize-none transition"
+          className="w-full bg-black border border-[#1A1A24] focus:border-[#FF4500] outline-none p-3 text-sm font-chakra text-white mb-3 resize-none transition"
           rows={2}
           data-testid="bodyscan-notes-input"
         />
@@ -221,13 +221,13 @@ export default function BodyScan() {
         >
           {analyzing ? (
             <>
-              <Loader2 size={36} className="mx-auto animate-spin text-[#00BFFF]" />
+              <Loader2 size={36} className="mx-auto animate-spin text-[#FF4500]" />
               <div className="font-teko text-xl mt-3 chrome-text">ANALYSIERE...</div>
               <div className="text-[10px] text-gray-500 font-chakra mt-1">KI prüft Muskelgruppen, Symmetrie & Schwachstellen</div>
             </>
           ) : (
             <>
-              <Camera size={36} className="mx-auto text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 10px rgba(0,191,255,0.6))" }} />
+              <Camera size={36} className="mx-auto text-[#FF4500]" style={{ filter: "drop-shadow(0 0 10px rgba(255,69,0,0.6))" }} />
               <div className="font-teko text-xl mt-3 chrome-text">FOTO HOCHLADEN</div>
               <div className="text-[10px] text-gray-500 font-chakra mt-1">KI-Body-Analyse starten</div>
             </>
@@ -259,7 +259,7 @@ export default function BodyScan() {
           {compareIds.length > 0 && (
             <button
               onClick={() => setCompareIds([])}
-              className="text-xs text-gray-400 hover:text-[#00BFFF] flex items-center gap-1 font-chakra"
+              className="text-xs text-gray-400 hover:text-[#FF4500] flex items-center gap-1 font-chakra"
               data-testid="bodyscan-clear-compare"
             >
               <X size={12} /> Auswahl löschen ({compareIds.length}/2)
@@ -269,7 +269,7 @@ export default function BodyScan() {
 
         {loading ? (
           <div className="text-center py-6">
-            <Loader2 size={24} className="animate-spin text-[#00BFFF] mx-auto" />
+            <Loader2 size={24} className="animate-spin text-[#FF4500] mx-auto" />
           </div>
         ) : scans.length === 0 ? (
           <div className="text-center text-gray-500 font-chakra py-6 text-sm">
@@ -287,14 +287,14 @@ export default function BodyScan() {
                   key={s.id}
                   className={`border p-3 sm:p-4 flex items-center gap-3 cursor-pointer transition ${
                     selected
-                      ? "border-[#00BFFF] bg-[#00BFFF]/5 glow-box"
-                      : "border-[#1A1A24] hover:border-[#00BFFF]/50"
+                      ? "border-[#FF4500] bg-[#FF4500]/5 glow-box"
+                      : "border-[#1A1A24] hover:border-[#FF4500]/50"
                   }`}
                   onClick={() => toggleCompare(s.id)}
                   data-testid={`bodyscan-history-item-${s.id}`}
                 >
                   <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center font-teko text-xl sm:text-2xl border ${
-                    selected ? "border-[#00BFFF] text-[#00BFFF]" : "border-[#1A1A24] text-gray-300"
+                    selected ? "border-[#FF4500] text-[#FF4500]" : "border-[#1A1A24] text-gray-300"
                   }`}>
                     {s.overall_score}
                   </div>
@@ -309,7 +309,7 @@ export default function BodyScan() {
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); setCurrent(s); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                    className="text-gray-500 hover:text-[#00BFFF] p-2"
+                    className="text-gray-500 hover:text-[#FF4500] p-2"
                     aria-label="Details"
                     data-testid={`bodyscan-view-${s.id}`}
                   >
@@ -336,9 +336,9 @@ export default function BodyScan() {
 function PageHeader() {
   return (
     <div className="flex items-center gap-3 mb-5 sm:mb-6 flex-wrap">
-      <Scan size={28} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
+      <Scan size={28} className="text-[#FF4500]" style={{ filter: "drop-shadow(0 0 12px rgba(255,69,0,0.6))" }} />
       <h1 className="font-teko text-3xl sm:text-5xl chrome-text">BODY SCAN</h1>
-      <span className="text-[10px] text-[#00BFFF] border border-[#00BFFF]/50 px-2 py-0.5 font-chakra uppercase tracking-widest">
+      <span className="text-[10px] text-[#FF4500] border border-[#FF4500]/50 px-2 py-0.5 font-chakra uppercase tracking-widest">
         PREMIUM
       </span>
     </div>
@@ -349,7 +349,7 @@ function ScanResultCard({ scan, highlighted, onApplyToPlan, applying }) {
   const delta = scan.delta_vs_previous;
   return (
     <div
-      className={`af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6 ${highlighted ? "glow-box border-[#00BFFF]" : ""}`}
+      className={`af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6 ${highlighted ? "glow-box border-[#FF4500]" : ""}`}
       data-testid="bodyscan-result"
     >
       <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
@@ -363,7 +363,7 @@ function ScanResultCard({ scan, highlighted, onApplyToPlan, applying }) {
         </div>
         <div className="text-right">
           <div className="text-[10px] text-gray-500 uppercase tracking-widest font-chakra">KFA-Schätzung</div>
-          <div className="font-teko text-2xl sm:text-3xl text-[#00BFFF] glow-text-soft">
+          <div className="font-teko text-2xl sm:text-3xl text-[#FF4500] glow-text-soft">
             {scan.body_fat_estimate}%
           </div>
           {scan.body_fat_range && (
@@ -401,13 +401,13 @@ function ScanResultCard({ scan, highlighted, onApplyToPlan, applying }) {
                   )}
                 </div>
                 <div className="flex items-end gap-1 mt-1">
-                  <div className="font-teko text-2xl text-[#00BFFF] leading-none">{v}</div>
+                  <div className="font-teko text-2xl text-[#FF4500] leading-none">{v}</div>
                   <div className="text-[10px] text-gray-500 font-chakra mb-1">/10</div>
                 </div>
                 <div className="mt-1 h-1 bg-[#1A1A24]">
                   <div
-                    className="h-full bg-[#00BFFF]"
-                    style={{ width: `${v * 10}%`, boxShadow: "0 0 6px rgba(0,191,255,0.6)" }}
+                    className="h-full bg-[#FF4500]"
+                    style={{ width: `${v * 10}%`, boxShadow: "0 0 6px rgba(255,69,0,0.6)" }}
                   />
                 </div>
               </div>
@@ -455,17 +455,17 @@ function ScanResultCard({ scan, highlighted, onApplyToPlan, applying }) {
       )}
 
       {/* Recommendations */}
-      <div className="border border-[#00BFFF]/30 bg-[#00BFFF]/5 p-3" data-testid="bodyscan-recommendations">
-        <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra mb-2 flex items-center gap-1">
+      <div className="border border-[#FF4500]/30 bg-[#FF4500]/5 p-3" data-testid="bodyscan-recommendations">
+        <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra mb-2 flex items-center gap-1">
           <Sparkles size={12} /> KI-EMPFEHLUNGEN
         </div>
         <ul className="text-sm text-gray-200 font-chakra space-y-1.5">
           {scan.recommendations?.map((r, i) => <li key={i}>→ {r}</li>)}
         </ul>
         {scan.next_focus && (
-          <div className="mt-3 pt-3 border-t border-[#00BFFF]/20">
+          <div className="mt-3 pt-3 border-t border-[#FF4500]/20">
             <div className="text-[10px] text-gray-500 uppercase tracking-widest font-chakra mb-1">NÄCHSTER FOKUS</div>
-            <div className="font-teko text-lg sm:text-xl text-[#00BFFF] glow-text-soft">{scan.next_focus}</div>
+            <div className="font-teko text-lg sm:text-xl text-[#FF4500] glow-text-soft">{scan.next_focus}</div>
           </div>
         )}
       </div>
@@ -477,7 +477,7 @@ function ScanResultCard({ scan, highlighted, onApplyToPlan, applying }) {
       {/* Apply to Plan CTA */}
       {onApplyToPlan && (
         <div className="mt-4 pt-4 border-t border-[#1A1A24]" data-testid="bodyscan-apply-to-plan">
-          <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra mb-2">PLAN-ANPASSUNG</div>
+          <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra mb-2">PLAN-ANPASSUNG</div>
           <p className="text-body font-chakra text-sm mb-3 leading-relaxed">
             KI passt deinen Trainingsplan automatisch an die Schwachstellen aus diesem Scan an.
           </p>
@@ -517,10 +517,10 @@ function CompareView({ left, right, onClose }) {
   // Sort: older = left, newer = right
   const [a, b] = new Date(left.created_at) <= new Date(right.created_at) ? [left, right] : [right, left];
   return (
-    <div className="af-card p-4 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6 border-[#00BFFF]" data-testid="bodyscan-compare">
+    <div className="af-card p-4 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6 border-[#FF4500]" data-testid="bodyscan-compare">
       <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
         <h2 className="font-teko text-2xl sm:text-3xl chrome-text">VERGLEICH</h2>
-        <button onClick={onClose} className="text-gray-400 hover:text-[#00BFFF] p-2" data-testid="bodyscan-compare-close">
+        <button onClick={onClose} className="text-gray-400 hover:text-[#FF4500] p-2" data-testid="bodyscan-compare-close">
           <X size={18} />
         </button>
       </div>
@@ -559,7 +559,7 @@ function CompareView({ left, right, onClose }) {
 function CompareSide({ scan, label }) {
   return (
     <div className="border border-[#1A1A24] p-3">
-      <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra mb-1">{label}</div>
+      <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra mb-1">{label}</div>
       <div className="text-[10px] text-gray-500 font-chakra">{formatDate(scan.created_at)}</div>
       <div className="font-teko text-3xl chrome-text mt-1">{scan.overall_score}<span className="text-base text-gray-500">/100</span></div>
       <div className="text-xs text-gray-400 font-chakra mt-1">KFA {scan.body_fat_estimate}%</div>

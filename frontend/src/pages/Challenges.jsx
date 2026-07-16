@@ -60,7 +60,7 @@ export default function Challenges() {
       <div className="mb-5 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-teko text-3xl sm:text-5xl chrome-text flex items-center gap-2">
-            <Swords className="text-[#00BFFF]" size={28} /> CHALLENGES
+            <Swords className="text-[#FF4500]" size={28} /> CHALLENGES
           </h1>
           <p className="prose-af font-chakra text-sm mt-1">Stell dich. Hetz deine Crew. Gewinne.</p>
         </div>
@@ -76,12 +76,12 @@ export default function Challenges() {
       {/* Tabs */}
       <div className="flex gap-1 sm:gap-2 mb-5 border-b border-[#1A1A24]" data-testid="challenge-tabs">
         <TabBtn active={tab === "active"} onClick={() => setTab("active")} testid="tab-ch-active">
-          Aktiv <span className="ml-1 text-[10px] text-[#00BFFF]">({data.counts.active})</span>
+          Aktiv <span className="ml-1 text-[10px] text-[#FF4500]">({data.counts.active})</span>
         </TabBtn>
         <TabBtn active={tab === "invited"} onClick={() => setTab("invited")} testid="tab-ch-invited">
           Einladungen
           {data.counts.invited > 0 && (
-            <span className="ml-1 inline-block bg-[#00BFFF] text-black rounded-full px-1.5 text-[10px] font-bold">
+            <span className="ml-1 inline-block bg-[#FF4500] text-black rounded-full px-1.5 text-[10px] font-bold">
               {data.counts.invited}
             </span>
           )}
@@ -92,7 +92,7 @@ export default function Challenges() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-[#00BFFF] font-teko text-2xl">
+        <div className="text-center py-12 text-[#FF4500] font-teko text-2xl">
           <Loader2 size={28} className="inline animate-spin mr-2" /> Lade...
         </div>
       ) : list.length === 0 ? (
@@ -129,7 +129,7 @@ function TabBtn({ active, onClick, children, testid }) {
       onClick={onClick}
       data-testid={testid}
       className={`px-3 py-2 font-teko text-base tracking-wide transition border-b-2 ${
-        active ? "border-[#00BFFF] text-white" : "border-transparent text-gray-500 hover:text-gray-300"
+        active ? "border-[#FF4500] text-white" : "border-transparent text-gray-500 hover:text-gray-300"
       }`}
     >
       {children}
@@ -176,7 +176,7 @@ function ChallengeCard({ challenge, onOpen }) {
   return (
     <button
       onClick={onOpen}
-      className="af-card w-full text-left p-4 hover:border-[#00BFFF]/40 transition group"
+      className="af-card w-full text-left p-4 hover:border-[#FF4500]/40 transition group"
       data-testid={`challenge-card-${c.id}`}
     >
       <div className="flex items-start justify-between gap-3 mb-2">
@@ -184,7 +184,7 @@ function ChallengeCard({ challenge, onOpen }) {
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-teko text-xl chrome-text truncate">{c.title}</h3>
             {c.status === "active" && (
-              <span className="text-[10px] uppercase tracking-widest text-[#00BFFF] flex items-center gap-1">
+              <span className="text-[10px] uppercase tracking-widest text-[#FF4500] flex items-center gap-1">
                 <Clock size={10} /> {timeLeft(c.end_at)}
               </span>
             )}
@@ -198,7 +198,7 @@ function ChallengeCard({ challenge, onOpen }) {
             Ziel: <span className="electric-text">{formatValue(c.target, c.metric)}</span> · {c.metric_label}
           </div>
         </div>
-        <ChevronRight size={16} className="text-gray-500 group-hover:text-[#00BFFF] flex-shrink-0 mt-1" />
+        <ChevronRight size={16} className="text-gray-500 group-hover:text-[#FF4500] flex-shrink-0 mt-1" />
       </div>
 
       {/* Leader preview */}
@@ -218,7 +218,7 @@ function ChallengeCard({ challenge, onOpen }) {
       {/* Progress bar (best participant vs target) */}
       <div className="mt-2 h-1.5 bg-[#1A1A24] rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-[#00BFFF] to-[#00E5FF] transition-all"
+          className="h-full bg-gradient-to-r from-[#FF4500] to-[#FF5A1F] transition-all"
           style={{ width: `${Math.min(100, Math.round(((leader?.value || 0) / (c.target || 1)) * 100))}%` }}
         />
       </div>
@@ -229,7 +229,7 @@ function ChallengeCard({ challenge, onOpen }) {
           <span className="text-yellow-400 font-bold">DU BIST EINGELADEN</span>
         )}
         {c.is_creator && (
-          <span className="text-[#00BFFF]">DU BIST ERSTELLER</span>
+          <span className="text-[#FF4500]">DU BIST ERSTELLER</span>
         )}
       </div>
     </button>
@@ -303,7 +303,7 @@ function CreateChallengeModal({ onClose, onCreated }) {
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4" data-testid="create-challenge-modal">
-      <div className="w-full sm:max-w-lg h-full sm:h-auto sm:max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-xl p-5 border-t-2 sm:border-2 border-[#00BFFF]/40 bg-[#03030A]" style={{boxShadow: "0 -20px 60px rgba(0,191,255,0.08)"}}>
+      <div className="w-full sm:max-w-lg h-full sm:h-auto sm:max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-xl p-5 border-t-2 sm:border-2 border-[#FF4500]/40 bg-[#03030A]" style={{boxShadow: "0 -20px 60px rgba(255,69,0,0.08)"}}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-teko text-2xl chrome-text">NEUE CHALLENGE</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white" data-testid="close-create-modal">
@@ -347,11 +347,11 @@ function CreateChallengeModal({ onClose, onCreated }) {
                       key={m.value}
                       onClick={() => setMetric(m.value)}
                       className={`p-3 rounded-lg border text-center transition ${
-                        active ? "border-[#00BFFF] bg-[#00BFFF]/10 text-white" : "border-[#1A1A24] text-gray-500 hover:text-gray-300"
+                        active ? "border-[#FF4500] bg-[#FF4500]/10 text-white" : "border-[#1A1A24] text-gray-500 hover:text-gray-300"
                       }`}
                       data-testid={`metric-${m.value}`}
                     >
-                      <Icon size={20} className={`mx-auto mb-1 ${active ? "text-[#00BFFF]" : ""}`} />
+                      <Icon size={20} className={`mx-auto mb-1 ${active ? "text-[#FF4500]" : ""}`} />
                       <div className="font-teko text-sm">{m.label}</div>
                     </button>
                   );
@@ -415,11 +415,11 @@ function CreateChallengeModal({ onClose, onCreated }) {
                       key={f.id}
                       onClick={() => toggleFriend(f.id)}
                       className={`w-full af-card p-2.5 flex items-center gap-3 transition ${
-                        checked ? "border-[#00BFFF] bg-[#00BFFF]/10" : ""
+                        checked ? "border-[#FF4500] bg-[#FF4500]/10" : ""
                       }`}
                       data-testid={`invite-toggle-${f.id}`}
                     >
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00BFFF]/30 to-[#1A1A24] flex items-center justify-center font-teko text-base chrome-text flex-shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#FF4500]/30 to-[#1A1A24] flex items-center justify-center font-teko text-base chrome-text flex-shrink-0">
                         {(f.name || "?")[0].toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0 text-left">
@@ -429,7 +429,7 @@ function CreateChallengeModal({ onClose, onCreated }) {
                         <div className="text-[10px] text-gray-500">{f.workouts_30d || 0} Workouts in 30d</div>
                       </div>
                       <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                        checked ? "border-[#00BFFF] bg-[#00BFFF]" : "border-[#1A1A24]"
+                        checked ? "border-[#FF4500] bg-[#FF4500]" : "border-[#1A1A24]"
                       }`}>
                         {checked && <Check size={12} className="text-black" />}
                       </div>
@@ -537,9 +537,9 @@ function ChallengeDetailModal({ challengeId, onClose, onChanged }) {
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4" data-testid="challenge-detail-modal">
-      <div className="w-full sm:max-w-lg h-full sm:h-auto sm:max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-xl border-t-2 sm:border-2 border-[#00BFFF]/40 bg-[#03030A]" style={{boxShadow: "0 -20px 60px rgba(0,191,255,0.08)"}}>
+      <div className="w-full sm:max-w-lg h-full sm:h-auto sm:max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-xl border-t-2 sm:border-2 border-[#FF4500]/40 bg-[#03030A]" style={{boxShadow: "0 -20px 60px rgba(255,69,0,0.08)"}}>
         {loading || !challenge ? (
-          <div className="p-10 text-center text-[#00BFFF]"><Loader2 size={28} className="inline animate-spin" /></div>
+          <div className="p-10 text-center text-[#FF4500]"><Loader2 size={28} className="inline animate-spin" /></div>
         ) : (
           <div className="p-5">
             <div className="flex items-start justify-between mb-3 gap-3">
@@ -613,7 +613,7 @@ function ChallengeDetailModal({ challengeId, onClose, onChanged }) {
                       </div>
                       <div className="h-1 bg-[#0A0A10] rounded-full overflow-hidden">
                         <div className={`h-full transition-all ${
-                          pct >= 100 ? "bg-gradient-to-r from-yellow-400 to-yellow-200" : "bg-gradient-to-r from-[#00BFFF] to-[#00E5FF]"
+                          pct >= 100 ? "bg-gradient-to-r from-yellow-400 to-yellow-200" : "bg-gradient-to-r from-[#FF4500] to-[#FF5A1F]"
                         }`} style={{ width: `${pct}%` }} />
                       </div>
                     </div>
@@ -669,7 +669,7 @@ function ChallengeDetailModal({ challengeId, onClose, onChanged }) {
 function Stat({ icon: Icon, label, value }) {
   return (
     <div className="af-card p-2">
-      <Icon size={14} className="text-[#00BFFF] mx-auto mb-1" />
+      <Icon size={14} className="text-[#FF4500] mx-auto mb-1" />
       <div className="font-teko text-base chrome-text leading-tight">{value}</div>
       <div className="text-[9px] uppercase tracking-widest text-gray-500">{label}</div>
     </div>

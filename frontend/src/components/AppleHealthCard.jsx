@@ -99,7 +99,7 @@ export default function AppleHealthCard({ apiBaseUrl }) {
       {/* Bulk export upload */}
       <div className="border border-[#1A1A24] p-3 sm:p-4 mb-4 bg-[#0A0A10]" data-testid="apple-health-upload">
         <div className="flex items-center gap-2 mb-2">
-          <Upload size={14} className="text-[#00BFFF]" />
+          <Upload size={14} className="text-[#FF4500]" />
           <div className="text-sm font-chakra tracking-wider text-gray-200">EINMAL-IMPORT</div>
         </div>
         <ol className="text-[11px] text-gray-500 font-chakra space-y-1 mb-3 list-decimal pl-4">
@@ -173,7 +173,7 @@ export default function AppleHealthCard({ apiBaseUrl }) {
 
         {/* Manual Shortcut recipe */}
         <details className="bg-[#03030A] border border-[#1A1A24] p-3" data-testid="apple-health-shortcut-recipe">
-          <summary className="text-[11px] font-chakra text-[#00BFFF] cursor-pointer">
+          <summary className="text-[11px] font-chakra text-[#FF4500] cursor-pointer">
             🛠 Shortcut selbst bauen (3 Schritte)
           </summary>
           <ol className="text-[11px] text-gray-400 font-chakra space-y-2 mt-3 list-decimal pl-4">

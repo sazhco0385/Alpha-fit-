@@ -64,7 +64,7 @@ export default function Leaderboard() {
     <Layout>
       <div className="mb-5">
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text flex items-center gap-2">
-          <Trophy className="text-[#00BFFF]" size={28} /> RANGLISTE
+          <Trophy className="text-[#FF4500]" size={28} /> RANGLISTE
         </h1>
         <p className="prose-af font-chakra text-sm mt-1">Vergleiche dich. Dominiere deine Crew.</p>
       </div>
@@ -89,11 +89,11 @@ export default function Leaderboard() {
               key={m.value}
               onClick={() => setMetric(m.value)}
               className={`p-2.5 rounded-lg border text-center transition ${
-                active ? "border-[#00BFFF] bg-[#00BFFF]/10 text-white" : "border-[#1A1A24] text-gray-500 hover:text-gray-300"
+                active ? "border-[#FF4500] bg-[#FF4500]/10 text-white" : "border-[#1A1A24] text-gray-500 hover:text-gray-300"
               }`}
               data-testid={`metric-${m.value}`}
             >
-              <Icon size={16} className={`mx-auto mb-0.5 ${active ? "text-[#00BFFF]" : ""}`} />
+              <Icon size={16} className={`mx-auto mb-0.5 ${active ? "text-[#FF4500]" : ""}`} />
               <div className="font-teko text-sm tracking-wide">{m.label}</div>
             </button>
           );
@@ -109,7 +109,7 @@ export default function Leaderboard() {
               onClick={() => setPeriod(p.value)}
               className={`px-3 py-1.5 rounded-full text-xs font-teko tracking-wider transition border ${
                 period === p.value
-                  ? "bg-[#00BFFF] text-black border-[#00BFFF]"
+                  ? "bg-[#FF4500] text-black border-[#FF4500]"
                   : "border-[#1A1A24] text-gray-500 hover:text-gray-300"
               }`}
               data-testid={`period-${p.value}`}
@@ -121,7 +121,7 @@ export default function Leaderboard() {
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-[#00BFFF] font-teko text-2xl">
+        <div className="text-center py-12 text-[#FF4500] font-teko text-2xl">
           <Loader2 size={28} className="inline animate-spin mr-2" /> Lade...
         </div>
       ) : rows.length === 0 ? (
@@ -134,12 +134,12 @@ export default function Leaderboard() {
             return (
               <div
                 key={row.user_id}
-                className={`af-card p-3 relative overflow-hidden ${row.is_self ? "border-[#00BFFF] bg-[#00BFFF]/5" : ""}`}
+                className={`af-card p-3 relative overflow-hidden ${row.is_self ? "border-[#FF4500] bg-[#FF4500]/5" : ""}`}
                 data-testid={`row-${row.user_id}`}
               >
                 {/* Background progress bar */}
                 <div
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#00BFFF]/8 to-transparent pointer-events-none"
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#FF4500]/8 to-transparent pointer-events-none"
                   style={{ width: `${pct}%` }}
                 />
                 <div className="relative flex items-center gap-3">
@@ -154,14 +154,14 @@ export default function Leaderboard() {
                     )}
                   </div>
                   {/* Avatar + name */}
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00BFFF]/30 to-[#1A1A24] flex items-center justify-center font-teko text-base chrome-text flex-shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#FF4500]/30 to-[#1A1A24] flex items-center justify-center font-teko text-base chrome-text flex-shrink-0">
                     {(row.name || "?")[0].toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-teko text-base chrome-text truncate flex items-center gap-1.5">
                       {row.name}
                       {row.is_premium && <Crown size={11} className="text-[#FFD700] flex-shrink-0" />}
-                      {row.is_self && <span className="text-[10px] text-[#00BFFF] uppercase tracking-widest ml-1">DU</span>}
+                      {row.is_self && <span className="text-[10px] text-[#FF4500] uppercase tracking-widest ml-1">DU</span>}
                     </div>
                   </div>
                   <div className="font-teko text-lg electric-text flex-shrink-0">
@@ -177,8 +177,8 @@ export default function Leaderboard() {
       {/* Sticky "Your rank" pill if not in list */}
       {showStickyYou && data?.you && (
         <div className="fixed bottom-20 left-3 right-3 sm:left-1/2 sm:-translate-x-1/2 sm:max-w-md z-30 pointer-events-none">
-          <div className="af-card glow-box p-3 flex items-center gap-3 border-[#00BFFF]/60 pointer-events-auto" data-testid="sticky-you">
-            <div className="text-[10px] uppercase tracking-widest text-[#00BFFF] font-chakra">Dein Rang</div>
+          <div className="af-card glow-box p-3 flex items-center gap-3 border-[#FF4500]/60 pointer-events-auto" data-testid="sticky-you">
+            <div className="text-[10px] uppercase tracking-widest text-[#FF4500] font-chakra">Dein Rang</div>
             <ChevronUp size={14} className="text-gray-500" />
             <div className="font-teko text-2xl chrome-text">{data.you.rank ? `#${data.you.rank}` : "—"}</div>
             <div className="flex-1" />
@@ -196,7 +196,7 @@ function ScopeBtn({ active, onClick, children, testid }) {
       onClick={onClick}
       data-testid={testid}
       className={`flex-1 py-2 rounded font-teko text-sm tracking-wide transition ${
-        active ? "bg-[#00BFFF] text-black" : "text-gray-400 hover:text-white"
+        active ? "bg-[#FF4500] text-black" : "text-gray-400 hover:text-white"
       }`}
     >
       {children}

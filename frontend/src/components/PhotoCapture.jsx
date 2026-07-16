@@ -122,7 +122,7 @@ export default function PhotoCapture({ onSaved, onClose, defaultPose = "front", 
         <div className="font-teko text-lg sm:text-xl tracking-widest chrome-text">PROGRESS FOTO</div>
         <button
           onClick={() => setShowGuide((s) => !s)}
-          className="w-11 h-11 flex items-center justify-center text-gray-300 hover:text-[#00BFFF]"
+          className="w-11 h-11 flex items-center justify-center text-gray-300 hover:text-[#FF4500]"
           title="Pose-Silhouette ein/aus"
           data-testid="capture-toggle-guide"
         >
@@ -137,7 +137,7 @@ export default function PhotoCapture({ onSaved, onClose, defaultPose = "front", 
             key={p.v}
             onClick={() => setPose(p.v)}
             className={`py-2 text-[11px] font-chakra uppercase tracking-widest border transition ${
-              pose === p.v ? "border-[#00BFFF] text-[#00BFFF] bg-[#00BFFF]/10" : "border-[#1A1A24] text-gray-400"
+              pose === p.v ? "border-[#FF4500] text-[#FF4500] bg-[#FF4500]/10" : "border-[#1A1A24] text-gray-400"
             }`}
             data-testid={`pose-${p.v}`}
           >
@@ -185,7 +185,7 @@ export default function PhotoCapture({ onSaved, onClose, defaultPose = "front", 
         <div className="flex items-center justify-around">
           <button
             onClick={() => setFacingMode((m) => (m === "user" ? "environment" : "user"))}
-            className="w-12 h-12 flex items-center justify-center rounded-full border border-[#1A1A24] text-gray-300 hover:text-[#00BFFF]"
+            className="w-12 h-12 flex items-center justify-center rounded-full border border-[#1A1A24] text-gray-300 hover:text-[#FF4500]"
             disabled={busy}
             data-testid="capture-flip-btn"
             title="Kamera wechseln"
@@ -196,11 +196,11 @@ export default function PhotoCapture({ onSaved, onClose, defaultPose = "front", 
           <button
             onClick={capture}
             disabled={busy || !!error}
-            className="w-20 h-20 rounded-full border-4 border-[#00BFFF] bg-[#00BFFF]/10 hover:bg-[#00BFFF]/20 disabled:opacity-50 flex items-center justify-center transition"
-            style={{ boxShadow: "0 0 30px rgba(0,191,255,0.4)" }}
+            className="w-20 h-20 rounded-full border-4 border-[#FF4500] bg-[#FF4500]/10 hover:bg-[#FF4500]/20 disabled:opacity-50 flex items-center justify-center transition"
+            style={{ boxShadow: "0 0 30px rgba(255,69,0,0.4)" }}
             data-testid="capture-shutter-btn"
           >
-            {busy ? <Loader2 size={28} className="animate-spin text-[#00BFFF]" /> : <Camera size={28} className="text-[#00BFFF]" />}
+            {busy ? <Loader2 size={28} className="animate-spin text-[#FF4500]" /> : <Camera size={28} className="text-[#FF4500]" />}
           </button>
 
           <div className="w-12 h-12" /> {/* placeholder for symmetry */}
@@ -213,7 +213,7 @@ export default function PhotoCapture({ onSaved, onClose, defaultPose = "front", 
 // Simple SVG silhouette guides per pose
 function PoseGuide({ pose }) {
   const common = {
-    className: "pointer-events-none absolute inset-0 w-full h-full text-[#00BFFF]/30 mix-blend-screen",
+    className: "pointer-events-none absolute inset-0 w-full h-full text-[#FF4500]/30 mix-blend-screen",
     fill: "none",
     stroke: "currentColor",
     strokeWidth: 1.2,

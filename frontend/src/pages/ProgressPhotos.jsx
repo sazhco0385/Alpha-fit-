@@ -74,7 +74,7 @@ export default function ProgressPhotos() {
           className="af-card p-5 clip-corner-tl-br hover:glow-box transition tracing-border text-center"
           data-testid="capture-photo-btn"
         >
-          <Camera size={32} className="mx-auto text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.6))" }} />
+          <Camera size={32} className="mx-auto text-[#FF4500]" style={{ filter: "drop-shadow(0 0 8px rgba(255,69,0,0.6))" }} />
           <div className="font-teko text-lg sm:text-xl mt-2 chrome-text">FOTO MACHEN</div>
           <div className="text-[10px] text-gray-500 font-chakra mt-1">Studio-Licht aktiv</div>
         </button>
@@ -97,7 +97,7 @@ export default function ProgressPhotos() {
             key={p.v || "all"}
             onClick={() => setPoseFilter(p.v)}
             className={`px-3 py-1.5 text-[11px] font-chakra uppercase tracking-widest border whitespace-nowrap transition ${
-              poseFilter === p.v ? "border-[#00BFFF] text-[#00BFFF] bg-[#00BFFF]/10" : "border-[#1A1A24] text-gray-400"
+              poseFilter === p.v ? "border-[#FF4500] text-[#FF4500] bg-[#FF4500]/10" : "border-[#1A1A24] text-gray-400"
             }`}
             data-testid={`filter-pose-${p.v || "all"}`}
           >
@@ -108,7 +108,7 @@ export default function ProgressPhotos() {
 
       {/* Grid */}
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 size={28} className="animate-spin text-[#00BFFF]" /></div>
+        <div className="flex justify-center py-12"><Loader2 size={28} className="animate-spin text-[#FF4500]" /></div>
       ) : photos.length === 0 ? (
         <div className="af-card p-8 text-center" data-testid="photos-empty">
           <Camera size={36} className="mx-auto text-gray-600 mb-3" />
@@ -123,12 +123,12 @@ export default function ProgressPhotos() {
             <button
               key={p.id}
               onClick={() => setLightbox(p)}
-              className="relative aspect-[3/4] bg-[#0A0A10] border border-[#1A1A24] hover:border-[#00BFFF]/60 transition overflow-hidden group"
+              className="relative aspect-[3/4] bg-[#0A0A10] border border-[#1A1A24] hover:border-[#FF4500]/60 transition overflow-hidden group"
               data-testid={`photo-${p.id}`}
             >
               <img src={p.image_base64.startsWith("data:") ? p.image_base64 : `data:image/jpeg;base64,${p.image_base64}`} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
               <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/85 to-transparent">
-                <div className="text-[9px] font-chakra text-[#00BFFF] uppercase tracking-widest">
+                <div className="text-[9px] font-chakra text-[#FF4500] uppercase tracking-widest">
                   {POSE_LABEL[p.pose] || p.pose}
                 </div>
                 <div className="text-[10px] font-chakra text-gray-300">{formatDate(p.created_at)}</div>
@@ -185,7 +185,7 @@ function Lightbox({ photo, onClose, onDelete }) {
         <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-gray-300" data-testid="lightbox-close-btn">
           <X size={22} />
         </button>
-        <div className="font-teko text-lg text-[#00BFFF]">{POSE_LABEL[photo.pose] || photo.pose}</div>
+        <div className="font-teko text-lg text-[#FF4500]">{POSE_LABEL[photo.pose] || photo.pose}</div>
         <button onClick={onDelete} className="w-11 h-11 flex items-center justify-center text-red-400" data-testid="lightbox-delete-btn">
           <Trash2 size={20} />
         </button>
@@ -237,7 +237,7 @@ function CompareSlider({ first, last, userName, onClose }) {
         <button
           type="button"
           onClick={() => setShareOpen(true)}
-          className="w-11 h-11 flex items-center justify-center text-[#00BFFF] hover:text-[#00E5FF]"
+          className="w-11 h-11 flex items-center justify-center text-[#FF4500] hover:text-[#FF5A1F]"
           data-testid="compare-share-btn"
           title="Teilen"
         >
@@ -258,10 +258,10 @@ function CompareSlider({ first, last, userName, onClose }) {
           <div className="absolute inset-0" style={{ clipPath: `polygon(0 0, ${pct}% 0, ${pct}% 100%, 0 100%)` }}>
             <img src={imgSrc(first)} alt="first" className="absolute inset-0 w-full h-full object-cover" />
           </div>
-          <div className="absolute top-0 bottom-0 w-[2px] bg-[#00BFFF]" style={{ left: `${pct}%`, boxShadow: "0 0 20px rgba(0,191,255,0.7)" }} />
+          <div className="absolute top-0 bottom-0 w-[2px] bg-[#FF4500]" style={{ left: `${pct}%`, boxShadow: "0 0 20px rgba(255,69,0,0.7)" }} />
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-10 h-10 bg-[#00BFFF] rounded-full flex items-center justify-center cursor-grab"
-            style={{ left: `${pct}%`, transform: `translate(-50%, -50%)`, boxShadow: "0 0 20px rgba(0,191,255,0.7)" }}
+            className="absolute top-1/2 -translate-y-1/2 w-10 h-10 bg-[#FF4500] rounded-full flex items-center justify-center cursor-grab"
+            style={{ left: `${pct}%`, transform: `translate(-50%, -50%)`, boxShadow: "0 0 20px rgba(255,69,0,0.7)" }}
           >
             <ChevronLeft size={14} className="text-black" />
             <ChevronRight size={14} className="text-black" />
@@ -377,18 +377,18 @@ function ShareCard({ first, last, userName, days, onClose }) {
           className="relative w-full aspect-[4/5] bg-black overflow-hidden"
           style={{
             backgroundImage: "linear-gradient(180deg, #0a0a14 0%, #050508 100%)",
-            border: "2px solid rgba(0,191,255,0.4)",
-            boxShadow: "inset 0 0 60px rgba(0,191,255,0.15)",
+            border: "2px solid rgba(255,69,0,0.4)",
+            boxShadow: "inset 0 0 60px rgba(255,69,0,0.15)",
           }}
         >
           {/* Header */}
           <div className="absolute top-0 left-0 right-0 p-3 flex items-center justify-between z-10" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.85), transparent)" }}>
             <div>
-              <div className="text-[10px] tracking-[0.3em] text-[#FFD700] font-bold" style={{ fontFamily: '"Teko", sans-serif' }}>ALPHA<span className="text-[#00BFFF]">FIT</span></div>
+              <div className="text-[10px] tracking-[0.3em] text-[#FFD700] font-bold" style={{ fontFamily: '"Teko", sans-serif' }}>ALPHA<span className="text-[#FF4500]">FIT</span></div>
               <div className="text-[9px] text-gray-400 tracking-widest uppercase">{userName}</div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] text-[#00BFFF] tracking-[0.25em] uppercase font-bold">{periodLabel}</div>
+              <div className="text-[10px] text-[#FF4500] tracking-[0.25em] uppercase font-bold">{periodLabel}</div>
               <div className="text-[8px] text-gray-500 uppercase tracking-widest">Transformation</div>
             </div>
           </div>
@@ -432,7 +432,7 @@ function ShareCard({ first, last, userName, days, onClose }) {
                 </span>
               </div>
             )}
-            <div className="text-[10px] tracking-[0.3em] uppercase font-bold text-[#00BFFF]" style={{ fontFamily: '"Chakra Petch", monospace' }}>
+            <div className="text-[10px] tracking-[0.3em] uppercase font-bold text-[#FF4500]" style={{ fontFamily: '"Chakra Petch", monospace' }}>
               alpha-fit.fitness
             </div>
           </div>

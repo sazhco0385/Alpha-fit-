@@ -99,14 +99,14 @@ export default function BarcodeScanner({ onFound, onClose }) {
 
   return createPortal((
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/95 backdrop-blur-md p-0 sm:p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border-t-2 sm:border border-[#00BFFF]/40 sm:border-[#1A1A24] p-5 sm:p-6 max-w-lg w-full h-full sm:h-auto overflow-y-auto sm:clip-corner-tl-br sm:my-4 rounded-t-2xl sm:rounded-none" data-testid="barcode-scanner-modal">
+      <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border-t-2 sm:border border-[#FF4500]/40 sm:border-[#1A1A24] p-5 sm:p-6 max-w-lg w-full h-full sm:h-auto overflow-y-auto sm:clip-corner-tl-br sm:my-4 rounded-t-2xl sm:rounded-none" data-testid="barcode-scanner-modal">
         <div className="flex items-start justify-between mb-3 gap-2">
           <div className="min-w-0">
-            <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra">BARCODE SCANNER</div>
+            <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra">BARCODE SCANNER</div>
             <div className="font-teko text-2xl sm:text-3xl chrome-text mt-1">Produkt scannen</div>
             <div className="text-xs text-gray-500 font-chakra mt-1">EAN / UPC · 2 Mio. Produkte aus Open Food Facts</div>
           </div>
-          <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-gray-500 hover:text-[#00BFFF] flex-shrink-0" data-testid="barcode-close-btn">
+          <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-gray-500 hover:text-[#FF4500] flex-shrink-0" data-testid="barcode-close-btn">
             <X size={20} />
           </button>
         </div>
@@ -115,9 +115,9 @@ export default function BarcodeScanner({ onFound, onClose }) {
           <div className="relative" data-testid="barcode-camera-view">
             <div id={containerId} className="w-full bg-black overflow-hidden border border-[#1A1A24]" style={{ minHeight: 280 }} />
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="w-[260px] h-[160px] border-2 border-[#00BFFF] relative" style={{ boxShadow: "0 0 30px rgba(0,191,255,0.5)" }}>
-                <div className="absolute left-0 right-0 top-1/2 h-[2px] bg-[#00BFFF] animate-pulse" />
-                <ScanLine size={20} className="absolute -top-7 left-1/2 -translate-x-1/2 text-[#00BFFF]" />
+              <div className="w-[260px] h-[160px] border-2 border-[#FF4500] relative" style={{ boxShadow: "0 0 30px rgba(255,69,0,0.5)" }}>
+                <div className="absolute left-0 right-0 top-1/2 h-[2px] bg-[#FF4500] animate-pulse" />
+                <ScanLine size={20} className="absolute -top-7 left-1/2 -translate-x-1/2 text-[#FF4500]" />
               </div>
             </div>
             {cameraError && (
@@ -181,7 +181,7 @@ export default function BarcodeScanner({ onFound, onClose }) {
         </div>
 
         {looking && (
-          <div className="mt-3 flex items-center justify-center gap-2 text-[#00BFFF] font-chakra text-sm" data-testid="barcode-looking">
+          <div className="mt-3 flex items-center justify-center gap-2 text-[#FF4500] font-chakra text-sm" data-testid="barcode-looking">
             <Loader2 size={14} className="animate-spin" /> Suche in Open Food Facts…
           </div>
         )}

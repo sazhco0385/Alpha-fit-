@@ -38,8 +38,8 @@ export default function VerifyEmail() {
       <div className="relative z-10 w-full max-w-md af-card p-6 sm:p-8 clip-corner-tl-br mt-16 sm:mt-0 text-center">
         {status === "loading" && (
           <>
-            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 border border-[#00BFFF]/60 bg-[#00BFFF]/10 rounded-full">
-              <Loader2 size={28} className="text-[#00BFFF] animate-spin" />
+            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 border border-[#FF4500]/60 bg-[#FF4500]/10 rounded-full">
+              <Loader2 size={28} className="text-[#FF4500] animate-spin" />
             </div>
             <h1 className="font-teko text-3xl chrome-text mb-2">PRÜFE TOKEN…</h1>
             <p className="text-gray-500 font-chakra text-sm">Einen Moment.</p>
@@ -64,8 +64,8 @@ export default function VerifyEmail() {
         )}
         {status === "already" && (
           <>
-            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 border border-[#00BFFF]/60 bg-[#00BFFF]/10 rounded-full">
-              <ShieldCheck size={32} className="text-[#00BFFF]" />
+            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 border border-[#FF4500]/60 bg-[#FF4500]/10 rounded-full">
+              <ShieldCheck size={32} className="text-[#FF4500]" />
             </div>
             <h1 className="font-teko text-3xl chrome-text mb-2">BEREITS BESTÄTIGT</h1>
             <p className="text-gray-400 font-chakra text-sm mb-6">Diese E-Mail wurde bereits verifiziert. Du kannst dich direkt einloggen.</p>

@@ -115,7 +115,7 @@ export default function Friends() {
   };
 
   if (loading) {
-    return <Layout><div className="text-center py-12 text-[#00BFFF] font-teko text-2xl"><Loader2 size={32} className="inline animate-spin mr-2" /> Lade...</div></Layout>;
+    return <Layout><div className="text-center py-12 text-[#FF4500] font-teko text-2xl"><Loader2 size={32} className="inline animate-spin mr-2" /> Lade...</div></Layout>;
   }
 
   const counts = data?.counts || { friends: 0, incoming: 0, outgoing: 0 };
@@ -131,21 +131,21 @@ export default function Friends() {
       <div className="grid grid-cols-2 gap-2 mb-4">
         <button
           onClick={() => navigate("/challenges")}
-          className="af-card p-3 flex items-center gap-2 hover:border-[#00BFFF]/60 group transition text-left"
+          className="af-card p-3 flex items-center gap-2 hover:border-[#FF4500]/60 group transition text-left"
           data-testid="goto-challenges-cta"
         >
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#00BFFF]/30 to-[#1A1A24] flex items-center justify-center flex-shrink-0">
-            <Swords size={18} className="text-[#00BFFF]" />
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF4500]/30 to-[#1A1A24] flex items-center justify-center flex-shrink-0">
+            <Swords size={18} className="text-[#FF4500]" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-teko text-base chrome-text leading-tight">CHALLENGES</div>
             <div className="text-[10px] text-gray-400 font-chakra leading-tight">Hetz die Crew</div>
           </div>
-          <ChevronRight size={14} className="text-gray-500 group-hover:text-[#00BFFF] flex-shrink-0" />
+          <ChevronRight size={14} className="text-gray-500 group-hover:text-[#FF4500] flex-shrink-0" />
         </button>
         <button
           onClick={() => navigate("/leaderboard")}
-          className="af-card p-3 flex items-center gap-2 hover:border-[#00BFFF]/60 group transition text-left"
+          className="af-card p-3 flex items-center gap-2 hover:border-[#FF4500]/60 group transition text-left"
           data-testid="goto-leaderboard-cta"
         >
           <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FFD700]/30 to-[#1A1A24] flex items-center justify-center flex-shrink-0">
@@ -155,14 +155,14 @@ export default function Friends() {
             <div className="font-teko text-base chrome-text leading-tight">RANGLISTE</div>
             <div className="text-[10px] text-gray-400 font-chakra leading-tight">Wer ist oben?</div>
           </div>
-          <ChevronRight size={14} className="text-gray-500 group-hover:text-[#00BFFF] flex-shrink-0" />
+          <ChevronRight size={14} className="text-gray-500 group-hover:text-[#FF4500] flex-shrink-0" />
         </button>
       </div>
 
       {/* Search bar */}
       <div className="af-card p-4 mb-5" data-testid="friends-search-card">
         <div className="flex items-center gap-2">
-          <Search size={18} className="text-[#00BFFF] flex-shrink-0" />
+          <Search size={18} className="text-[#FF4500] flex-shrink-0" />
           <input
             value={query}
             onChange={(e) => { setQuery(e.target.value); setTab("search"); }}
@@ -170,7 +170,7 @@ export default function Friends() {
             className="af-input flex-1 bg-transparent text-white"
             data-testid="friends-search-input"
           />
-          {searching && <Loader2 size={16} className="animate-spin text-[#00BFFF]" />}
+          {searching && <Loader2 size={16} className="animate-spin text-[#FF4500]" />}
         </div>
       </div>
 
@@ -178,11 +178,11 @@ export default function Friends() {
       <div className="flex gap-1 sm:gap-2 mb-5 border-b border-[#1A1A24]" data-testid="friends-tabs">
         <TabBtn active={tab === "friends"} onClick={() => setTab("friends")} testid="tab-friends">
           <Users size={14} className="inline mr-1" /> Freunde
-          <span className="ml-1 text-[10px] text-[#00BFFF]">({counts.friends})</span>
+          <span className="ml-1 text-[10px] text-[#FF4500]">({counts.friends})</span>
         </TabBtn>
         <TabBtn active={tab === "incoming"} onClick={() => setTab("incoming")} testid="tab-incoming">
           Anfragen
-          {counts.incoming > 0 && <span className="ml-1 inline-block bg-[#00BFFF] text-black rounded-full px-1.5 text-[10px] font-bold">{counts.incoming}</span>}
+          {counts.incoming > 0 && <span className="ml-1 inline-block bg-[#FF4500] text-black rounded-full px-1.5 text-[10px] font-bold">{counts.incoming}</span>}
         </TabBtn>
         <TabBtn active={tab === "outgoing"} onClick={() => setTab("outgoing")} testid="tab-outgoing">
           Gesendet
@@ -206,7 +206,7 @@ export default function Friends() {
           {searchResults.map((r) => (
             <UserRow key={r.id} user={r} testid={`search-${r.id}`}>
               {r.request_status === "friend" ? (
-                <span className="text-[#00BFFF] font-teko text-sm">FREUND</span>
+                <span className="text-[#FF4500] font-teko text-sm">FREUND</span>
               ) : r.request_status === "outgoing_pending" ? (
                 <span className="text-gray-400 font-chakra text-xs">Gesendet</span>
               ) : r.request_status === "incoming_pending" ? (
@@ -327,7 +327,7 @@ function TabBtn({ active, onClick, children, testid }) {
       onClick={onClick}
       data-testid={testid}
       className={`px-3 py-2 font-teko text-base tracking-wide transition border-b-2 ${
-        active ? "border-[#00BFFF] text-white" : "border-transparent text-gray-500 hover:text-gray-300"
+        active ? "border-[#FF4500] text-white" : "border-transparent text-gray-500 hover:text-gray-300"
       }`}
     >
       {children}
@@ -338,10 +338,10 @@ function TabBtn({ active, onClick, children, testid }) {
 function UserRow({ user, testid, children }) {
   return (
     <div
-      className="af-card p-3 flex items-center gap-3 hover:border-[#00BFFF]/40 transition"
+      className="af-card p-3 flex items-center gap-3 hover:border-[#FF4500]/40 transition"
       data-testid={testid}
     >
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00BFFF]/30 to-[#1A1A24] flex items-center justify-center font-teko text-lg chrome-text flex-shrink-0">
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF4500]/30 to-[#1A1A24] flex items-center justify-center font-teko text-lg chrome-text flex-shrink-0">
         {(user.name || "?")[0].toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">

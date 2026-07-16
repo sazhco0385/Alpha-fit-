@@ -78,24 +78,24 @@ export default function A2HSPrompt() {
         onClick={(e) => e.stopPropagation()}
         data-testid="a2hs-prompt"
       >
-        <button onClick={dismiss} className="absolute top-3 right-3 w-11 h-11 flex items-center justify-center text-gray-500 hover:text-[#00BFFF]" data-testid="a2hs-close-btn" aria-label="Schliessen">
+        <button onClick={dismiss} className="absolute top-3 right-3 w-11 h-11 flex items-center justify-center text-gray-500 hover:text-[#FF4500]" data-testid="a2hs-close-btn" aria-label="Schliessen">
           <X size={20} />
         </button>
 
         <div className="flex items-center gap-3 mb-4">
-          <div className="relative w-14 h-14 hex-shield flex items-center justify-center pulse-glow" style={{ background: "linear-gradient(180deg, #00E5FF, #1E90FF)" }}>
+          <div className="relative w-14 h-14 hex-shield flex items-center justify-center pulse-glow" style={{ background: "linear-gradient(180deg, #FF5A1F, #1E90FF)" }}>
             <div className="absolute inset-[2px] hex-shield bg-black flex items-center justify-center">
-              <Smartphone size={22} className="text-[#00E5FF]" style={{ filter: "drop-shadow(0 0 8px rgba(0,229,255,0.9))" }} />
+              <Smartphone size={22} className="text-[#FF5A1F]" style={{ filter: "drop-shadow(0 0 8px rgba(255,90,31,0.9))" }} />
             </div>
           </div>
           <div>
-            <div className="text-[10px] text-[#00BFFF] uppercase tracking-[0.3em] font-chakra">PRO TIPP</div>
+            <div className="text-[10px] text-[#FF4500] uppercase tracking-[0.3em] font-chakra">PRO TIPP</div>
             <div className="font-teko text-3xl chrome-text leading-none">Als App installieren</div>
           </div>
         </div>
 
         <p className="text-gray-300 font-chakra text-sm leading-relaxed mb-4">
-          Installiere <span className="text-[#00BFFF]">alpha-fit</span> auf deinem Handy —
+          Installiere <span className="text-[#FF4500]">alpha-fit</span> auf deinem Handy —
           läuft im Fullscreen, ohne Browser-Adressleiste, wie eine echte App.
         </p>
 
@@ -111,39 +111,39 @@ export default function A2HSPrompt() {
         ) : ios ? (
           <ol className="space-y-3 text-sm font-chakra text-gray-200">
             <li className="flex items-start gap-3" data-testid="a2hs-step-1">
-              <span className="w-7 h-7 border border-[#00BFFF] text-[#00BFFF] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+              <span className="w-7 h-7 border border-[#FF4500] text-[#FF4500] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
               <div>
                 Tippe auf das <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#0A0A10] border border-[#1A1A24] mx-1">
-                  <Share size={14} className="text-[#00BFFF]" /> <span className="text-xs">Teilen</span>
+                  <Share size={14} className="text-[#FF4500]" /> <span className="text-xs">Teilen</span>
                 </span> Symbol unten in Safari
               </div>
             </li>
             <li className="flex items-start gap-3" data-testid="a2hs-step-2">
-              <span className="w-7 h-7 border border-[#00BFFF] text-[#00BFFF] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+              <span className="w-7 h-7 border border-[#FF4500] text-[#FF4500] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
               <div>
                 Wähle <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#0A0A10] border border-[#1A1A24] mx-1">
-                  <Plus size={14} className="text-[#00BFFF]" /> <span className="text-xs">Zum Home-Bildschirm</span>
+                  <Plus size={14} className="text-[#FF4500]" /> <span className="text-xs">Zum Home-Bildschirm</span>
                 </span>
               </div>
             </li>
             <li className="flex items-start gap-3" data-testid="a2hs-step-3">
-              <span className="w-7 h-7 border border-[#00BFFF] text-[#00BFFF] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
-              <div>Bestätige mit <span className="text-[#00BFFF] font-bold">"Hinzufügen"</span> — fertig.</div>
+              <span className="w-7 h-7 border border-[#FF4500] text-[#FF4500] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+              <div>Bestätige mit <span className="text-[#FF4500] font-bold">"Hinzufügen"</span> — fertig.</div>
             </li>
           </ol>
         ) : android ? (
           <ol className="space-y-3 text-sm font-chakra text-gray-200">
             <li className="flex items-start gap-3" data-testid="a2hs-step-1">
-              <span className="w-7 h-7 border border-[#00BFFF] text-[#00BFFF] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
-              <div>Tippe oben rechts auf die <span className="text-[#00BFFF] font-bold">⋮ drei Punkte</span> in Chrome</div>
+              <span className="w-7 h-7 border border-[#FF4500] text-[#FF4500] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+              <div>Tippe oben rechts auf die <span className="text-[#FF4500] font-bold">⋮ drei Punkte</span> in Chrome</div>
             </li>
             <li className="flex items-start gap-3" data-testid="a2hs-step-2">
-              <span className="w-7 h-7 border border-[#00BFFF] text-[#00BFFF] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
-              <div>Wähle <span className="text-[#00BFFF] font-bold">"App installieren"</span> oder <span className="text-[#00BFFF] font-bold">"Zum Startbildschirm hinzufügen"</span></div>
+              <span className="w-7 h-7 border border-[#FF4500] text-[#FF4500] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+              <div>Wähle <span className="text-[#FF4500] font-bold">"App installieren"</span> oder <span className="text-[#FF4500] font-bold">"Zum Startbildschirm hinzufügen"</span></div>
             </li>
             <li className="flex items-start gap-3" data-testid="a2hs-step-3">
-              <span className="w-7 h-7 border border-[#00BFFF] text-[#00BFFF] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
-              <div>Bestätige mit <span className="text-[#00BFFF] font-bold">"Installieren"</span> — fertig.</div>
+              <span className="w-7 h-7 border border-[#FF4500] text-[#FF4500] font-teko text-base flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+              <div>Bestätige mit <span className="text-[#FF4500] font-bold">"Installieren"</span> — fertig.</div>
             </li>
           </ol>
         ) : null}

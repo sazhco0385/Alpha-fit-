@@ -271,3 +271,59 @@
   padding: 0.75rem 1rem;
   box-shadow: 0 4px 12px rgba(255,69,0,0.2);
 }
+
+/* ---------- Backward-compat shims (post-cyan → Electric Blaze) ---------- */
+/* Old cyan glow text — now a subtle blaze glow */
+.glow-text {
+  text-shadow:
+    0 0 6px rgba(255, 69, 0, 0.55),
+    0 0 18px rgba(255, 69, 0, 0.35);
+}
+
+/* Old cyberpunk clipped-corner cards — flatten to tactical rounded-md */
+.clip-corner-tl-br,
+.clip-corner-tr-bl,
+.clip-corner-tl,
+.clip-corner-tr,
+.clip-corner-bl,
+.clip-corner-br {
+  clip-path: none;
+  border-radius: var(--radius);
+}
+
+/* Neon underline (login inputs, active tabs) — remap to blaze */
+.neon-underline {
+  border-bottom: 1px solid var(--af-primary);
+  box-shadow: 0 1px 12px rgba(255, 69, 0, 0.35);
+}
+
+/* Legacy Electric badge classes */
+.electric-badge {
+  background: rgba(255, 69, 0, 0.08);
+  border: 1px solid rgba(255, 69, 0, 0.4);
+  color: var(--af-primary);
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius);
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Scanline sweep used by BodyScan camera overlay */
+@keyframes scanline-sweep {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+.scanline {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, rgba(255,69,0,0.55) 50%, transparent 100%);
+  height: 8%;
+  animation: scanline-sweep 2.4s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(255,69,0,0.6));
+}
+
+/* Selection highlight */
+::selection { background: rgba(255,69,0,0.35); color: #FFFFFF; }

@@ -47,7 +47,7 @@ export function getRestCategory(exercise) {
     return {
       label: "CORE / AUSDAUER",
       hint: "Kurze Pause – der Muskel erholt sich schnell bei hoher Wiederholungszahl.",
-      color: "#00E5FF",
+      color: "#FF5A1F",
     };
   }
   if (matches(name, COMPOUND_HEAVY)) {
@@ -75,7 +75,7 @@ export function getRestCategory(exercise) {
     return {
       label: "ISOLATIONSÜBUNG",
       hint: "Nur ein Muskel arbeitet – kürzere Pause hält den Pump hoch.",
-      color: "#00BFFF",
+      color: "#FF4500",
     };
   }
   // Fallback based purely on rest length
@@ -85,5 +85,5 @@ export function getRestCategory(exercise) {
   if (rest >= 75) {
     return { label: "KRAFT & MASSE", hint: "Ausgewogene Pause für Hypertrophie.", color: "#FFB800" };
   }
-  return { label: "PUMP-SATZ", hint: "Kurze Pause hält die Spannung im Muskel.", color: "#00BFFF" };
+  return { label: "PUMP-SATZ", hint: "Kurze Pause hält die Spannung im Muskel.", color: "#FF4500" };
 }

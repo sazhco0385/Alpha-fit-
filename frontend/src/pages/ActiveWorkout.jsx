@@ -178,7 +178,7 @@ export default function ActiveWorkout() {
 
       {/* Top bar */}
       <div className="relative z-10 p-2 sm:p-6 flex items-center justify-between gap-2">
-        <button onClick={() => navigate("/dashboard")} className="text-gray-400 hover:text-[#00BFFF] font-chakra uppercase tracking-widest text-xs flex-shrink-0 w-11 h-11 flex items-center justify-center sm:w-auto sm:px-3" data-testid="workout-exit-btn">
+        <button onClick={() => navigate("/dashboard")} className="text-gray-400 hover:text-[#FF4500] font-chakra uppercase tracking-widest text-xs flex-shrink-0 w-11 h-11 flex items-center justify-center sm:w-auto sm:px-3" data-testid="workout-exit-btn">
           <X size={20} /> <span className="hidden sm:inline ml-1">PAUSE</span>
         </button>
         <div className="font-teko text-base sm:text-2xl tracking-widest chrome-text text-center min-w-0 truncate">
@@ -193,8 +193,8 @@ export default function ActiveWorkout() {
       <div className="relative z-10 h-[3px] bg-[#0A0A10] mx-3 sm:mx-4">
         <div className="h-full transition-all duration-500" style={{
           width: `${overallProgress}%`,
-          background: "linear-gradient(90deg, #00E5FF, #00BFFF)",
-          boxShadow: "0 0 12px rgba(0,229,255,0.8)",
+          background: "linear-gradient(90deg, #FF5A1F, #FF4500)",
+          boxShadow: "0 0 12px rgba(255,90,31,0.8)",
         }} />
       </div>
 
@@ -241,7 +241,7 @@ export default function ActiveWorkout() {
               </button>
             </div>
             <div className="mt-10 text-gray-500 font-chakra text-sm">
-              Nächste Übung: <span className="text-[#00BFFF]">{day.exercises[exIdx]?.name}</span>
+              Nächste Übung: <span className="text-[#FF4500]">{day.exercises[exIdx]?.name}</span>
               <br />Satz {setIdx + 1} von {totalSets}
             </div>
           </div>
@@ -259,28 +259,28 @@ export default function ActiveWorkout() {
                 background: "linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.95) 100%)",
               }} />
               <div className="absolute bottom-2 left-3 right-3 sm:bottom-3 sm:left-4 sm:right-4">
-                <div className="text-[9px] sm:text-[10px] text-[#00BFFF] uppercase tracking-[0.3em] font-chakra">ÜBUNG {exIdx + 1} / {totalExercises}</div>
+                <div className="text-[9px] sm:text-[10px] text-[#FF4500] uppercase tracking-[0.3em] font-chakra">ÜBUNG {exIdx + 1} / {totalExercises}</div>
                 <div className="font-teko text-2xl sm:text-4xl md:text-5xl chrome-text leading-none mt-1 break-words" data-testid="exercise-name">{exercise.name}</div>
-                <div className="text-[#00BFFF] font-chakra uppercase tracking-widest text-[10px] sm:text-xs mt-1">{exercise.target_muscle}</div>
+                <div className="text-[#FF4500] font-chakra uppercase tracking-widest text-[10px] sm:text-xs mt-1">{exercise.target_muscle}</div>
               </div>
               {/* Tutorial Video shortcut */}
               <button
                 onClick={() => setShowVideo(true)}
-                className="absolute top-2 right-2 sm:top-3 sm:right-3 px-2 sm:px-3 py-1.5 bg-black/70 border border-[#00BFFF]/60 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10 transition flex items-center gap-1.5 backdrop-blur-sm"
+                className="absolute top-2 right-2 sm:top-3 sm:right-3 px-2 sm:px-3 py-1.5 bg-black/70 border border-[#FF4500]/60 hover:border-[#FF4500] hover:bg-[#FF4500]/10 transition flex items-center gap-1.5 backdrop-blur-sm"
                 data-testid="active-video-btn"
                 aria-label="Tutorial-Video"
               >
-                <PlayCircle size={14} className="text-[#00BFFF]" />
+                <PlayCircle size={14} className="text-[#FF4500]" />
                 <span className="text-[10px] sm:text-xs font-chakra tracking-widest uppercase text-white">Video</span>
               </button>
               {/* Form-Check shortcut */}
               <button
                 onClick={() => navigate(`/formcheck?exercise=${encodeURIComponent(exercise.name)}&muscle=${encodeURIComponent(exercise.target_muscle || "")}`)}
-                className="absolute top-12 right-2 sm:top-14 sm:right-3 px-2 sm:px-3 py-1.5 bg-black/70 border border-[#00BFFF]/60 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10 transition flex items-center gap-1.5 backdrop-blur-sm"
+                className="absolute top-12 right-2 sm:top-14 sm:right-3 px-2 sm:px-3 py-1.5 bg-black/70 border border-[#FF4500]/60 hover:border-[#FF4500] hover:bg-[#FF4500]/10 transition flex items-center gap-1.5 backdrop-blur-sm"
                 data-testid="active-formcheck-btn"
                 aria-label="Form-Check"
               >
-                <Activity size={14} className="text-[#00BFFF]" />
+                <Activity size={14} className="text-[#FF4500]" />
                 <span className="text-[10px] sm:text-xs font-chakra tracking-widest uppercase text-white">Form-Check</span>
               </button>
             </div>
@@ -289,11 +289,11 @@ export default function ActiveWorkout() {
 
             {/* KI Progression Suggestion */}
             {suggestion && (
-              <div className="af-card p-3 sm:p-4 clip-corner-tl-br border-[#00BFFF]/40 glow-box" data-testid="progression-suggestion">
+              <div className="af-card p-3 sm:p-4 clip-corner-tl-br border-[#FF4500]/40 glow-box" data-testid="progression-suggestion">
                 <div className="flex items-start gap-2 sm:gap-3">
-                  <Sparkles size={18} className="text-[#00E5FF] mt-0.5 flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(0,229,255,0.8))" }} />
+                  <Sparkles size={18} className="text-[#FF5A1F] mt-0.5 flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(255,90,31,0.8))" }} />
                   <div className="flex-1 min-w-0">
-                    <div className="text-[9px] sm:text-[10px] text-[#00BFFF] uppercase tracking-[0.3em] font-chakra">KI EMPFEHLUNG</div>
+                    <div className="text-[9px] sm:text-[10px] text-[#FF4500] uppercase tracking-[0.3em] font-chakra">KI EMPFEHLUNG</div>
                     <div className="font-chakra text-xs sm:text-sm mt-1 text-gray-200">{suggestion.message}</div>
                     {suggestion.has_history && (
                       <button
@@ -302,7 +302,7 @@ export default function ActiveWorkout() {
                           setReps(suggestion.suggested_reps);
                           toast.success("KI Empfehlung übernommen");
                         }}
-                        className="mt-2 text-[10px] sm:text-xs text-[#00E5FF] hover:text-white font-chakra uppercase tracking-widest inline-flex items-center gap-1 flex-wrap"
+                        className="mt-2 text-[10px] sm:text-xs text-[#FF5A1F] hover:text-white font-chakra uppercase tracking-widest inline-flex items-center gap-1 flex-wrap"
                         data-testid="apply-suggestion-btn"
                       >
                         <TrendingUp size={12} /> ÜBERNEHMEN ({suggestion.suggested_weight}kg × {suggestion.suggested_reps})
@@ -346,7 +346,7 @@ export default function ActiveWorkout() {
             {/* Up next preview */}
             {!isLastExercise && (
               <div className="text-center text-xs text-gray-500 font-chakra uppercase tracking-widest">
-                ALS NÄCHSTES: <span className="text-[#00BFFF]">{day.exercises[exIdx+1]?.name}</span>
+                ALS NÄCHSTES: <span className="text-[#FF4500]">{day.exercises[exIdx+1]?.name}</span>
               </div>
             )}
           </div>
@@ -368,17 +368,17 @@ function NumberStepper({ label, value, onChange, step, testid }) {
     <div>
       <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-widest font-chakra mb-2">{label}</div>
       <div className="flex items-stretch gap-2 h-12 sm:h-14">
-        <button onClick={() => onChange(Math.max(0, Number(value) - step))} className="w-12 sm:w-14 border border-[#1A1A24] hover:border-[#00BFFF] active:bg-[#00BFFF]/10 font-teko text-2xl text-[#00BFFF] transition flex-shrink-0 flex items-center justify-center" data-testid={`${testid}-minus`}>−</button>
+        <button onClick={() => onChange(Math.max(0, Number(value) - step))} className="w-12 sm:w-14 border border-[#1A1A24] hover:border-[#FF4500] active:bg-[#FF4500]/10 font-teko text-2xl text-[#FF4500] transition flex-shrink-0 flex items-center justify-center" data-testid={`${testid}-minus`}>−</button>
         <input
           type="number"
           inputMode="decimal"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-[#0A0A10] border border-[#1A1A24] text-center font-chakra text-2xl text-white flex-1 min-w-0 outline-none focus:border-[#00BFFF] transition"
+          className="bg-[#0A0A10] border border-[#1A1A24] text-center font-chakra text-2xl text-white flex-1 min-w-0 outline-none focus:border-[#FF4500] transition"
           style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "20px", lineHeight: "1" }}
           data-testid={testid}
         />
-        <button onClick={() => onChange(Number(value) + step)} className="w-12 sm:w-14 border border-[#1A1A24] hover:border-[#00BFFF] active:bg-[#00BFFF]/10 font-teko text-2xl text-[#00BFFF] transition flex-shrink-0 flex items-center justify-center" data-testid={`${testid}-plus`}>+</button>
+        <button onClick={() => onChange(Number(value) + step)} className="w-12 sm:w-14 border border-[#1A1A24] hover:border-[#FF4500] active:bg-[#FF4500]/10 font-teko text-2xl text-[#FF4500] transition flex-shrink-0 flex items-center justify-center" data-testid={`${testid}-plus`}>+</button>
       </div>
     </div>
   );
@@ -388,8 +388,8 @@ function FullScreenLoader({ text }) {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="text-center">
-        <Loader2 size={40} className="animate-spin text-[#00BFFF] mx-auto" />
-        <div className="font-teko text-2xl tracking-widest text-[#00BFFF] mt-4 glow-text">{text}</div>
+        <Loader2 size={40} className="animate-spin text-[#FF4500] mx-auto" />
+        <div className="font-teko text-2xl tracking-widest text-[#FF4500] mt-4 glow-text">{text}</div>
       </div>
     </div>
   );
@@ -401,8 +401,8 @@ function CompleteView({ newBadges, newPRs = [], onClose }) {
       <div className="absolute inset-0 bg-grid opacity-30" />
       <div className="absolute inset-0 bg-radial-blue" />
       <div className="relative z-10 text-center max-w-xl w-full" data-testid="workout-complete-view">
-        <Trophy size={64} className="mx-auto text-[#00E5FF] sm:hidden" style={{ filter: "drop-shadow(0 0 24px rgba(0,229,255,1))" }} />
-        <Trophy size={80} className="mx-auto text-[#00E5FF] hidden sm:block" style={{ filter: "drop-shadow(0 0 24px rgba(0,229,255,1))" }} />
+        <Trophy size={64} className="mx-auto text-[#FF5A1F] sm:hidden" style={{ filter: "drop-shadow(0 0 24px rgba(255,90,31,1))" }} />
+        <Trophy size={80} className="mx-auto text-[#FF5A1F] hidden sm:block" style={{ filter: "drop-shadow(0 0 24px rgba(255,90,31,1))" }} />
         <h1 className="font-teko text-4xl sm:text-6xl lg:text-7xl mt-4 electric-text glow-text leading-[0.95] tracking-wide">
           TRAINING<br />ABGESCHLOSSEN
         </h1>

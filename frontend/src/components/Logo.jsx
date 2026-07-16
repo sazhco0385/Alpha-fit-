@@ -10,7 +10,7 @@ export default function Logo({ size = 40, withText = true, square = false, pulse
           width: size,
           height: size,
           objectFit: "contain",
-          filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))",
+          filter: "drop-shadow(0 0 12px rgba(255,69,0,0.6))",
         }}
         data-testid="alphafit-logo"
       />
@@ -26,7 +26,7 @@ export default function Logo({ size = 40, withText = true, square = false, pulse
           width: size,
           height: size,
           objectFit: "contain",
-          filter: "drop-shadow(0 0 12px rgba(0,191,255,0.65))",
+          filter: "drop-shadow(0 0 12px rgba(255,69,0,0.65))",
         }}
       />
       {withText && (

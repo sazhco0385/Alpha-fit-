@@ -64,7 +64,7 @@ export default function BodyWeight() {
     }
   };
 
-  if (loading) return <Layout><div className="text-center py-12 text-[#00BFFF]"><Loader2 size={28} className="inline animate-spin mr-2" />Lade...</div></Layout>;
+  if (loading) return <Layout><div className="text-center py-12 text-[#FF4500]"><Loader2 size={28} className="inline animate-spin mr-2" />Lade...</div></Layout>;
 
   const latest = data?.latest;
   const stats = data?.stats || {};
@@ -77,16 +77,16 @@ export default function BodyWeight() {
     <Layout>
       <div className="mb-5">
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text flex items-center gap-2">
-          <Scale className="text-[#00BFFF]" size={28} /> KÖRPERGEWICHT
+          <Scale className="text-[#FF4500]" size={28} /> KÖRPERGEWICHT
         </h1>
         <p className="prose-af font-chakra text-sm mt-1">Tracke deinen Fortschritt. Jeden Morgen ein Eintrag genügt.</p>
       </div>
 
       {/* Current weight + Quick log */}
       <div className="af-card p-5 clip-corner-tl-br mb-5 tracing-border" data-testid="current-weight">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-[#00BFFF] font-chakra mb-2">Aktuell</div>
+        <div className="text-[10px] uppercase tracking-[0.3em] text-[#FF4500] font-chakra mb-2">Aktuell</div>
         <div className="flex items-end justify-between gap-3 mb-4">
-          <div className="font-teko text-6xl sm:text-7xl electric-text leading-none" style={{filter: "drop-shadow(0 0 16px rgba(0,229,255,0.5))"}}>
+          <div className="font-teko text-6xl sm:text-7xl electric-text leading-none" style={{filter: "drop-shadow(0 0 16px rgba(255,90,31,0.5))"}}>
             {latest ? latest.weight_kg.toFixed(1) : "—"}
             <span className="text-2xl sm:text-3xl ml-2 text-gray-500">kg</span>
           </div>
@@ -142,13 +142,13 @@ export default function BodyWeight() {
               <XAxis dataKey="date" stroke="#666" tick={{ fontSize: 10 }} />
               <YAxis stroke="#666" tick={{ fontSize: 10 }} domain={["auto", "auto"]} />
               <Tooltip
-                contentStyle={{ background: "#03030A", border: "1px solid #00BFFF", fontSize: 12 }}
-                labelStyle={{ color: "#00E5FF" }}
+                contentStyle={{ background: "#03030A", border: "1px solid #FF4500", fontSize: 12 }}
+                labelStyle={{ color: "#FF5A1F" }}
                 formatter={(v) => [`${v} kg`, "Gewicht"]}
               />
-              <Line type="monotone" dataKey="weight" stroke="#00E5FF" strokeWidth={2}
-                dot={{ fill: "#00E5FF", r: 3 }} activeDot={{ r: 5, fill: "#00BFFF" }}
-                style={{ filter: "drop-shadow(0 0 4px rgba(0,229,255,0.5))" }} />
+              <Line type="monotone" dataKey="weight" stroke="#FF5A1F" strokeWidth={2}
+                dot={{ fill: "#FF5A1F", r: 3 }} activeDot={{ r: 5, fill: "#FF4500" }}
+                style={{ filter: "drop-shadow(0 0 4px rgba(255,90,31,0.5))" }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -206,7 +206,7 @@ function DeltaStat({ label, delta }) {
   let Icon = Minus;
   let color = "#666";
   if (hasData && delta > 0) { Icon = TrendingUp; color = "#FF5722"; }
-  else if (hasData && delta < 0) { Icon = TrendingDown; color = "#00E5FF"; }
+  else if (hasData && delta < 0) { Icon = TrendingDown; color = "#FF5A1F"; }
   return (
     <div className="af-card p-3" data-testid={`stat-${label.toLowerCase().replace(/\s+/g, "-")}`}>
       <div className="text-[10px] uppercase tracking-widest text-gray-500 font-chakra mb-1">{label}</div>
@@ -226,7 +226,7 @@ function GoalCard({ goal, onOpen, hasWeight }) {
       <button
         onClick={onOpen}
         disabled={!hasWeight}
-        className="af-card p-4 mb-5 w-full text-left clip-corner-tl-br border border-dashed border-[#1A1A24] hover:border-[#00BFFF]/50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        className="af-card p-4 mb-5 w-full text-left clip-corner-tl-br border border-dashed border-[#1A1A24] hover:border-[#FF4500]/50 transition disabled:opacity-40 disabled:cursor-not-allowed"
         data-testid="set-goal-cta"
       >
         <div className="flex items-center gap-3">
@@ -248,7 +248,7 @@ function GoalCard({ goal, onOpen, hasWeight }) {
   const reached = goal.reached;
   const direction = goal.direction;
   const directionLabel = direction === "lose" ? "ABNEHMEN" : direction === "gain" ? "ZUNEHMEN" : "HALTEN";
-  const directionColor = reached ? "#00E5FF" : (direction === "lose" ? "#00E5FF" : direction === "gain" ? "#FFD740" : "#9E9E9E");
+  const directionColor = reached ? "#FF5A1F" : (direction === "lose" ? "#FF5A1F" : direction === "gain" ? "#FFD740" : "#9E9E9E");
 
   return (
     <div className="af-card p-4 mb-5 clip-corner-tl-br" data-testid="goal-card">
@@ -262,7 +262,7 @@ function GoalCard({ goal, onOpen, hasWeight }) {
             </div>
           </div>
         </div>
-        <button onClick={onOpen} className="text-gray-500 hover:text-[#00BFFF] p-1 transition" data-testid="edit-goal-btn">
+        <button onClick={onOpen} className="text-gray-500 hover:text-[#FF4500] p-1 transition" data-testid="edit-goal-btn">
           <Edit3 size={14} />
         </button>
       </div>
@@ -273,8 +273,8 @@ function GoalCard({ goal, onOpen, hasWeight }) {
           style={{
             width: `${pct}%`,
             background: reached
-              ? "linear-gradient(90deg, #00E5FF, #FFD700)"
-              : `linear-gradient(90deg, #00BFFF, ${directionColor})`,
+              ? "linear-gradient(90deg, #FF5A1F, #FFD700)"
+              : `linear-gradient(90deg, #FF4500, ${directionColor})`,
             boxShadow: `0 0 8px ${directionColor}66`,
           }}
         />
@@ -283,7 +283,7 @@ function GoalCard({ goal, onOpen, hasWeight }) {
       <div className="flex items-center justify-between text-xs font-chakra">
         <div className="text-gray-400">
           {reached ? (
-            <span className="text-[#00E5FF] font-bold flex items-center gap-1"><CheckCircle2 size={12} /> ZIEL ERREICHT 🎉</span>
+            <span className="text-[#FF5A1F] font-bold flex items-center gap-1"><CheckCircle2 size={12} /> ZIEL ERREICHT 🎉</span>
           ) : (
             <>Noch <span className="text-white font-bold">{Math.abs(goal.remaining_kg).toFixed(1)} kg</span> zu gehen</>
           )}

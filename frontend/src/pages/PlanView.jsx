@@ -154,7 +154,7 @@ export default function PlanView() {
     setDraft((prev) => ({ ...prev, days: prev.days.map((d, i) => i === dayIdx ? { ...d, name: value } : d) }));
   };
 
-  if (loading) return <Layout><div className="text-center py-12 text-[#00BFFF] font-teko text-2xl">Lade...</div></Layout>;
+  if (loading) return <Layout><div className="text-center py-12 text-[#FF4500] font-teko text-2xl">Lade...</div></Layout>;
 
   const displayPlan = editMode ? draft : plan;
 
@@ -213,14 +213,14 @@ export default function PlanView() {
       </div>
 
       {plan?.source === "auto_weekly" && !editMode && (
-        <div className="af-card p-4 sm:p-5 mb-5 border-[#00BFFF] glow-box" data-testid="plan-auto-banner">
+        <div className="af-card p-4 sm:p-5 mb-5 border-[#FF4500] glow-box" data-testid="plan-auto-banner">
           <div className="flex items-start gap-3">
-            <Sparkles size={20} className="text-[#00BFFF] flex-shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.7))" }} />
+            <Sparkles size={20} className="text-[#FF4500] flex-shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 8px rgba(255,69,0,0.7))" }} />
             <div>
               <div className="font-teko text-xl sm:text-2xl chrome-text">AUTOMATISCH ANGEPASST</div>
               <p className="prose-af font-chakra text-sm mt-1">
                 Du hast eine komplette Woche durchgezogen — Coach hat deinen Plan automatisch
-                an deine Performance angepasst. <strong className="text-[#00BFFF]">Werde alpha.</strong>
+                an deine Performance angepasst. <strong className="text-[#FF4500]">Werde alpha.</strong>
               </p>
             </div>
           </div>
@@ -228,11 +228,11 @@ export default function PlanView() {
       )}
 
       {editMode && (
-        <div className="af-card p-4 mb-5 border-[#00BFFF]/40" data-testid="plan-edit-banner">
+        <div className="af-card p-4 mb-5 border-[#FF4500]/40" data-testid="plan-edit-banner">
           <div className="flex items-start gap-3">
-            <Pencil size={18} className="text-[#00BFFF] flex-shrink-0 mt-0.5" />
+            <Pencil size={18} className="text-[#FF4500] flex-shrink-0 mt-0.5" />
             <div className="font-chakra text-sm prose-af">
-              <strong className="text-[#00BFFF]">Bearbeitungsmodus.</strong> Tippe auf eine Übung um Sets/Reps/Gewicht/Pause zu ändern.
+              <strong className="text-[#FF4500]">Bearbeitungsmodus.</strong> Tippe auf eine Übung um Sets/Reps/Gewicht/Pause zu ändern.
               Mit „+ ÜBUNG&quot; Übungen hinzufügen, mit dem Mülleimer-Icon entfernen.
               Speichern erzeugt eine neue Plan-Version.
             </div>
@@ -245,7 +245,7 @@ export default function PlanView() {
           <div key={day.day_index} className="af-card p-4 sm:p-6 clip-corner-tl-br" data-testid={`plan-detail-day-${day.day_index}`}>
             <div className="flex items-center justify-between mb-4 sm:mb-5 flex-wrap gap-3">
               <div className="min-w-0 flex-1">
-                <div className="text-[10px] sm:text-xs text-[#00BFFF] uppercase tracking-widest font-chakra">TAG {day.day_index}</div>
+                <div className="text-[10px] sm:text-xs text-[#FF4500] uppercase tracking-widest font-chakra">TAG {day.day_index}</div>
                 {editMode ? (
                   <input
                     value={day.name}
@@ -277,7 +277,7 @@ export default function PlanView() {
                 <button
                   key={i}
                   onClick={() => setVideoEx({ name: ex.name, target_muscle: ex.target_muscle })}
-                  className="w-full flex items-center gap-3 sm:gap-4 p-2 sm:p-3 bg-[#0A0A10] border border-[#1A1A24] hover:border-[#00BFFF]/60 hover:bg-[#00BFFF]/5 transition text-left group"
+                  className="w-full flex items-center gap-3 sm:gap-4 p-2 sm:p-3 bg-[#0A0A10] border border-[#1A1A24] hover:border-[#FF4500]/60 hover:bg-[#FF4500]/5 transition text-left group"
                   data-testid={`exercise-${day.day_index}-${i}`}
                   title="Tutorial-Video ansehen"
                 >
@@ -289,7 +289,7 @@ export default function PlanView() {
                       className="w-12 h-12 sm:w-16 sm:h-16 object-cover border border-[#1A1A24]"
                     />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/60 transition">
-                      <PlayCircle size={22} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 6px rgba(0,191,255,0.8))" }} />
+                      <PlayCircle size={22} className="text-[#FF4500]" style={{ filter: "drop-shadow(0 0 6px rgba(255,69,0,0.8))" }} />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -322,16 +322,16 @@ export default function PlanView() {
                     </button>
                   </div>
                   {pickerOpen?.dayIdx === dayIdx && (
-                    <div className="af-card p-3 border-[#00BFFF]/40 max-h-72 overflow-y-auto" data-testid={`exercise-picker-${day.day_index}`}>
+                    <div className="af-card p-3 border-[#FF4500]/40 max-h-72 overflow-y-auto" data-testid={`exercise-picker-${day.day_index}`}>
                       {(suggestions || []).map((g) => (
                         <div key={g.muscle} className="mb-3 last:mb-0">
-                          <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra mb-1">{g.muscle}</div>
+                          <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra mb-1">{g.muscle}</div>
                           <div className="flex flex-wrap gap-1">
                             {g.exercises.map((name) => (
                               <button
                                 key={name}
                                 onClick={() => addExerciseFromPicker(dayIdx, name, g.muscle)}
-                                className="text-[11px] px-2 py-1 border border-[#1A1A24] hover:border-[#00BFFF] hover:bg-[#00BFFF]/10 transition font-chakra"
+                                className="text-[11px] px-2 py-1 border border-[#1A1A24] hover:border-[#FF4500] hover:bg-[#FF4500]/10 transition font-chakra"
                                 data-testid={`pick-${name.replace(/\s+/g, '-')}`}
                               >
                                 {name}
@@ -363,9 +363,9 @@ export default function PlanView() {
 function EditableExerciseRow({ ex, onChange, onRemove, testid }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <div className="bg-[#0A0A10] border border-[#1A1A24] hover:border-[#00BFFF]/40 transition" data-testid={testid}>
+    <div className="bg-[#0A0A10] border border-[#1A1A24] hover:border-[#FF4500]/40 transition" data-testid={testid}>
       <div className="flex items-center gap-2 p-2 sm:p-3">
-        <button onClick={() => setExpanded((v) => !v)} className="text-[#00BFFF] flex-shrink-0" data-testid={`${testid}-expand`}>
+        <button onClick={() => setExpanded((v) => !v)} className="text-[#FF4500] flex-shrink-0" data-testid={`${testid}-expand`}>
           <ChevronDown size={16} className={expanded ? "rotate-180 transition" : "transition"} />
         </button>
         <input

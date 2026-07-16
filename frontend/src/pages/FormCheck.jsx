@@ -105,19 +105,19 @@ export default function FormCheck() {
       <Header />
 
       {/* Disclaimer */}
-      <div className="border border-[#00BFFF]/30 bg-[#00BFFF]/5 p-3 sm:p-4 mb-5 sm:mb-6 flex gap-3 items-start" data-testid="formcheck-disclaimer">
-        <ShieldAlert size={18} className="text-[#00BFFF] flex-shrink-0 mt-0.5" />
+      <div className="border border-[#FF4500]/30 bg-[#FF4500]/5 p-3 sm:p-4 mb-5 sm:mb-6 flex gap-3 items-start" data-testid="formcheck-disclaimer">
+        <ShieldAlert size={18} className="text-[#FF4500] flex-shrink-0 mt-0.5" />
         <div className="text-xs sm:text-sm text-body font-chakra leading-relaxed">
-          <strong className="text-[#00BFFF]">Hinweis:</strong> Foto-basierte Form-Analyse ist eine
+          <strong className="text-[#FF4500]">Hinweis:</strong> Foto-basierte Form-Analyse ist eine
           KI-Einschätzung, kein medizinischer/physiotherapeutischer Rat. Bei Schmerzen sofort abbrechen.
-          Dein Foto wird <strong className="text-[#00BFFF]">nicht gespeichert</strong>.
+          Dein Foto wird <strong className="text-[#FF4500]">nicht gespeichert</strong>.
         </div>
       </div>
 
       {/* Setup + Upload */}
       <div className="af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6" data-testid="formcheck-upload">
         <div className="flex items-center gap-3 mb-3">
-          <Sparkles size={20} className="text-[#00BFFF]" />
+          <Sparkles size={20} className="text-[#FF4500]" />
           <h2 className="font-teko text-2xl sm:text-3xl chrome-text">NEUER FORM-CHECK</h2>
         </div>
 
@@ -141,7 +141,7 @@ export default function FormCheck() {
           value={notes}
           onChange={(e) => setNotes(e.target.value.slice(0, 300))}
           placeholder="Notiz (optional): z.B. 'Phase: Stange auf Brust'"
-          className="w-full bg-black border border-[#1A1A24] focus:border-[#00BFFF] outline-none p-3 text-sm font-chakra text-white mb-3 resize-none transition"
+          className="w-full bg-black border border-[#1A1A24] focus:border-[#FF4500] outline-none p-3 text-sm font-chakra text-white mb-3 resize-none transition"
           rows={2}
           data-testid="formcheck-notes-input"
         />
@@ -154,13 +154,13 @@ export default function FormCheck() {
         >
           {analyzing ? (
             <>
-              <Loader2 size={36} className="mx-auto animate-spin text-[#00BFFF]" />
+              <Loader2 size={36} className="mx-auto animate-spin text-[#FF4500]" />
               <div className="font-teko text-xl mt-3 chrome-text">ANALYSIERE FORM...</div>
               <div className="text-[10px] text-gray-500 font-chakra mt-1">KI prüft Technik, Haltung, Risiko</div>
             </>
           ) : (
             <>
-              <Camera size={36} className="mx-auto text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 10px rgba(0,191,255,0.6))" }} />
+              <Camera size={36} className="mx-auto text-[#FF4500]" style={{ filter: "drop-shadow(0 0 10px rgba(255,69,0,0.6))" }} />
               <div className="font-teko text-xl mt-3 chrome-text">FOTO HOCHLADEN</div>
               <div className="text-[10px] text-gray-500 font-chakra mt-1">{exercise.trim() ? "Foto während der Übung aufnehmen" : "Erst Übung eingeben"}</div>
             </>
@@ -184,7 +184,7 @@ export default function FormCheck() {
       <div className="af-card p-4 sm:p-6 clip-corner-tl-br" data-testid="formcheck-history">
         <h2 className="font-teko text-2xl sm:text-3xl chrome-text mb-4">VERLAUF ({history.length})</h2>
         {loadingHist ? (
-          <div className="text-center py-6"><Loader2 size={24} className="animate-spin text-[#00BFFF] mx-auto" /></div>
+          <div className="text-center py-6"><Loader2 size={24} className="animate-spin text-[#FF4500] mx-auto" /></div>
         ) : history.length === 0 ? (
           <div className="text-body-muted font-chakra py-6 text-sm text-center">
             Noch keine Form-Checks. Lade dein erstes Foto hoch!
@@ -194,7 +194,7 @@ export default function FormCheck() {
             {history.map((c) => (
               <div key={c.id}
                 className={`border p-3 sm:p-4 flex items-center gap-3 transition cursor-pointer ${
-                  current?.id === c.id ? "border-[#00BFFF] bg-[#00BFFF]/5 glow-box" : "border-[#1A1A24] hover:border-[#00BFFF]/50"
+                  current?.id === c.id ? "border-[#FF4500] bg-[#FF4500]/5 glow-box" : "border-[#1A1A24] hover:border-[#FF4500]/50"
                 }`}
                 onClick={() => { setCurrent(c); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                 data-testid={`formcheck-history-item-${c.id}`}
@@ -208,7 +208,7 @@ export default function FormCheck() {
                     {formatDate(c.created_at)} · Sicherheit {c.safety_score}/10
                   </div>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); setCurrent(c); }} className="text-gray-500 hover:text-[#00BFFF] p-2" aria-label="Details">
+                <button onClick={(e) => { e.stopPropagation(); setCurrent(c); }} className="text-gray-500 hover:text-[#FF4500] p-2" aria-label="Details">
                   <ChevronRight size={18} />
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); deleteCheck(c.id); }} className="text-gray-500 hover:text-red-400 p-2" aria-label="Löschen">
@@ -226,21 +226,21 @@ export default function FormCheck() {
 function Header() {
   return (
     <div className="flex items-center gap-3 mb-5 sm:mb-6 flex-wrap">
-      <Activity size={28} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
+      <Activity size={28} className="text-[#FF4500]" style={{ filter: "drop-shadow(0 0 12px rgba(255,69,0,0.6))" }} />
       <h1 className="font-teko text-3xl sm:text-5xl chrome-text">FORM-CHECK</h1>
-      <span className="text-[10px] text-[#00BFFF] border border-[#00BFFF]/50 px-2 py-0.5 font-chakra uppercase tracking-widest">PREMIUM</span>
+      <span className="text-[10px] text-[#FF4500] border border-[#FF4500]/50 px-2 py-0.5 font-chakra uppercase tracking-widest">PREMIUM</span>
     </div>
   );
 }
 
 function ResultCard({ check, highlighted }) {
   return (
-    <div className={`af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6 ${highlighted ? "glow-box border-[#00BFFF]" : ""}`} data-testid="formcheck-result">
+    <div className={`af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6 ${highlighted ? "glow-box border-[#FF4500]" : ""}`} data-testid="formcheck-result">
       <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
         <div>
           <div className="text-[10px] text-gray-500 uppercase tracking-widest font-chakra">ERGEBNIS · {formatDate(check.created_at)}</div>
           <div className="font-teko text-2xl sm:text-3xl chrome-text">{check.exercise_recognized || check.exercise_name}</div>
-          {check.phase && <div className="text-xs text-[#00BFFF] font-chakra mt-1">Phase: {check.phase}</div>}
+          {check.phase && <div className="text-xs text-[#FF4500] font-chakra mt-1">Phase: {check.phase}</div>}
         </div>
         <div className="flex gap-3">
           <ScoreBadge label="TECHNIK" value={check.form_score} />
@@ -250,10 +250,10 @@ function ResultCard({ check, highlighted }) {
 
       {/* Primary correction */}
       {check.primary_correction && (
-        <div className="border border-[#00BFFF]/40 bg-[#00BFFF]/5 p-3 sm:p-4 mb-4 flex items-start gap-3">
-          <Target size={18} className="text-[#00BFFF] flex-shrink-0 mt-0.5" />
+        <div className="border border-[#FF4500]/40 bg-[#FF4500]/5 p-3 sm:p-4 mb-4 flex items-start gap-3">
+          <Target size={18} className="text-[#FF4500] flex-shrink-0 mt-0.5" />
           <div>
-            <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra">WICHTIGSTE KORREKTUR</div>
+            <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra">WICHTIGSTE KORREKTUR</div>
             <div className="font-teko text-xl sm:text-2xl chrome-text mt-0.5">{check.primary_correction}</div>
           </div>
         </div>
@@ -287,14 +287,14 @@ function ResultCard({ check, highlighted }) {
       </div>
 
       {/* Tips */}
-      <div className="border border-[#00BFFF]/30 bg-[#00BFFF]/5 p-3 sm:p-4" data-testid="formcheck-tips">
-        <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra mb-2 flex items-center gap-1">
+      <div className="border border-[#FF4500]/30 bg-[#FF4500]/5 p-3 sm:p-4" data-testid="formcheck-tips">
+        <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra mb-2 flex items-center gap-1">
           <Sparkles size={12} /> KI-TIPPS
         </div>
         <ul className="space-y-2">
           {(check.tips || []).map((s, i) => (
             <li key={i} className="prose-af font-chakra flex items-start gap-2">
-              <Eye size={14} className="text-[#00BFFF] mt-1 flex-shrink-0" />
+              <Eye size={14} className="text-[#FF4500] mt-1 flex-shrink-0" />
               <span>{s}</span>
             </li>
           ))}
@@ -318,7 +318,7 @@ function ScoreBadge({ label, value }) {
 
 function scoreToColor(score) {
   if (score >= 8) return "border-green-400 text-green-400";
-  if (score >= 5) return "border-[#00BFFF] text-[#00BFFF]";
+  if (score >= 5) return "border-[#FF4500] text-[#FF4500]";
   return "border-orange-400 text-orange-400";
 }
 

@@ -226,7 +226,7 @@ export default function WeekSchedule({ plan, sessions, onStartDay }) {
                   data-testid={`edit-day-${d}`}
                   className={`aspect-square rounded-md border transition font-chakra text-xs sm:text-sm ${
                     on
-                      ? "bg-[#00BFFF]/20 border-[#00BFFF] text-[#00BFFF] shadow-[0_0_10px_rgba(0,191,255,0.4)]"
+                      ? "bg-[#FF4500]/20 border-[#FF4500] text-[#FF4500] shadow-[0_0_10px_rgba(255,69,0,0.4)]"
                       : "border-gray-700 text-gray-500 hover:border-gray-500"
                   }`}
                 >
@@ -273,12 +273,12 @@ export default function WeekSchedule({ plan, sessions, onStartDay }) {
                   if (isTrainingDay && planDay && !isCompletedThisWeek && isToday && !dragging) onStartDay?.(planDay.day_index);
                 }}
                 className={`af-card relative p-2 sm:p-3 flex flex-col items-center justify-between text-center min-h-[96px] transition ${
-                  isToday ? "ring-1 ring-[#00BFFF] shadow-[0_0_14px_rgba(0,191,255,0.35)]" : ""
+                  isToday ? "ring-1 ring-[#FF4500] shadow-[0_0_14px_rgba(255,69,0,0.35)]" : ""
                 } ${isDropHover ? "ring-2 ring-[#00FF7F] shadow-[0_0_16px_rgba(0,255,127,0.5)]" : ""} ${
-                  isTrainingDay ? "cursor-pointer hover:border-[#00BFFF]" : "opacity-70"
+                  isTrainingDay ? "cursor-pointer hover:border-[#FF4500]" : "opacity-70"
                 }`}
               >
-                <div className={`text-[10px] font-chakra uppercase tracking-widest ${isToday ? "text-[#00BFFF]" : "text-gray-500"}`}>
+                <div className={`text-[10px] font-chakra uppercase tracking-widest ${isToday ? "text-[#FF4500]" : "text-gray-500"}`}>
                   {lbl}
                 </div>
                 {isTrainingDay && planDay ? (
@@ -294,7 +294,7 @@ export default function WeekSchedule({ plan, sessions, onStartDay }) {
                   >
                     <div className="flex items-center gap-0.5 text-gray-500">
                       <GripVertical size={10} />
-                      <Dumbbell size={16} className={isCompletedThisWeek ? "text-[#00FF7F]" : "text-[#00BFFF]"} />
+                      <Dumbbell size={16} className={isCompletedThisWeek ? "text-[#00FF7F]" : "text-[#FF4500]"} />
                     </div>
                     <div className={`text-[10px] sm:text-[11px] font-chakra leading-tight break-words px-1 ${isCompletedThisWeek ? "text-[#00FF7F]" : "text-gray-300"}`}>
                       {isCompletedThisWeek ? "GESCHAFFT" : (planDay.focus || `T${planDay.day_index}`)}
