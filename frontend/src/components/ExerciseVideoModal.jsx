@@ -27,13 +27,13 @@ export default function ExerciseVideoModal({ exerciseName, muscle, onClose }) {
       data-testid="video-modal-backdrop"
     >
       <div
-        className="bg-[#05050A] border border-[#FF4500]/40 w-full sm:max-w-3xl sm:rounded-lg overflow-hidden"
+        className="bg-[#05050A] border border-[#00BFFF]/40 w-full sm:max-w-3xl sm:rounded-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         data-testid="video-modal"
       >
         <div className="flex items-center justify-between p-3 sm:p-4 border-b border-[#1A1A24]">
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] sm:text-xs text-[#FF4500] uppercase tracking-widest font-chakra">
+            <div className="text-[10px] sm:text-xs text-[#00BFFF] uppercase tracking-widest font-chakra">
               {muscle || "Übung"}
             </div>
             <div className="font-teko text-xl sm:text-2xl chrome-text truncate" data-testid="video-modal-title">
@@ -64,7 +64,7 @@ export default function ExerciseVideoModal({ exerciseName, muscle, onClose }) {
           </div>
         ) : (
           <div className="p-8 text-center" data-testid="video-modal-no-curated">
-            <PlayCircle size={48} className="mx-auto text-[#FF4500]/40 mb-3" />
+            <PlayCircle size={48} className="mx-auto text-[#00BFFF]/40 mb-3" />
             <div className="font-teko text-xl chrome-text mb-2">Kein kuratiertes Video</div>
             <p className="prose-af font-chakra text-sm mb-5">
               Für diese Übung haben wir noch kein Video. Du kannst direkt auf YouTube suchen.
@@ -90,7 +90,7 @@ export default function ExerciseVideoModal({ exerciseName, muscle, onClose }) {
               href={`https://www.youtube.com/watch?v=${embedUrl.split("/embed/")[1]?.split("?")[0]}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#FF4500] hover:text-[#80DFFF] text-xs font-chakra inline-flex items-center gap-1"
+              className="text-[#00BFFF] hover:text-[#80DFFF] text-xs font-chakra inline-flex items-center gap-1"
               data-testid="video-modal-open-yt"
             >
               In YouTube öffnen <ExternalLink size={11} />

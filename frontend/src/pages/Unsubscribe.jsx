@@ -91,7 +91,7 @@ export default function Unsubscribe() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#05050A] flex items-center justify-center px-4">
-        <Loader2 className="animate-spin text-[#FF4500]" size={32} />
+        <Loader2 className="animate-spin text-[#00BFFF]" size={32} />
       </div>
     );
   }
@@ -114,7 +114,7 @@ export default function Unsubscribe() {
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <div className="font-teko text-5xl chrome-text tracking-widest mb-1">ALPHA-FIT</div>
-          <div className="text-[10px] tracking-[3px] text-[#FF4500]/70 uppercase">Email-Einstellungen</div>
+          <div className="text-[10px] tracking-[3px] text-[#00BFFF]/70 uppercase">Email-Einstellungen</div>
         </div>
 
         <div className="af-card p-5 sm:p-6 mb-5" data-testid="unsub-card">
@@ -145,7 +145,7 @@ export default function Unsubscribe() {
                 aria-checked={!!prefs?.[t.key]}
                 disabled={saving}
                 className={`w-full flex items-start gap-3 p-3 border transition text-left ${
-                  prefs?.[t.key] ? "border-[#FF4500] bg-[#FF4500]/5" : "border-[#1A1A24] hover:border-[#FF4500]/40"
+                  prefs?.[t.key] ? "border-[#00BFFF] bg-[#00BFFF]/5" : "border-[#1A1A24] hover:border-[#00BFFF]/40"
                 }`}
                 data-testid={`unsub-toggle-${t.key}`}
               >
@@ -154,7 +154,7 @@ export default function Unsubscribe() {
                   <div className="text-xs text-gray-400 font-chakra mt-1">{t.desc}</div>
                 </div>
                 <div className={`w-12 h-7 flex-shrink-0 rounded-full p-0.5 transition ${
-                  prefs?.[t.key] ? "bg-[#FF4500]" : "bg-[#1A1A24]"
+                  prefs?.[t.key] ? "bg-[#00BFFF]" : "bg-[#1A1A24]"
                 }`}>
                   <div className={`w-6 h-6 rounded-full bg-white transition ${
                     prefs?.[t.key] ? "translate-x-5" : "translate-x-0"
@@ -176,9 +176,9 @@ export default function Unsubscribe() {
         </button>
 
         <div className="text-center mt-8 text-xs text-gray-500 font-chakra">
-          <Link to="/" className="hover:text-[#FF4500] transition">Zurück zur Startseite</Link>
+          <Link to="/" className="hover:text-[#00BFFF] transition">Zurück zur Startseite</Link>
           <span className="mx-2 opacity-50">·</span>
-          <Link to="/settings" className="hover:text-[#FF4500] transition">Vollständige Einstellungen (Login nötig)</Link>
+          <Link to="/settings" className="hover:text-[#00BFFF] transition">Vollständige Einstellungen (Login nötig)</Link>
         </div>
       </div>
     </div>

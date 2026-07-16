@@ -95,10 +95,10 @@ export default function Premium() {
               <span className={`font-teko text-5xl sm:text-6xl ${p.popular ? "gold-chrome" : "chrome-text"}`}>{p.price}</span>
               <span className="text-body-muted font-chakra text-sm">{p.interval}</span>
             </div>
-            <div className={`font-chakra text-sm mt-1 ${p.popular ? "gold-text-soft" : "text-[#FF4500]"}`}>{p.desc}</div>
+            <div className={`font-chakra text-sm mt-1 ${p.popular ? "gold-text-soft" : "text-[#00BFFF]"}`}>{p.desc}</div>
             {p.save && <div className="text-[#00FF7F] font-chakra text-xs mt-1 uppercase tracking-widest">{p.save}</div>}
 
-            <div className="mt-5 mb-6 inline-flex items-center gap-2 px-3 py-1 border border-[#FF4500]/40 text-[#FF4500] text-xs font-chakra tracking-widest uppercase">
+            <div className="mt-5 mb-6 inline-flex items-center gap-2 px-3 py-1 border border-[#00BFFF]/40 text-[#00BFFF] text-xs font-chakra tracking-widest uppercase">
               <Zap size={12} /> 7 TAGE GRATIS
             </div>
 

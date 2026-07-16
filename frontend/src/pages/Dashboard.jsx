@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import CoachInsights from "../components/CoachInsights";
-import DailySummary from "../components/DailySummary";
 import WeekSchedule from "../components/WeekSchedule";
 import CollapsibleSection from "../components/CollapsibleSection";
+import DashboardHero from "../components/DashboardHero";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { Brain, Crown, Play, Calendar, Flame, RefreshCw, Loader2, Weight, Scan, BookOpen, Sparkles, TrendingUp, Activity } from "lucide-react";
+import { Brain, Crown, Play, Calendar, Flame, RefreshCw, Loader2, Weight, Scan, BookOpen, TrendingUp, ChevronRight, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -72,197 +72,233 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      {/* Hero greeting - High Impact, Oversized Typography */}
-      <div className="mb-8 sm:mb-12 mt-4" data-testid="dashboard-hero">
-        <div className="text-xs text-muted-foreground font-chakra uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
-          <Activity size={14} className="text-primary animate-pulse" /> SYSTEM ONLINE
-        </div>
-        <h1 className="font-teko text-5xl sm:text-7xl md:text-8xl tracking-tight text-foreground leading-none break-words uppercase">
-          ALPHA <span className="electric-text block sm:inline">{user?.name}</span>
-        </h1>
-      </div>
+      {/* ═══════════ HERO — Aurora + Greeting + Daily Quote ═══════════ */}
+      <DashboardHero
+        user={user}
+        streak={stats.current_streak}
+        onResume={activeSession ? () => navigate(`/workout/${activeSession.id}`) : null}
+        resumeLabel={activeSession ? `TRAINING FORTSETZEN · TAG ${activeSession.day_index}` : null}
+      />
 
-      {/* Grid Layout Strategy: Bento Grid Mode B (High Density) */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 mb-8">
-        
-        {/* Active Session - Hero Span */}
-        {activeSession && (
-          <div className="md:col-span-12 lg:col-span-8 af-card p-6 sm:p-8 tracing-border relative overflow-hidden group" data-testid="resume-banner">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-transform group-hover:scale-110"></div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
-              <div>
-                <div className="text-[11px] sm:text-xs text-primary uppercase tracking-[0.2em] font-chakra mb-2 font-semibold">Training Läuft</div>
-                <div className="font-teko text-3xl sm:text-4xl chrome-text uppercase mb-1">Setze dein Training fort</div>
-                <div className="text-muted-foreground text-sm font-chakra flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
-                  Tag {activeSession.day_index} <span className="text-border">/</span> {activeSession.logged_sets?.length || 0} Sätze geloggt
-                </div>
-              </div>
-              <button onClick={() => navigate(`/workout/${activeSession.id}`)} className="btn-primary flex-shrink-0" data-testid="resume-workout-btn">
-                <Play size={20} className="mr-2" fill="currentColor" /> FORTSETZEN
-              </button>
-            </div>
-          </div>
-        )}
+      {/* ═══════════ QUICK STATS — mobile-first row ═══════════ */}
+      <section className="grid grid-cols-3 gap-2 sm:gap-3 mb-6" data-testid="dashboard-stats-row">
+        <StatTile
+          icon={Flame}
+          label="Workouts"
+          value={stats.total_completed || 0}
+          testid="stat-workouts"
+        />
+        <StatTile
+          icon={Weight}
+          label="Volumen"
+          value={formatVolume(stats.total_volume_kg)}
+          testid="stat-volume"
+        />
+        <StatTile
+          icon={Crown}
+          label="Status"
+          value={user?.is_premium ? "PRO" : "FREE"}
+          highlight={user?.is_premium}
+          testid="stat-status"
+        />
+      </section>
 
-        {/* Streak Banner - Secondary Span */}
-        {stats.current_streak >= 3 && !activeSession && (
-          <div className="md:col-span-12 lg:col-span-8 af-card p-6 sm:p-8 relative overflow-hidden group" data-testid="streak-banner" style={{ borderColor: 'var(--af-primary)' }}>
-            <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors"></div>
-            <div className="relative flex items-center gap-5 z-10">
-              <div className="bg-primary/20 p-4 rounded-full">
-                <Flame size={40} className="text-primary" />
-              </div>
-              <div className="min-w-0">
-                <div className="font-teko text-3xl sm:text-4xl electric-text tracking-tight uppercase leading-none">{stats.current_streak}-TAGE STREAK</div>
-                <div className="text-sm text-muted-foreground font-chakra mt-1">Verliere deinen Fokus nicht.</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Quick Stats - Sidebar Spans */}
-        <div className="md:col-span-12 lg:col-span-4 grid grid-cols-2 gap-4">
-          <StatCard icon={Flame} label="Workouts" value={stats.total_completed} testid="stat-workouts" />
-          <StatCard icon={Calendar} label="Streak" value={stats.current_streak} highlight={stats.current_streak >= 3} testid="stat-streak" />
-          <StatCard icon={Weight} label="Volumen (kg)" value={formatVolume(stats.total_volume_kg)} testid="stat-volume" />
-          <StatCard icon={Crown} label="Status" value={user?.is_premium ? "PRO" : "FREE"} gold={user?.is_premium} testid="stat-status" />
-        </div>
-      </div>
-
-      {/* Week Schedule (Full Width Row) */}
-      <div className="mb-8">
+      {/* ═══════════ WEEK SCHEDULE ═══════════ */}
+      <div className="mb-6">
         <WeekSchedule plan={plan} sessions={sessions} onStartDay={startDay} />
       </div>
 
-      {/* Two Column Layout for Insights & Plan */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 sm:gap-8 mb-8">
-        
-        {/* Left Column: Plan View */}
-        <section className="xl:col-span-8">
-          <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-4">
-            <h2 className="font-teko text-3xl tracking-wide chrome-text m-0">DEIN PLAN</h2>
-            <div className="flex gap-2">
-              <button onClick={adjustPlan} disabled={regenerating} className="btn-outline px-3 py-1.5 min-h-[36px] text-xs flex items-center gap-1.5" data-testid="adjust-plan-btn">
-                {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                <span className="hidden sm:inline">KI ANPASSEN</span>
-              </button>
-              <button onClick={() => navigate("/plan")} className="btn-outline px-3 py-1.5 min-h-[36px] text-xs" data-testid="view-plan-btn">DETAILS</button>
-            </div>
-          </div>
-          
-          {adjustStatus && adjustStatus.status !== "no_plan" && (
-            <div className="mb-4 bg-secondary/50 border border-white/5 rounded p-3 flex items-center gap-3 text-xs font-chakra" data-testid="adjust-status-badge">
-              <div className="relative flex h-2 w-2">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${adjustStatus.status === 'ready' ? 'bg-[#39FF14]' : 'bg-primary'}`}></span>
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${adjustStatus.status === 'ready' ? 'bg-[#39FF14]' : 'bg-primary'}`}></span>
-              </div>
-              <span className="text-muted-foreground uppercase tracking-wider">SYSTEM STATUS:</span>
-              <span className="text-white font-medium">{adjustStatus.message}</span>
-            </div>
-          )}
+      {/* ═══════════ TRAINING PLAN ═══════════ */}
+      <section className="mb-6" data-testid="dashboard-plan-section">
+        <div className="dash-section-title">
+          <h2>DEIN PLAN</h2>
+          <button
+            onClick={() => navigate("/plan")}
+            className="text-[11px] font-chakra uppercase tracking-[0.25em] text-[#00BFFF] flex items-center gap-1 hover:text-white transition"
+            data-testid="view-plan-btn"
+          >
+            Details <ChevronRight size={12} />
+          </button>
+        </div>
 
-          {plan ? (
-            <div>
-              <div className="flex flex-col sm:flex-row sm:items-baseline gap-3 mb-6">
-                <h3 className="text-primary font-teko text-2xl m-0 leading-none">{plan.name}</h3>
-                <p className="text-muted-foreground text-sm font-chakra flex-1 sm:border-l sm:border-white/10 sm:pl-3">{plan.progression_notes}</p>
+        {plan && (
+          <>
+            <div className="text-[#00BFFF] font-teko text-lg sm:text-xl leading-tight mb-1">{plan.name}</div>
+            {plan.progression_notes && (
+              <p className="text-white/55 text-xs sm:text-sm font-chakra leading-relaxed mb-3">{plan.progression_notes}</p>
+            )}
+
+            {adjustStatus && adjustStatus.status !== "no_plan" && (
+              <div className="mb-3 flex items-center gap-2 text-[11px] font-chakra" data-testid="adjust-status-badge">
+                <span
+                  className="inline-block w-2 h-2 rounded-full"
+                  style={{
+                    background: adjustStatus.status === "ready" ? "#00FF7F" : adjustStatus.status === "cooldown" ? "#FFD740" : "#00BFFF",
+                    boxShadow: `0 0 8px ${adjustStatus.status === "ready" ? "#00FF7F" : adjustStatus.status === "cooldown" ? "#FFD740" : "#00BFFF"}`,
+                  }}
+                />
+                <span className="text-white/50">Nächste KI-Anpassung:</span>
+                <span className="text-white/80">{adjustStatus.message}</span>
               </div>
-              
-              <div className="grid md:grid-cols-2 gap-4">
-                {plan.days?.map((day) => (
-                  <div key={day.day_index} className="af-card p-5 group flex flex-col h-full" data-testid={`plan-day-${day.day_index}`}>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="text-xs text-muted-foreground font-chakra uppercase tracking-[0.2em]">TAG {day.day_index}</div>
-                      {day.focus && <span className="text-[10px] text-primary border border-primary/30 bg-primary/5 px-2 py-0.5 rounded-sm font-chakra uppercase tracking-widest">{day.focus}</span>}
-                    </div>
-                    <div className="font-teko text-2xl tracking-wide mb-2 text-white group-hover:electric-text transition-colors leading-none uppercase">{day.name}</div>
-                    <div className="text-sm text-muted-foreground font-chakra mb-6 flex-1 flex items-center gap-2">
-                      <Activity size={14} /> {day.exercises?.length || 0} Übungen
-                    </div>
-                    <button onClick={() => startDay(day.day_index)} className="btn-outline w-full hover:bg-primary hover:text-black hover:border-primary group-hover:border-primary/50" data-testid={`start-day-${day.day_index}`}>
-                      STARTEN
-                    </button>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {plan.days?.map((day) => (
+                <div
+                  key={day.day_index}
+                  className="af-card tile-3d p-4 clip-corner-tl-br"
+                  data-testid={`plan-day-${day.day_index}`}
+                >
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <div className="text-[10px] text-white/40 uppercase tracking-[0.3em] font-chakra">TAG {day.day_index}</div>
+                    {day.focus && (
+                      <span className="text-[9px] text-[#00BFFF] border border-[#00BFFF]/40 px-1.5 py-0.5 font-chakra uppercase tracking-widest rounded">
+                        {day.focus}
+                      </span>
+                    )}
                   </div>
-                ))}
-              </div>
+                  <div className="font-teko text-lg sm:text-xl tracking-wide chrome-text leading-tight mb-2 break-words">{day.name}</div>
+                  <div className="text-[11px] text-white/50 font-chakra mb-3 flex items-center gap-1">
+                    <Zap size={11} className="text-[#00BFFF]" /> {day.exercises?.length || 0} Übungen
+                  </div>
+                  <button
+                    onClick={() => startDay(day.day_index)}
+                    className="btn-primary w-full flex items-center justify-center gap-2 text-sm"
+                    data-testid={`start-day-${day.day_index}`}
+                  >
+                    <Play size={14} /> STARTEN
+                  </button>
+                </div>
+              ))}
             </div>
-          ) : (
-            <div className="af-card p-12 text-center border-dashed border-white/20">
-              <Brain size={48} className="mx-auto text-muted-foreground mb-4 opacity-50" />
-              <div className="text-muted-foreground font-chakra uppercase tracking-widest">Plan wird generiert...</div>
+
+            <div className="mt-3 flex gap-2 flex-wrap">
+              <button
+                onClick={adjustPlan}
+                disabled={regenerating}
+                className="btn-outline text-xs flex items-center gap-1.5"
+                data-testid="adjust-plan-btn"
+              >
+                {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                KI ANPASSEN
+              </button>
+              <button
+                onClick={() => navigate("/plan-history")}
+                className="btn-outline text-xs"
+                data-testid="plan-history-btn"
+              >
+                HISTORIE
+              </button>
             </div>
-          )}
-        </section>
-
-        {/* Right Column: Insights & Quick Actions */}
-        <section className="xl:col-span-4 flex flex-col gap-4">
-          <div className="flex flex-col gap-4">
-            <h2 className="font-teko text-2xl tracking-wide text-white m-0 border-b border-white/5 pb-2">COMMAND CENTER</h2>
-            <button onClick={() => navigate("/bodyscan")} className="af-card p-4 hover:border-primary group text-left flex items-center gap-4 transition-all" data-testid="dashboard-bodyscan-cta">
-              <div className="bg-white/5 p-3 rounded group-hover:bg-primary/10 group-hover:text-primary transition-colors text-white">
-                <Scan size={24} />
-              </div>
-              <div>
-                <div className="font-teko text-xl text-white uppercase tracking-wide leading-none mb-1">Body Scan</div>
-                <div className="text-xs text-muted-foreground font-chakra uppercase tracking-wider">KI-Analyse Starten</div>
-              </div>
-            </button>
-            
-            <button onClick={() => navigate("/library")} className="af-card p-4 hover:border-primary group text-left flex items-center gap-4 transition-all" data-testid="dashboard-library-cta">
-              <div className="bg-white/5 p-3 rounded group-hover:bg-primary/10 group-hover:text-primary transition-colors text-white">
-                <BookOpen size={24} />
-              </div>
-              <div>
-                <div className="font-teko text-xl text-white uppercase tracking-wide leading-none mb-1">Bibliothek</div>
-                <div className="text-xs text-muted-foreground font-chakra uppercase tracking-wider">Datenbank Öffnen</div>
-              </div>
-            </button>
+          </>
+        )}
+        {!plan && (
+          <div className="af-card p-8 text-center">
+            <Brain size={32} className="mx-auto text-[#00BFFF] mb-2" />
+            <div className="text-white/50 font-chakra">Plan wird generiert...</div>
           </div>
+        )}
+      </section>
 
-          <div className="mt-4">
-            <CollapsibleSection title="Alpha Coach" icon={Brain} hint="Wochen-Analyse" defaultOpen={true} storageKey="coach" testid="section-coach">
-              <CoachInsights compact />
-            </CollapsibleSection>
-          </div>
-          
-          <div className="mt-2">
-            <CollapsibleSection title="Heute" icon={Sparkles} hint="Kalorien · Gewicht" defaultOpen={false} storageKey="daily" testid="section-daily">
-              <DailySummary plan={plan} sessions={sessions} />
-            </CollapsibleSection>
-          </div>
-        </section>
+      {/* ═══════════ QUICK ACTIONS ═══════════ */}
+      <section className="grid grid-cols-2 gap-3 mb-6" data-testid="quick-actions">
+        <QuickAction
+          icon={Scan}
+          title="BODY SCAN"
+          subtitle="KI-Analyse"
+          onClick={() => navigate("/bodyscan")}
+          testid="dashboard-bodyscan-cta"
+        />
+        <QuickAction
+          icon={BookOpen}
+          title="BIBLIOTHEK"
+          subtitle="54 Übungen"
+          onClick={() => navigate("/library")}
+          testid="dashboard-library-cta"
+        />
+      </section>
 
-      </div>
+      {/* ═══════════ COLLAPSIBLE — Alpha Coach ═══════════ */}
+      <CollapsibleSection
+        title="Alpha Coach"
+        icon={Brain}
+        hint="Deine Wochen-Analyse"
+        defaultOpen={false}
+        storageKey="coach"
+        testid="section-coach"
+      >
+        <CoachInsights compact />
+      </CollapsibleSection>
+
+      {/* ═══════════ COLLAPSIBLE — Detail-Stats ═══════════ */}
+      <CollapsibleSection
+        title="Statistik"
+        icon={TrendingUp}
+        hint={`Streak ${stats.current_streak} · ${stats.total_completed} Workouts`}
+        defaultOpen={false}
+        storageKey="stats"
+        testid="section-stats"
+      >
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatCard icon={Flame} label="Workouts" value={stats.total_completed} testid="stat-workouts-detail" />
+          <StatCard icon={Calendar} label="Streak (Tage)" value={stats.current_streak} highlight={stats.current_streak >= 3} testid="stat-streak-detail" />
+          <StatCard icon={Weight} label="Volumen (kg)" value={formatVolume(stats.total_volume_kg)} testid="stat-volume-detail" />
+          <StatCard icon={Crown} label="Status" value={user?.is_premium ? "PREMIUM" : "FREE"} highlight={user?.is_premium} gold={user?.is_premium} testid="stat-status-detail" />
+        </div>
+      </CollapsibleSection>
     </Layout>
   );
 }
 
-function StatCard({ icon: Icon, label, value, highlight, gold, testid }) {
-  const isGold = gold;
-  const isHighlight = highlight;
-  
-  let borderClass = "border-white/10";
-  let textClass = "text-white";
-  let iconClass = "text-muted-foreground";
-  
-  if (isGold) {
-    borderClass = "border-[#D4AF37]/50 shadow-[0_0_15px_rgba(212,175,55,0.1)]";
-    textClass = "text-[#FFDF00]";
-    iconClass = "text-[#D4AF37]";
-  } else if (isHighlight) {
-    borderClass = "border-primary/50 shadow-[0_0_15px_rgba(255,69,0,0.1)]";
-    textClass = "text-primary";
-    iconClass = "text-primary";
-  }
-
+function StatTile({ icon: Icon, label, value, highlight, testid }) {
   return (
-    <div className={`af-card p-4 sm:p-5 flex flex-col justify-between ${borderClass} h-full`} data-testid={testid}>
-      <Icon size={20} className={`${iconClass} mb-3`} />
-      <div>
-        <div className={`font-teko text-3xl sm:text-4xl leading-none tracking-tight mb-1 ${textClass}`}>{value}</div>
-        <div className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-chakra">{label}</div>
+    <div className="stat-tile" data-testid={testid}>
+      <div className="relative z-10">
+        <Icon size={14} className={highlight ? "text-[#E0B968]" : "text-[#00BFFF]"} />
+        <div className={`stat-tile__value mt-1 ${highlight ? "gold-chrome" : ""}`}>{value}</div>
+        <div className="stat-tile__label">{label}</div>
       </div>
+    </div>
+  );
+}
+
+function QuickAction({ icon: Icon, title, subtitle, onClick, testid }) {
+  return (
+    <button
+      onClick={onClick}
+      className="af-card tile-3d p-4 clip-corner-tl-br text-left flex items-center gap-3 w-full"
+      data-testid={testid}
+    >
+      <div
+        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{
+          background: "linear-gradient(135deg, rgba(0,191,255,0.18), rgba(0,191,255,0.04))",
+          border: "1px solid rgba(0,191,255,0.3)",
+          boxShadow: "0 0 12px rgba(0,191,255,0.25) inset",
+        }}
+      >
+        <Icon size={18} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 6px rgba(0,191,255,0.7))" }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-teko text-base sm:text-lg chrome-text tracking-wide leading-tight">{title}</div>
+        <div className="text-[10px] text-white/45 font-chakra uppercase tracking-widest mt-0.5">{subtitle}</div>
+      </div>
+      <ChevronRight size={14} className="text-white/25" />
+    </button>
+  );
+}
+
+function StatCard({ icon: Icon, label, value, highlight, gold, testid }) {
+  const iconColor = gold ? "text-[#E0B968]" : "text-[#00BFFF]";
+  const boxClass = gold
+    ? "gold-glow-box gold-border"
+    : highlight ? "glow-box border-[#00BFFF]" : "";
+  const valueClass = gold ? "gold-chrome" : "chrome-text";
+  return (
+    <div className={`af-card p-4 clip-corner-tl-br ${boxClass}`} data-testid={testid}>
+      <Icon size={18} className={iconColor} />
+      <div className={`font-teko text-3xl mt-2 tracking-wide ${valueClass}`}>{value}</div>
+      <div className="text-[10px] text-body-muted uppercase tracking-[0.25em] font-chakra mt-1">{label}</div>
     </div>
   );
 }

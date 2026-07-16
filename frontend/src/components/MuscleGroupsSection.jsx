@@ -51,16 +51,16 @@ function BodySilhouette({ view, activeKey, groupPercents, onHover }) {
         const isActive = activeKey === key;
         // Color intensity based on training %: 0=dim, 100=bright neon
         const alpha = 0.10 + (pct / 100) * 0.55;
-        const stroke = isActive ? "#FF5A1F" : "#FF4500";
+        const stroke = isActive ? "#00E5FF" : "#00BFFF";
         return (
           <path
             key={key}
             d={d}
-            fill={`rgba(255,69,0,${alpha})`}
+            fill={`rgba(0,191,255,${alpha})`}
             stroke={stroke}
             strokeWidth={isActive ? 1.8 : 0.6}
             style={{
-              filter: isActive ? "drop-shadow(0 0 8px rgba(255,90,31,0.9))" : undefined,
+              filter: isActive ? "drop-shadow(0 0 8px rgba(0,229,255,0.9))" : undefined,
               cursor: "pointer",
               transition: "all 150ms",
             }}
@@ -108,7 +108,7 @@ export default function MuscleGroupsSection() {
       <div className="flex items-end justify-between mb-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-teko tracking-wider chrome-text uppercase flex items-center gap-2">
-            <Activity size={18} className="text-[#FF4500]" />
+            <Activity size={18} className="text-[#00BFFF]" />
             Muskelgruppen im Detail
           </h2>
           <div className="text-xs text-gray-500 font-chakra">
@@ -125,7 +125,7 @@ export default function MuscleGroupsSection() {
               data-testid={`body-view-${v}`}
               className={`px-3 py-1 border transition uppercase tracking-widest ${
                 view === v
-                  ? "border-[#FF4500] text-[#FF4500] bg-[#FF4500]/10"
+                  ? "border-[#00BFFF] text-[#00BFFF] bg-[#00BFFF]/10"
                   : "border-gray-700 text-gray-500 hover:border-gray-500"
               }`}
             >
@@ -161,13 +161,13 @@ export default function MuscleGroupsSection() {
                 data-testid={`muscle-card-${g.key}`}
                 className={`text-left p-3 border transition ${
                   isActive
-                    ? "border-[#FF4500] bg-[#FF4500]/10 shadow-[0_0_14px_rgba(255,69,0,0.4)]"
+                    ? "border-[#00BFFF] bg-[#00BFFF]/10 shadow-[0_0_14px_rgba(0,191,255,0.4)]"
                     : "border-gray-800 hover:border-gray-600"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-chakra text-sm text-gray-200">{g.name}</span>
-                  <span className={`font-teko text-lg tracking-wide ${isActive ? "text-[#FF4500]" : "text-gray-400"}`}>
+                  <span className={`font-teko text-lg tracking-wide ${isActive ? "text-[#00BFFF]" : "text-gray-400"}`}>
                     {g.percent}%
                   </span>
                 </div>
@@ -176,8 +176,8 @@ export default function MuscleGroupsSection() {
                     className="h-full transition-all"
                     style={{
                       width: `${g.percent}%`,
-                      background: g.percent >= 80 ? "#00FF7F" : g.percent >= 50 ? "#FF4500" : "#f4d27a",
-                      boxShadow: g.percent > 0 ? "0 0 6px rgba(255,69,0,0.6)" : "none",
+                      background: g.percent >= 80 ? "#00FF7F" : g.percent >= 50 ? "#00BFFF" : "#f4d27a",
+                      boxShadow: g.percent > 0 ? "0 0 6px rgba(0,191,255,0.6)" : "none",
                     }}
                   />
                 </div>

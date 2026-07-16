@@ -37,9 +37,9 @@ export default function Library() {
   return (
     <Layout>
       <div className="mb-5 sm:mb-6 flex items-center gap-3 flex-wrap">
-        <BookOpen size={28} className="text-[#FF4500]" style={{ filter: "drop-shadow(0 0 12px rgba(255,69,0,0.6))" }} />
+        <BookOpen size={28} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text">ÜBUNGS-BIBLIOTHEK</h1>
-        <span className="text-[10px] text-[#FF4500] border border-[#FF4500]/50 px-2 py-0.5 font-chakra uppercase tracking-widest">
+        <span className="text-[10px] text-[#00BFFF] border border-[#00BFFF]/50 px-2 py-0.5 font-chakra uppercase tracking-widest">
           {all.length} ÜBUNGEN
         </span>
       </div>
@@ -49,7 +49,7 @@ export default function Library() {
 
       {/* Search bar */}
       <div className="af-card p-3 sm:p-4 mb-4 sm:mb-5 flex items-center gap-3" data-testid="library-search-bar">
-        <Search size={18} className="text-[#FF4500] flex-shrink-0" />
+        <Search size={18} className="text-[#00BFFF] flex-shrink-0" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -103,8 +103,8 @@ function FilterChip({ active, onClick, label, testid }) {
       onClick={onClick}
       className={`flex-shrink-0 px-3 sm:px-4 py-1.5 text-xs font-chakra tracking-widest uppercase border transition whitespace-nowrap ${
         active
-          ? "bg-[#FF4500]/10 border-[#FF4500] text-[#FF4500] glow-box"
-          : "border-[#1A1A24] text-body-muted hover:border-[#FF4500]/40 hover:text-white"
+          ? "bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF] glow-box"
+          : "border-[#1A1A24] text-body-muted hover:border-[#00BFFF]/40 hover:text-white"
       }`}
       data-testid={testid}
     >
@@ -133,10 +133,10 @@ function ExerciseCard({ ex, onClick }) {
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.7) 100%)" }} />
       </div>
       <div className="font-teko text-lg sm:text-xl text-white tracking-wide leading-tight">{ex.name}</div>
-      <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra mt-1 flex items-center gap-1">
+      <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra mt-1 flex items-center gap-1">
         <Target size={10} /> {ex.de}
       </div>
-      <div className="mt-2 text-[10px] text-gray-500 font-chakra flex items-center gap-1 group-hover:text-[#FF4500] transition">
+      <div className="mt-2 text-[10px] text-gray-500 font-chakra flex items-center gap-1 group-hover:text-[#00BFFF] transition">
         {ex.tips.length} TIPPS <ChevronRight size={10} />
       </div>
     </button>
@@ -164,7 +164,7 @@ export function LibraryDetail() {
 
   return (
     <Layout>
-      <button onClick={() => navigate("/library")} className="flex items-center gap-2 text-body-muted hover:text-[#FF4500] mb-4 font-chakra text-sm" data-testid="library-back">
+      <button onClick={() => navigate("/library")} className="flex items-center gap-2 text-body-muted hover:text-[#00BFFF] mb-4 font-chakra text-sm" data-testid="library-back">
         <ArrowLeft size={14} /> ZURÜCK ZUR BIBLIOTHEK
       </button>
 
@@ -181,7 +181,7 @@ export function LibraryDetail() {
           />
           <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.9) 100%)" }} />
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra">{ex.de}</div>
+            <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra">{ex.de}</div>
             <h1 className="font-teko text-3xl sm:text-5xl chrome-text leading-tight">{ex.name.toUpperCase()}</h1>
           </div>
         </div>
@@ -189,13 +189,13 @@ export function LibraryDetail() {
         {/* Tips */}
         <div className="af-card p-5 sm:p-6 clip-corner-tl-br">
           <div className="flex items-center gap-2 mb-3">
-            <Target size={18} className="text-[#FF4500]" />
+            <Target size={18} className="text-[#00BFFF]" />
             <h2 className="font-teko text-2xl chrome-text">AUSFÜHRUNGS-TIPPS</h2>
           </div>
           <ul className="space-y-3" data-testid="library-tips">
             {ex.tips.map((tip, i) => (
               <li key={i} className="flex gap-3 items-start" data-testid={`library-tip-${i}`}>
-                <span className="flex-shrink-0 w-7 h-7 flex items-center justify-center bg-[#FF4500]/10 border border-[#FF4500]/40 text-[#FF4500] font-teko text-base">
+                <span className="flex-shrink-0 w-7 h-7 flex items-center justify-center bg-[#00BFFF]/10 border border-[#00BFFF]/40 text-[#00BFFF] font-teko text-base">
                   {i + 1}
                 </span>
                 <p className="prose-af font-chakra flex-1">{tip}</p>
@@ -206,8 +206,8 @@ export function LibraryDetail() {
       </div>
 
       {/* Safety disclaimer */}
-      <div className="af-card p-4 border-[#FF4500]/30 mb-4">
-        <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra mb-1">SICHERHEITS-HINWEIS</div>
+      <div className="af-card p-4 border-[#00BFFF]/30 mb-4">
+        <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra mb-1">SICHERHEITS-HINWEIS</div>
         <p className="prose-af font-chakra text-sm">
           Beginne mit leichtem Gewicht & sauberer Technik. Schmerz {">"} Brennen — bei Schmerzen sofort abbrechen.
           Diese Tipps ersetzen keine professionelle Trainingsberatung.

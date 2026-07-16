@@ -36,7 +36,7 @@ export default function PlanHistory() {
 
   return (
     <Layout>
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-gray-400 hover:text-[#FF4500] mb-4 font-chakra" data-testid="plan-history-back">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-gray-400 hover:text-[#00BFFF] mb-4 font-chakra" data-testid="plan-history-back">
         <ChevronLeft size={16} /> ZURÜCK
       </button>
       <h1 className="font-teko text-4xl chrome-text tracking-wider mb-1">PLAN-HISTORIE</h1>
@@ -51,7 +51,7 @@ export default function PlanHistory() {
           {plans.map((p) => (
             <div
               key={p.id}
-              className={`af-card p-4 ${p.is_current ? "border-[#FF4500] shadow-[0_0_14px_rgba(255,69,0,0.35)]" : ""}`}
+              className={`af-card p-4 ${p.is_current ? "border-[#00BFFF] shadow-[0_0_14px_rgba(0,191,255,0.35)]" : ""}`}
               data-testid={`plan-history-item-${p.id}`}
             >
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -70,7 +70,7 @@ export default function PlanHistory() {
                   <div className="text-xs text-gray-500 font-chakra mb-2">
                     {new Date(p.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                     {" · "}
-                    <Dumbbell size={11} className="inline text-[#FF4500] mx-0.5" />
+                    <Dumbbell size={11} className="inline text-[#00BFFF] mx-0.5" />
                     {p.day_count} Tage · {p.exercise_count} Übungen
                   </div>
                   {p.day_focus && p.day_focus.length > 0 && (

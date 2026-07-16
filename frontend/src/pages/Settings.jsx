@@ -134,7 +134,7 @@ export default function Settings() {
   return (
     <Layout>
       <div className="mb-5 sm:mb-6 flex items-center gap-3">
-        <Cog size={28} className="text-[#FF4500]" style={{ filter: "drop-shadow(0 0 12px rgba(255,69,0,0.6))" }} />
+        <Cog size={28} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text">EINSTELLUNGEN</h1>
       </div>
 
@@ -145,7 +145,7 @@ export default function Settings() {
       <div className="af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6" data-testid="settings-sound">
         <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
           <div className="flex items-center gap-3">
-            {soundOn ? <Volume2 size={20} className="text-[#FF4500]" /> : <VolumeX size={20} className="text-gray-500" />}
+            {soundOn ? <Volume2 size={20} className="text-[#00BFFF]" /> : <VolumeX size={20} className="text-gray-500" />}
             <h2 className="font-teko text-2xl sm:text-3xl chrome-text">SOUND</h2>
           </div>
         </div>
@@ -156,18 +156,18 @@ export default function Settings() {
         <button
           onClick={() => toggleSound(!soundOn)}
           className={`w-full flex items-center gap-3 p-3 border transition text-left ${
-            soundOn ? "border-[#FF4500] bg-[#FF4500]/5" : "border-[#1A1A24] hover:border-[#FF4500]/40"
+            soundOn ? "border-[#00BFFF] bg-[#00BFFF]/5" : "border-[#1A1A24] hover:border-[#00BFFF]/40"
           }`}
           data-testid="toggle-sound"
         >
-          <div className={`w-9 h-9 flex items-center justify-center border ${soundOn ? "border-[#FF4500] text-[#FF4500]" : "border-[#1A1A24] text-gray-500"}`}>
+          <div className={`w-9 h-9 flex items-center justify-center border ${soundOn ? "border-[#00BFFF] text-[#00BFFF]" : "border-[#1A1A24] text-gray-500"}`}>
             {soundOn ? <Volume2 size={16} /> : <VolumeX size={16} />}
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-teko text-lg tracking-wide text-white">Pause-Ende Ton</div>
             <div className="text-[10px] text-gray-400 font-chakra">Beep auf 3-2-1 + Gong bei 0 + leichte Vibration</div>
           </div>
-          <div className={`w-10 h-6 flex-shrink-0 relative transition ${soundOn ? "bg-[#FF4500]" : "bg-[#1A1A24]"}`} style={{ borderRadius: "999px" }}>
+          <div className={`w-10 h-6 flex-shrink-0 relative transition ${soundOn ? "bg-[#00BFFF]" : "bg-[#1A1A24]"}`} style={{ borderRadius: "999px" }}>
             <div className="absolute top-0.5 w-5 h-5 bg-white transition-all" style={{ borderRadius: "999px", left: soundOn ? "calc(100% - 22px)" : "2px" }} />
           </div>
         </button>
@@ -177,7 +177,7 @@ export default function Settings() {
       <div className="af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6" data-testid="settings-push">
         <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
           <div className="flex items-center gap-3">
-            <Bell size={20} className="text-[#FF4500]" />
+            <Bell size={20} className="text-[#00BFFF]" />
             <h2 className="font-teko text-2xl sm:text-3xl chrome-text">PUSH-BENACHRICHTIGUNGEN</h2>
           </div>
           {sub && (
@@ -289,7 +289,7 @@ export default function Settings() {
       {/* Email triggers block */}
       <div className="af-card p-5 sm:p-6 clip-corner-tl-br mb-5 sm:mb-6" data-testid="settings-email">
         <div className="flex items-center gap-3 mb-2">
-          <Mail size={20} className="text-[#FF4500]" />
+          <Mail size={20} className="text-[#00BFFF]" />
           <h2 className="font-teko text-2xl sm:text-3xl chrome-text">EMAIL-BENACHRICHTIGUNGEN</h2>
         </div>
         <p className="prose-af font-chakra mb-4 text-sm">
@@ -350,18 +350,18 @@ function TriggerToggle({ icon: Icon, title, desc, enabled, onToggle, testid }) {
       role="switch"
       aria-checked={enabled}
       className={`w-full flex items-center gap-3 p-3 border transition text-left ${
-        enabled ? "border-[#FF4500] bg-[#FF4500]/5" : "border-[#1A1A24] hover:border-[#FF4500]/40"
+        enabled ? "border-[#00BFFF] bg-[#00BFFF]/5" : "border-[#1A1A24] hover:border-[#00BFFF]/40"
       }`}
       data-testid={testid}
     >
-      <div className={`w-9 h-9 flex items-center justify-center border ${enabled ? "border-[#FF4500] text-[#FF4500]" : "border-[#1A1A24] text-gray-500"}`}>
+      <div className={`w-9 h-9 flex items-center justify-center border ${enabled ? "border-[#00BFFF] text-[#00BFFF]" : "border-[#1A1A24] text-gray-500"}`}>
         <Icon size={16} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-teko text-lg tracking-wide text-white">{title}</div>
         <div className="text-[10px] text-gray-400 font-chakra">{desc}</div>
       </div>
-      <div className={`w-10 h-6 flex-shrink-0 relative transition ${enabled ? "bg-[#FF4500]" : "bg-[#1A1A24]"}`} style={{ borderRadius: "999px" }}>
+      <div className={`w-10 h-6 flex-shrink-0 relative transition ${enabled ? "bg-[#00BFFF]" : "bg-[#1A1A24]"}`} style={{ borderRadius: "999px" }}>
         <div
           className="absolute top-0.5 w-5 h-5 bg-white transition-all"
           style={{ borderRadius: "999px", left: enabled ? "calc(100% - 22px)" : "2px" }}

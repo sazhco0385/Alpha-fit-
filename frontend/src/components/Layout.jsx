@@ -43,13 +43,13 @@ export default function Layout({ children }) {
                 <Crown size={12} /> <span className="hidden sm:inline">PREMIUM</span><span className="sm:hidden">PRO</span>
               </span>
             )}
-            <button onClick={() => setHelpOpen(true)} className="text-gray-400 hover:text-[#FF4500] transition w-11 h-11 flex items-center justify-center" data-testid="help-btn" aria-label="Hilfe">
+            <button onClick={() => setHelpOpen(true)} className="text-gray-400 hover:text-[#00BFFF] transition w-11 h-11 flex items-center justify-center" data-testid="help-btn" aria-label="Hilfe">
               <HelpCircle size={18} />
             </button>
-            <button onClick={() => navigate("/settings")} className="text-gray-400 hover:text-[#FF4500] transition w-11 h-11 flex items-center justify-center" data-testid="settings-btn" aria-label="Einstellungen">
+            <button onClick={() => navigate("/settings")} className="text-gray-400 hover:text-[#00BFFF] transition w-11 h-11 flex items-center justify-center" data-testid="settings-btn" aria-label="Einstellungen">
               <Cog size={18} />
             </button>
-            <button onClick={() => { logout(); navigate("/"); }} className="text-gray-400 hover:text-[#FF4500] transition w-11 h-11 flex items-center justify-center" data-testid="logout-btn" aria-label="Logout">
+            <button onClick={() => { logout(); navigate("/"); }} className="text-gray-400 hover:text-[#00BFFF] transition w-11 h-11 flex items-center justify-center" data-testid="logout-btn" aria-label="Logout">
               <LogOut size={20} />
             </button>
           </div>
@@ -59,10 +59,10 @@ export default function Layout({ children }) {
       <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6 pb-32">{children}</main>
 
       <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 md:px-8 pb-28 pt-6 flex flex-wrap justify-center gap-3 sm:gap-6 text-[9px] sm:text-[10px] tracking-widest uppercase text-gray-600 font-chakra">
-        <NavLink to="/support" className="hover:text-[#FF4500]" data-testid="layout-support-link">Support</NavLink>
-        <NavLink to="/impressum" className="hover:text-[#FF4500]" data-testid="layout-impressum-link">Impressum</NavLink>
-        <NavLink to="/agb" className="hover:text-[#FF4500]" data-testid="layout-agb-link">AGB</NavLink>
-        <NavLink to="/datenschutz" className="hover:text-[#FF4500]" data-testid="layout-datenschutz-link">Datenschutz</NavLink>
+        <NavLink to="/support" className="hover:text-[#00BFFF]" data-testid="layout-support-link">Support</NavLink>
+        <NavLink to="/impressum" className="hover:text-[#00BFFF]" data-testid="layout-impressum-link">Impressum</NavLink>
+        <NavLink to="/agb" className="hover:text-[#00BFFF]" data-testid="layout-agb-link">AGB</NavLink>
+        <NavLink to="/datenschutz" className="hover:text-[#00BFFF]" data-testid="layout-datenschutz-link">Datenschutz</NavLink>
         <span className="w-full sm:w-auto text-center">© Sky-Networks UG</span>
       </div>
 
@@ -80,8 +80,8 @@ export default function Layout({ children }) {
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center gap-0.5 py-3 px-1 min-h-[56px] transition-all min-w-0 ${
                   isActive
-                    ? "text-[#FF5A1F] glow-text-soft"
-                    : "text-gray-500 hover:text-[#FF4500] active:text-[#FF5A1F]"
+                    ? "text-[#00E5FF] glow-text-soft"
+                    : "text-gray-500 hover:text-[#00BFFF] active:text-[#00E5FF]"
                 }`
               }
             >

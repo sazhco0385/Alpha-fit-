@@ -79,21 +79,21 @@ export default function SplashScreen() {
         .splash-grid {
           position: absolute; inset: 0;
           background-image:
-            linear-gradient(rgba(255,69,0,0.07) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,69,0,0.07) 1px, transparent 1px);
+            linear-gradient(rgba(0,191,255,0.07) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,191,255,0.07) 1px, transparent 1px);
           background-size: 48px 48px;
           opacity: .55;
         }
         .splash-radial {
           position: absolute; inset: 0;
-          background: radial-gradient(circle at center, rgba(255,69,0,0.18) 0%, transparent 60%);
+          background: radial-gradient(circle at center, rgba(0,191,255,0.18) 0%, transparent 60%);
         }
         .splash-scanline {
           position: absolute;
           left: 0; right: 0;
           height: 2px;
-          background: linear-gradient(90deg, transparent, rgba(255,90,31,0.85), transparent);
-          box-shadow: 0 0 14px rgba(255,90,31,0.9);
+          background: linear-gradient(90deg, transparent, rgba(0,229,255,0.85), transparent);
+          box-shadow: 0 0 14px rgba(0,229,255,0.9);
           animation: splash-scan 1.8s cubic-bezier(.55,.05,.45,.95) infinite;
         }
 
@@ -118,7 +118,7 @@ export default function SplashScreen() {
         .splash-helmet-glow {
           position: absolute;
           inset: -25%;
-          background: radial-gradient(circle, rgba(255,69,0,0.55) 0%, rgba(255,69,0,0.15) 35%, transparent 70%);
+          background: radial-gradient(circle, rgba(0,191,255,0.55) 0%, rgba(0,191,255,0.15) 35%, transparent 70%);
           filter: blur(8px);
           animation: splash-pulse 1.4s ease-in-out infinite;
         }
@@ -128,8 +128,8 @@ export default function SplashScreen() {
           height: 100%;
           object-fit: contain;
           filter:
-            drop-shadow(0 0 18px rgba(255,69,0,0.75))
-            drop-shadow(0 0 38px rgba(255,69,0,0.35));
+            drop-shadow(0 0 18px rgba(0,191,255,0.75))
+            drop-shadow(0 0 38px rgba(0,191,255,0.35));
           animation:
             splash-helmet-in 900ms cubic-bezier(.16,1,.3,1) both,
             splash-helmet-breath 1.4s ease-in-out infinite 900ms;
@@ -145,11 +145,11 @@ export default function SplashScreen() {
         }
         .splash-title-base {
           position: relative;
-          background: linear-gradient(180deg, #ffffff 0%, #a0c8db 55%, #FF4500 100%);
+          background: linear-gradient(180deg, #ffffff 0%, #a0c8db 55%, #00BFFF 100%);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
-          text-shadow: 0 0 26px rgba(255,69,0,0.45);
+          text-shadow: 0 0 26px rgba(0,191,255,0.45);
           display: inline-block;
           animation: splash-glitch 1.6s steps(1, end) both;
         }
@@ -165,7 +165,7 @@ export default function SplashScreen() {
           pointer-events: none;
         }
         .splash-title-base::before {
-          color: #FF5A1F;
+          color: #00E5FF;
           transform: translate(-2px, 0);
           clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
           animation: splash-glitch-a 1.6s steps(1, end) both;
@@ -181,7 +181,7 @@ export default function SplashScreen() {
         .splash-bar {
           width: clamp(180px, 32vw, 280px);
           height: 2px;
-          background: rgba(255,69,0,0.18);
+          background: rgba(0,191,255,0.18);
           position: relative;
           overflow: hidden;
         }
@@ -189,8 +189,8 @@ export default function SplashScreen() {
           position: absolute;
           left: 0; top: 0; bottom: 0;
           width: 0;
-          background: linear-gradient(90deg, #FF4500, #FF5A1F);
-          box-shadow: 0 0 10px rgba(255,90,31,0.9);
+          background: linear-gradient(90deg, #00BFFF, #00E5FF);
+          box-shadow: 0 0 10px rgba(0,229,255,0.9);
           animation: splash-bar 1.8s cubic-bezier(.6,.05,.35,1) forwards;
         }
 
@@ -198,7 +198,7 @@ export default function SplashScreen() {
           font-family: 'Chakra Petch', sans-serif;
           letter-spacing: 0.45em;
           font-size: 10px;
-          color: rgba(255,69,0,0.7);
+          color: rgba(0,191,255,0.7);
           text-transform: uppercase;
           opacity: 0;
           animation: splash-tag-in 600ms ease-out 800ms forwards;
@@ -217,18 +217,18 @@ export default function SplashScreen() {
           50%      { opacity: 1;    transform: scale(1.14); }
         }
         @keyframes splash-helmet-in {
-          0%   { opacity: 0; transform: scale(0.6) translateY(8px); filter: drop-shadow(0 0 0 rgba(255,69,0,0)); }
+          0%   { opacity: 0; transform: scale(0.6) translateY(8px); filter: drop-shadow(0 0 0 rgba(0,191,255,0)); }
           60%  { opacity: 1; transform: scale(1.05); }
           100% { opacity: 1; transform: scale(1) translateY(0); }
         }
         @keyframes splash-helmet-breath {
           0%, 100% {
             transform: scale(1);
-            filter: drop-shadow(0 0 18px rgba(255,69,0,0.75)) drop-shadow(0 0 38px rgba(255,69,0,0.35));
+            filter: drop-shadow(0 0 18px rgba(0,191,255,0.75)) drop-shadow(0 0 38px rgba(0,191,255,0.35));
           }
           50% {
             transform: scale(1.05);
-            filter: drop-shadow(0 0 28px rgba(255,90,31,0.95)) drop-shadow(0 0 60px rgba(255,69,0,0.55));
+            filter: drop-shadow(0 0 28px rgba(0,229,255,0.95)) drop-shadow(0 0 60px rgba(0,191,255,0.55));
           }
         }
         @keyframes splash-bar {

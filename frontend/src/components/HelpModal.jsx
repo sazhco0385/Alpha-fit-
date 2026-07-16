@@ -64,10 +64,10 @@ export default function HelpModal({ open, onClose }) {
           <button
             type="button"
             onClick={startTour}
-            className="af-card p-3 flex items-center gap-3 hover:border-[#FF4500] transition text-left"
+            className="af-card p-3 flex items-center gap-3 hover:border-[#00BFFF] transition text-left"
             data-testid="help-start-tour-btn"
           >
-            <PlayCircle size={22} className="text-[#FF4500] flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(255,69,0,0.5))" }} />
+            <PlayCircle size={22} className="text-[#00BFFF] flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.5))" }} />
             <div className="min-w-0">
               <div className="font-teko text-lg chrome-text leading-tight">TOUR STARTEN</div>
               <div className="text-[10px] text-gray-500 font-chakra uppercase tracking-widest">Die 5 wichtigsten Bereiche</div>
@@ -75,10 +75,10 @@ export default function HelpModal({ open, onClose }) {
           </button>
           <a
             href="mailto:support@alpha-fit.fitness"
-            className="af-card p-3 flex items-center gap-3 hover:border-[#FF4500] transition text-left"
+            className="af-card p-3 flex items-center gap-3 hover:border-[#00BFFF] transition text-left"
             data-testid="help-support-link"
           >
-            <Mail size={22} className="text-[#FF4500] flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(255,69,0,0.5))" }} />
+            <Mail size={22} className="text-[#00BFFF] flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.5))" }} />
             <div className="min-w-0">
               <div className="font-teko text-lg chrome-text leading-tight">SUPPORT</div>
               <div className="text-[10px] text-gray-500 font-chakra uppercase tracking-widest truncate">support@alpha-fit.fitness</div>
@@ -100,7 +100,7 @@ export default function HelpModal({ open, onClose }) {
                   data-testid={`faq-toggle-${i}`}
                 >
                   <span className="font-chakra text-sm text-gray-200">{f.q}</span>
-                  <ChevronDown size={16} className={`text-gray-400 flex-shrink-0 transition-transform ${open ? "rotate-180 text-[#FF4500]" : ""}`} />
+                  <ChevronDown size={16} className={`text-gray-400 flex-shrink-0 transition-transform ${open ? "rotate-180 text-[#00BFFF]" : ""}`} />
                 </button>
                 {open && (
                   <div className="px-3 pb-3 text-xs sm:text-sm text-gray-400 font-chakra leading-relaxed" data-testid={`faq-body-${i}`}>

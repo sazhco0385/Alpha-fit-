@@ -9,7 +9,7 @@ export default function FeatureKICoach() {
       path="/features/ki-coach"
       hero={
         <>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-5 border border-[#FF4500]/40 rounded-full text-[10px] uppercase tracking-[0.25em] text-[#FF4500] font-chakra">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-5 border border-[#00BFFF]/40 rounded-full text-[10px] uppercase tracking-[0.25em] text-[#00BFFF] font-chakra">
             <Brain size={12} /> Powered by GPT-5
           </div>
           <h1 className="font-teko text-4xl sm:text-6xl lg:text-7xl chrome-text leading-[0.95] mb-4">
@@ -41,11 +41,11 @@ export default function FeatureKICoach() {
               <div className="text-[10px] uppercase tracking-widest text-gray-500 mb-1">DU</div>
               <div className="font-chakra text-sm text-gray-200">Ich habe heute keine Lust auf Beine. Was kann ich stattdessen machen?</div>
             </div>
-            <div className="bg-[#0A0F1A] border border-[#FF4500]/30 p-3 rounded">
-              <div className="text-[10px] uppercase tracking-widest text-[#FF4500] mb-1">ALPHA COACH</div>
+            <div className="bg-[#0A0F1A] border border-[#00BFFF]/30 p-3 rounded">
+              <div className="text-[10px] uppercase tracking-widest text-[#00BFFF] mb-1">ALPHA COACH</div>
               <div className="font-chakra text-sm text-gray-200">
                 Verstehe. Lass uns deine Brust prio-isieren. Aber wir verschieben Beine auf morgen — sonst hast du Mo + Sa die gleichen Belastungen, was nicht optimal regeneriert.<br /><br />
-                Mein Vorschlag: <strong className="text-[#FF5A1F]">Bankdrücken 4×6 → Schrägbank 3×8 → Dips 3×AMRAP → Trizeps Pushdown 3×12</strong>. 45min, dann bist du raus. Ready?
+                Mein Vorschlag: <strong className="text-[#00E5FF]">Bankdrücken 4×6 → Schrägbank 3×8 → Dips 3×AMRAP → Trizeps Pushdown 3×12</strong>. 45min, dann bist du raus. Ready?
               </div>
             </div>
           </div>

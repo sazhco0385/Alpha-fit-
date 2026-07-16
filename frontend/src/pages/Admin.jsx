@@ -111,13 +111,13 @@ export default function Admin() {
   };
 
   if (loading) {
-    return <Layout><div className="text-center py-12 text-[#FF4500]"><Loader2 size={24} className="animate-spin mx-auto" /></div></Layout>;
+    return <Layout><div className="text-center py-12 text-[#00BFFF]"><Loader2 size={24} className="animate-spin mx-auto" /></div></Layout>;
   }
 
   return (
     <Layout>
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <Shield size={28} className="text-[#FF4500]" style={{ filter: "drop-shadow(0 0 12px rgba(255,69,0,0.6))" }} />
+        <Shield size={28} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text">ADMIN CONTROL</h1>
       </div>
 
@@ -154,8 +154,8 @@ export default function Admin() {
               <CartesianGrid stroke="#1A1A24" strokeDasharray="3 3" />
               <XAxis dataKey="date" stroke="#606070" style={{ fontFamily: "Chakra Petch", fontSize: 11 }} />
               <YAxis stroke="#606070" style={{ fontFamily: "Chakra Petch", fontSize: 11 }} />
-              <Tooltip contentStyle={{ background: "#000", border: "1px solid #FF4500", color: "#fff" }} />
-              <Bar dataKey="total" fill="#FF4500" />
+              <Tooltip contentStyle={{ background: "#000", border: "1px solid #00BFFF", color: "#fff" }} />
+              <Bar dataKey="total" fill="#00BFFF" />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -187,7 +187,7 @@ export default function Admin() {
                   <td className="py-3 px-2 text-gray-300">{m.email}</td>
                   <td className="py-3 px-2">
                     {m.is_premium ? (
-                      <span className="inline-flex items-center gap-1 text-[#FF4500] font-teko tracking-wider text-sm"><Crown size={12} /> PREMIUM</span>
+                      <span className="inline-flex items-center gap-1 text-[#00BFFF] font-teko tracking-wider text-sm"><Crown size={12} /> PREMIUM</span>
                     ) : (
                       <span className="text-gray-600 text-xs font-teko tracking-widest">FREE</span>
                     )}
@@ -195,7 +195,7 @@ export default function Admin() {
                   <td className="py-3 px-2 text-gray-500 text-xs hidden md:table-cell">{(m.created_at || "").slice(0, 10)}</td>
                   <td className="py-3 px-2">
                     <div className="flex justify-end gap-1">
-                      <button onClick={() => setPremiumModal(m)} className="w-11 h-11 flex items-center justify-center text-[#FF4500] hover:bg-[#FF4500]/10 transition" title="Premium freischalten" data-testid={`grant-premium-${m.id}`}>
+                      <button onClick={() => setPremiumModal(m)} className="w-11 h-11 flex items-center justify-center text-[#00BFFF] hover:bg-[#00BFFF]/10 transition" title="Premium freischalten" data-testid={`grant-premium-${m.id}`}>
                         <Crown size={18} />
                       </button>
                       {m.is_premium && (
@@ -220,7 +220,7 @@ export default function Admin() {
       {/* Premium modal */}
       {premiumModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4" onClick={() => setPremiumModal(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border border-[#FF4500]/40 p-6 max-w-md w-full clip-corner-tl-br" data-testid="premium-modal">
+          <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border border-[#00BFFF]/40 p-6 max-w-md w-full clip-corner-tl-br" data-testid="premium-modal">
             <div className="font-teko text-3xl chrome-text mb-2">PREMIUM FREISCHALTEN</div>
             <div className="text-gray-500 font-chakra text-sm mb-4">{premiumModal.name} · {premiumModal.email}</div>
             <label className="block text-xs text-gray-500 uppercase tracking-widest font-chakra mb-2">Tage</label>
@@ -236,11 +236,11 @@ export default function Admin() {
       {/* Reply Modal */}
       {replyModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4" onClick={() => setReplyModal(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border border-[#FF4500]/40 p-6 max-w-lg w-full clip-corner-tl-br" data-testid="reply-modal">
+          <div onClick={(e) => e.stopPropagation()} className="bg-[#03030A] border border-[#00BFFF]/40 p-6 max-w-lg w-full clip-corner-tl-br" data-testid="reply-modal">
             <div className="font-teko text-3xl chrome-text mb-1">ANTWORT AN USER</div>
             <div className="text-xs text-gray-500 font-chakra mb-3">{replyModal.user_name} · {replyModal.user_email}</div>
             <div className="bg-[#0A0A10] border border-[#1A1A24] p-3 mb-4 max-h-32 overflow-y-auto">
-              <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra mb-1">ANFRAGE: {replyModal.subject}</div>
+              <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra mb-1">ANFRAGE: {replyModal.subject}</div>
               <div className="text-sm text-gray-300 font-chakra whitespace-pre-wrap">{replyModal.message}</div>
             </div>
             <label className="block text-xs text-gray-500 uppercase tracking-widest font-chakra mb-2">Deine Antwort</label>
@@ -266,7 +266,7 @@ export default function Admin() {
 function TrialReminderFunnel({ funnel }) {
   const stages = [
     { label: "E-Mails", sub: `${funnel.emails_sent_48h} × 48h · ${funnel.emails_sent_24h} × 24h`, value: funnel.emails_sent, rate: null, color: "#A78BFA" },
-    { label: "Klicks", sub: `${funnel.clicks_unique} unique User`, value: funnel.clicks_total, rate: funnel.rate_click_through, color: "#FF4500" },
+    { label: "Klicks", sub: `${funnel.clicks_unique} unique User`, value: funnel.clicks_total, rate: funnel.rate_click_through, color: "#00BFFF" },
     { label: "Checkouts", sub: "Stripe gestartet", value: funnel.checkouts_started, rate: funnel.rate_checkout, color: "#FFD700" },
     { label: "Käufe", sub: `${funnel.revenue.toFixed(2)} € Umsatz`, value: funnel.purchases, rate: funnel.rate_purchase, color: "#00FF7F" },
   ];
@@ -309,7 +309,7 @@ function TrialReminderFunnel({ funnel }) {
 function TicketsSection({ tickets, onReply, onDelete }) {
   const statusConfig = {
     open: { color: "#FF9800", label: "OFFEN" },
-    in_progress: { color: "#FF4500", label: "IN BEARBEITUNG" },
+    in_progress: { color: "#00BFFF", label: "IN BEARBEITUNG" },
     resolved: { color: "#00FF7F", label: "GELÖST" },
   };
   const catLabel = { general: "Allgemein", billing: "Zahlung", bug: "Bug", feature: "Feature", account: "Account" };
@@ -317,7 +317,7 @@ function TicketsSection({ tickets, onReply, onDelete }) {
     <div className="af-card p-4 sm:p-6 clip-corner-tl-br mb-6 sm:mb-8" data-testid="admin-tickets">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="font-teko text-xl sm:text-2xl chrome-text flex items-center gap-2">
-          <Inbox size={20} className="text-[#FF4500]" />
+          <Inbox size={20} className="text-[#00BFFF]" />
           SUPPORT-ANFRAGEN
         </div>
         {tickets.open_count > 0 && (
@@ -333,12 +333,12 @@ function TicketsSection({ tickets, onReply, onDelete }) {
           {tickets.tickets.map((t) => {
             const s = statusConfig[t.status] || statusConfig.open;
             return (
-              <div key={t.id} className="bg-[#0A0A10] border border-[#1A1A24] p-3 sm:p-4 hover:border-[#FF4500]/40 transition" data-testid={`ticket-${t.id}`}>
+              <div key={t.id} className="bg-[#0A0A10] border border-[#1A1A24] p-3 sm:p-4 hover:border-[#00BFFF]/40 transition" data-testid={`ticket-${t.id}`}>
                 <div className="flex items-start justify-between gap-2 mb-2 flex-wrap">
                   <div className="min-w-0 flex-1">
                     <div className="font-teko text-lg chrome-text break-words">{t.subject}</div>
                     <div className="text-xs text-gray-500 font-chakra mt-1">
-                      <span className="text-[#FF4500]">{t.user_name}</span> · {t.user_email} · <span className="text-gray-400">{catLabel[t.category] || t.category}</span>
+                      <span className="text-[#00BFFF]">{t.user_name}</span> · {t.user_email} · <span className="text-gray-400">{catLabel[t.category] || t.category}</span>
                     </div>
                   </div>
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-chakra uppercase tracking-widest flex-shrink-0" style={{ color: s.color, border: `1px solid ${s.color}` }}>
@@ -372,20 +372,20 @@ function TicketsSection({ tickets, onReply, onDelete }) {
 
 function StatBlock({ icon: Icon, label, value, sub, highlight, testid }) {
   return (
-    <div className={`af-card p-4 clip-corner-tl-br ${highlight ? "glow-box border-[#FF4500]" : ""}`} data-testid={testid}>
-      <Icon size={18} className="text-[#FF4500]" />
+    <div className={`af-card p-4 clip-corner-tl-br ${highlight ? "glow-box border-[#00BFFF]" : ""}`} data-testid={testid}>
+      <Icon size={18} className="text-[#00BFFF]" />
       <div className="font-teko text-3xl chrome-text mt-2 tracking-wide">{value}</div>
       <div className="text-[10px] text-gray-500 uppercase tracking-[0.25em] font-chakra mt-1">{label}</div>
-      {sub && <div className="text-[10px] text-[#FF4500] font-chakra mt-1">{sub}</div>}
+      {sub && <div className="text-[10px] text-[#00BFFF] font-chakra mt-1">{sub}</div>}
     </div>
   );
 }
 
 function ActivityFeed({ events }) {
   const config = {
-    registered: { icon: UserPlus, color: "#FF4500", text: (m) => `hat sich registriert` },
+    registered: { icon: UserPlus, color: "#00BFFF", text: (m) => `hat sich registriert` },
     onboarding_completed: { icon: CheckCircle2, color: "#00FF7F", text: (m) => `hat Onboarding abgeschlossen (${m.goal || ""})` },
-    workout_started: { icon: Play, color: "#FF5A1F", text: (m) => `trainiert gerade Tag ${m.day_index}` },
+    workout_started: { icon: Play, color: "#00E5FF", text: (m) => `trainiert gerade Tag ${m.day_index}` },
     workout_completed: { icon: Zap, color: "#FFD700", text: (m) => `hat Training Tag ${m.day_index} abgeschlossen (${m.sets || 0} Sätze)` },
     checkout_started: { icon: ShoppingCart, color: "#FF9800", text: (m) => `hat Checkout gestartet — ${m.plan} (${m.amount}€)` },
     payment_succeeded: { icon: Sparkles, color: "#FFD700", text: (m) => `🎉 PREMIUM GEKAUFT — ${m.plan} (${m.amount}€)` },
@@ -405,8 +405,8 @@ function ActivityFeed({ events }) {
       <div className="flex items-center justify-between mb-4">
         <div className="font-teko text-xl sm:text-2xl chrome-text flex items-center gap-2">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-[#FF5A1F] opacity-75 animate-ping"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF5A1F]"></span>
+            <span className="absolute inline-flex h-full w-full rounded-full bg-[#00E5FF] opacity-75 animate-ping"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00E5FF]"></span>
           </span>
           LIVE AKTIVITÄT
         </div>
@@ -426,7 +426,7 @@ function ActivityFeed({ events }) {
                 <Icon size={16} style={{ color: cfg.color, filter: `drop-shadow(0 0 6px ${cfg.color}99)` }} className="mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="font-chakra text-sm text-white">
-                    <span className="font-bold text-[#FF4500]">{e.user_name || "User"}</span>{" "}
+                    <span className="font-bold text-[#00BFFF]">{e.user_name || "User"}</span>{" "}
                     <span className="text-gray-300">{cfg.text(e.metadata || {})}</span>
                   </div>
                 </div>

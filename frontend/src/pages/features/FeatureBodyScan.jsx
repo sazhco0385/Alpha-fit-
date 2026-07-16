@@ -9,7 +9,7 @@ export default function FeatureBodyScan() {
       path="/features/body-scan"
       hero={
         <>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-5 border border-[#FF4500]/40 rounded-full text-[10px] uppercase tracking-[0.25em] text-[#FF4500] font-chakra">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-5 border border-[#00BFFF]/40 rounded-full text-[10px] uppercase tracking-[0.25em] text-[#00BFFF] font-chakra">
             <Eye size={12} /> Powered by GPT-5 Vision
           </div>
           <h1 className="font-teko text-4xl sm:text-6xl lg:text-7xl chrome-text leading-[0.95] mb-4">
@@ -32,7 +32,7 @@ export default function FeatureBodyScan() {
     >
       <section className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <div className="af-card p-5 sm:p-8 clip-corner-tl-br">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-[#FF4500] font-chakra mb-3">BEISPIEL-ANALYSE</div>
+          <div className="text-[10px] uppercase tracking-[0.3em] text-[#00BFFF] font-chakra mb-3">BEISPIEL-ANALYSE</div>
           <div className="space-y-3 font-chakra text-sm">
             <div className="bg-[#0A0A10] border border-[#1A1A24] p-3 rounded">
               <div className="font-teko text-lg text-[#FF5722] mb-1">⚠️ Schwächen erkannt</div>
@@ -42,12 +42,12 @@ export default function FeatureBodyScan() {
                 <li>Leichte Beinasymmetrie rechts &gt; links</li>
               </ul>
             </div>
-            <div className="bg-[#0A0F1A] border border-[#FF4500]/30 p-3 rounded">
-              <div className="font-teko text-lg text-[#FF5A1F] mb-1">✓ Empfohlene Übungen</div>
+            <div className="bg-[#0A0F1A] border border-[#00BFFF]/30 p-3 rounded">
+              <div className="font-teko text-lg text-[#00E5FF] mb-1">✓ Empfohlene Übungen</div>
               <ul className="space-y-1 text-gray-200 list-disc list-inside">
-                <li><strong className="text-[#FF5A1F]">Face Pulls 3×15</strong> für hintere Schultern</li>
-                <li><strong className="text-[#FF5A1F]">Rudern weiter Griff 4×10</strong> für oberen Rücken</li>
-                <li><strong className="text-[#FF5A1F]">Bulgarische Splits</strong> für Bein-Symmetrie</li>
+                <li><strong className="text-[#00E5FF]">Face Pulls 3×15</strong> für hintere Schultern</li>
+                <li><strong className="text-[#00E5FF]">Rudern weiter Griff 4×10</strong> für oberen Rücken</li>
+                <li><strong className="text-[#00E5FF]">Bulgarische Splits</strong> für Bein-Symmetrie</li>
               </ul>
             </div>
           </div>

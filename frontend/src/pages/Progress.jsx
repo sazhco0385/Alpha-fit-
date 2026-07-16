@@ -98,8 +98,8 @@ export default function Progress() {
               <CartesianGrid stroke="#1A1A24" strokeDasharray="3 3" />
               <XAxis dataKey="date" stroke="#606070" style={{ fontFamily: "Chakra Petch", fontSize: 12 }} />
               <YAxis stroke="#606070" style={{ fontFamily: "Chakra Petch", fontSize: 12 }} />
-              <Tooltip contentStyle={{ background: "#000", border: "1px solid #FF4500", color: "#fff" }} />
-              <Line type="monotone" dataKey="volume" stroke="#FF4500" strokeWidth={2.5} dot={{ fill: "#FF5A1F", r: 4 }} activeDot={{ r: 6, fill: "#FF5A1F" }} />
+              <Tooltip contentStyle={{ background: "#000", border: "1px solid #00BFFF", color: "#fff" }} />
+              <Line type="monotone" dataKey="volume" stroke="#00BFFF" strokeWidth={2.5} dot={{ fill: "#00E5FF", r: 4 }} activeDot={{ r: 6, fill: "#00E5FF" }} />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -138,7 +138,7 @@ export default function Progress() {
 function Stat({ icon: Icon, label, value, testid }) {
   return (
     <div className="af-card p-4 clip-corner-tl-br" data-testid={testid}>
-      <Icon size={18} className="text-[#FF4500]" />
+      <Icon size={18} className="text-[#00BFFF]" />
       <div className="font-teko text-3xl chrome-text mt-2">{value}</div>
       <div className="text-[10px] text-gray-500 uppercase tracking-[0.25em] font-chakra mt-1">{label}</div>
     </div>
@@ -156,7 +156,7 @@ function BadgeCollection({ user, completedCount, totalVolume, currentStreak }) {
   const sections = [
     { id: "workouts", title: "TRAININGS-MEILENSTEINE", icon: Award, color: "#FFD700", list: BADGE_WORKOUTS, currentValue: completedCount, unit: "Trainings" },
     { id: "streaks",  title: "STREAK-SERIEN",          icon: Flame, color: "#FF5722", list: BADGE_STREAKS,  currentValue: currentStreak,  unit: "Tage Streak" },
-    { id: "volumes",  title: "VOLUMEN-LEGENDEN",       icon: Weight, color: "#FF5A1F", list: BADGE_VOLUMES, currentValue: totalVolume,   unit: "kg" },
+    { id: "volumes",  title: "VOLUMEN-LEGENDEN",       icon: Weight, color: "#00E5FF", list: BADGE_VOLUMES, currentValue: totalVolume,   unit: "kg" },
   ];
 
   return (
@@ -174,7 +174,7 @@ function BadgeCollection({ user, completedCount, totalVolume, currentStreak }) {
       </div>
       <div className="h-1.5 bg-[#0A0A10] rounded-full overflow-hidden mb-6">
         <div
-          className="h-full bg-gradient-to-r from-[#FF4500] via-[#FF5A1F] to-[#FFD700] transition-all"
+          className="h-full bg-gradient-to-r from-[#00BFFF] via-[#00E5FF] to-[#FFD700] transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>

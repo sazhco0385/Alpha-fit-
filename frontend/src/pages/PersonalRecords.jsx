@@ -19,7 +19,7 @@ export default function PersonalRecords() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <Layout><div className="text-center py-12 text-[#FF4500]"><Loader2 size={28} className="inline animate-spin mr-2" />Lade...</div></Layout>;
+  if (loading) return <Layout><div className="text-center py-12 text-[#00BFFF]"><Loader2 size={28} className="inline animate-spin mr-2" />Lade...</div></Layout>;
 
   const counts = data?.rarity_counts || { bronze: 0, silver: 0, gold: 0, mythic: 0 };
   const total = data?.total_prs || 0;

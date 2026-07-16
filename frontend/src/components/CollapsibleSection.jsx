@@ -43,7 +43,7 @@ export default function CollapsibleSection({
         aria-expanded={open}
       >
         <div className="flex items-center gap-2 min-w-0">
-          {Icon && <Icon size={16} className="text-[#FF4500] flex-shrink-0" />}
+          {Icon && <Icon size={16} className="text-[#00BFFF] flex-shrink-0" />}
           <h2 className="font-teko text-xl sm:text-2xl tracking-wider chrome-text uppercase leading-none whitespace-nowrap">
             {title}
           </h2>
@@ -55,7 +55,7 @@ export default function CollapsibleSection({
           {headerRight}
           <ChevronDown
             size={18}
-            className={`text-gray-400 transition-transform duration-200 ${open ? "rotate-180 text-[#FF4500]" : ""}`}
+            className={`text-gray-400 transition-transform duration-200 ${open ? "rotate-180 text-[#00BFFF]" : ""}`}
           />
         </div>
       </button>

@@ -9,7 +9,7 @@ export default function FeatureNutrition() {
       path="/features/ernaehrung"
       hero={
         <>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-5 border border-[#FF4500]/40 rounded-full text-[10px] uppercase tracking-[0.25em] text-[#FF4500] font-chakra">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-5 border border-[#00BFFF]/40 rounded-full text-[10px] uppercase tracking-[0.25em] text-[#00BFFF] font-chakra">
             <Apple size={12} /> Foto-AI Ernährungs-Tracker
           </div>
           <h1 className="font-teko text-4xl sm:text-6xl lg:text-7xl chrome-text leading-[0.95] mb-4">
@@ -32,7 +32,7 @@ export default function FeatureNutrition() {
     >
       <section className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <div className="af-card p-5 sm:p-8 clip-corner-tl-br">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-[#FF4500] font-chakra mb-3">SO FUNKTIONIERT'S</div>
+          <div className="text-[10px] uppercase tracking-[0.3em] text-[#00BFFF] font-chakra mb-3">SO FUNKTIONIERT'S</div>
           <div className="grid gap-3">
             <Step n="1" icon={Camera} title="Foto knipsen" text="Halte die Kamera auf deinen Teller. Funktioniert auch mit Restaurant-Essen, Snacks, Drinks." />
             <Step n="2" icon={Apple} title="AI erkennt automatisch" text="Reis, Hähnchen, Salat — die KI identifiziert jede Zutat und schätzt die Mengen." />
@@ -47,10 +47,10 @@ export default function FeatureNutrition() {
 function Step({ n, icon: Icon, title, text }) {
   return (
     <div className="flex items-start gap-3 bg-[#0A0A10] border border-[#1A1A24] p-3 rounded">
-      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF4500] to-[#1E90FF] flex items-center justify-center font-teko text-base text-black flex-shrink-0">{n}</div>
+      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00BFFF] to-[#1E90FF] flex items-center justify-center font-teko text-base text-black flex-shrink-0">{n}</div>
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
-          <Icon size={14} className="text-[#FF4500]" />
+          <Icon size={14} className="text-[#00BFFF]" />
           <span className="font-teko text-base chrome-text">{title}</span>
         </div>
         <div className="text-xs text-gray-300 font-chakra leading-relaxed">{text}</div>

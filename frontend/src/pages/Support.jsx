@@ -50,18 +50,18 @@ export default function Support() {
   return (
     <Layout>
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <MessageCircle size={28} className="text-[#FF4500]" style={{ filter: "drop-shadow(0 0 12px rgba(255,69,0,0.6))" }} />
+        <MessageCircle size={28} className="text-[#00BFFF]" style={{ filter: "drop-shadow(0 0 12px rgba(0,191,255,0.6))" }} />
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text">SUPPORT</h1>
       </div>
 
       {/* Direct contact */}
       <div className="af-card p-4 sm:p-5 mb-6 clip-corner-tl-br" data-testid="support-direct-contact">
         <div className="flex items-start gap-3">
-          <Mail size={20} className="text-[#FF4500] mt-1 flex-shrink-0" />
+          <Mail size={20} className="text-[#00BFFF] mt-1 flex-shrink-0" />
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra">DIREKT-KONTAKT</div>
+            <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra">DIREKT-KONTAKT</div>
             <div className="font-teko text-xl chrome-text mt-1">Schreib uns eine Email</div>
-            <a href={`mailto:${supportEmail}`} className="text-[#FF5A1F] underline font-chakra text-sm break-all" data-testid="support-email-link">
+            <a href={`mailto:${supportEmail}`} className="text-[#00E5FF] underline font-chakra text-sm break-all" data-testid="support-email-link">
               {supportEmail}
             </a>
             <p className="text-gray-500 text-xs font-chakra mt-2">
@@ -85,8 +85,8 @@ export default function Support() {
                   onClick={() => setForm({ ...form, category: c.v })}
                   className={`px-3 py-2 text-xs font-chakra uppercase tracking-widest transition border ${
                     form.category === c.v
-                      ? "border-[#FF4500] text-[#FF4500] glow-box"
-                      : "border-[#1A1A24] text-gray-400 hover:border-[#FF4500]/40"
+                      ? "border-[#00BFFF] text-[#00BFFF] glow-box"
+                      : "border-[#1A1A24] text-gray-400 hover:border-[#00BFFF]/40"
                   }`}
                   data-testid={`support-cat-${c.v}`}
                 >
@@ -145,7 +145,7 @@ export default function Support() {
 function TicketItem({ ticket }) {
   const statusConfig = {
     open: { icon: Clock, color: "#FF9800", label: "OFFEN" },
-    in_progress: { icon: AlertCircle, color: "#FF4500", label: "IN BEARBEITUNG" },
+    in_progress: { icon: AlertCircle, color: "#00BFFF", label: "IN BEARBEITUNG" },
     resolved: { icon: CheckCircle2, color: "#00FF7F", label: "GELÖST" },
   };
   const s = statusConfig[ticket.status] || statusConfig.open;
@@ -162,7 +162,7 @@ function TicketItem({ ticket }) {
       <div className="text-sm text-gray-300 font-chakra whitespace-pre-wrap">{ticket.message}</div>
       {ticket.admin_reply && (
         <div className="mt-3 pt-3 border-t border-[#1A1A24]">
-          <div className="text-[10px] text-[#FF4500] uppercase tracking-widest font-chakra mb-1">ANTWORT VOM SUPPORT</div>
+          <div className="text-[10px] text-[#00BFFF] uppercase tracking-widest font-chakra mb-1">ANTWORT VOM SUPPORT</div>
           <div className="text-sm text-gray-200 font-chakra whitespace-pre-wrap">{ticket.admin_reply}</div>
         </div>
       )}

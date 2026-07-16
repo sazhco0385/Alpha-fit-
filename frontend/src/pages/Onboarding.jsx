@@ -107,8 +107,8 @@ export default function Onboarding() {
           className="h-full transition-all duration-500"
           style={{
             width: `${progress}%`,
-            background: "linear-gradient(90deg, #FF5A1F, #FF4500)",
-            boxShadow: "0 0 12px rgba(255,90,31,0.8)",
+            background: "linear-gradient(90deg, #00E5FF, #00BFFF)",
+            boxShadow: "0 0 12px rgba(0,229,255,0.8)",
           }}
         />
       </div>
@@ -117,10 +117,10 @@ export default function Onboarding() {
         <div className="w-full max-w-2xl" data-testid={`onboarding-step-${current.key}`}>
           <div className="flex items-start sm:items-center gap-3 mb-5 sm:mb-6">
             <div className="w-10 h-10 sm:w-12 sm:h-12 hex-shield flex items-center justify-center flex-shrink-0 relative" style={{
-              background: "linear-gradient(180deg, #FF5A1F, #1E90FF)",
+              background: "linear-gradient(180deg, #00E5FF, #1E90FF)",
             }}>
               <div className="absolute inset-[2px] hex-shield bg-black flex items-center justify-center">
-                <Icon size={18} className="text-[#FF4500]" />
+                <Icon size={18} className="text-[#00BFFF]" />
               </div>
             </div>
             <h2 className="font-teko text-2xl sm:text-4xl md:text-5xl tracking-wide chrome-text leading-tight">{current.label}</h2>
@@ -134,8 +134,8 @@ export default function Onboarding() {
                   onClick={() => setValue(opt.v)}
                   className={`af-card p-4 sm:p-5 text-left transition-all clip-corner-tl-br ${
                     data[current.key] === opt.v
-                      ? "border-[#FF4500] glow-box-intense"
-                      : "hover:border-[#FF4500]/50"
+                      ? "border-[#00BFFF] glow-box-intense"
+                      : "hover:border-[#00BFFF]/50"
                   }`}
                   data-testid={`onboarding-option-${opt.v}`}
                 >

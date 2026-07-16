@@ -40,7 +40,7 @@ export function Impressum() {
       <Section title="Streitschlichtung">
         <p>
           Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
-          <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noreferrer" className="text-[#FF4500] underline">
+          <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noreferrer" className="text-[#00BFFF] underline">
             https://ec.europa.eu/consumers/odr
           </a>.
         </p>
@@ -224,7 +224,7 @@ export function Datenschutz() {
           Für die Abwicklung der Premium-Mitgliedschaft nutzen wir Stripe Payments Europe, Ltd. (Dublin, Irland). Wir selbst speichern
           keine Kreditkarten- oder Bankdaten. Die Daten werden ausschließlich an Stripe übermittelt und dort gemäß deren Datenschutzerklärung
           verarbeitet:{" "}
-          <a href="https://stripe.com/de/privacy" target="_blank" rel="noreferrer" className="text-[#FF4500] underline">
+          <a href="https://stripe.com/de/privacy" target="_blank" rel="noreferrer" className="text-[#00BFFF] underline">
             stripe.com/de/privacy
           </a>.
         </p>
@@ -293,7 +293,7 @@ function LegalShell({ title, children, onBack }) {
 
       <header className="relative z-10 max-w-4xl mx-auto px-6 py-6 flex items-center justify-between">
         <Link to="/"><Logo size={36} /></Link>
-        <button onClick={onBack} className="text-gray-400 hover:text-[#FF4500] flex items-center gap-2 font-chakra text-sm uppercase tracking-widest" data-testid="legal-back-btn">
+        <button onClick={onBack} className="text-gray-400 hover:text-[#00BFFF] flex items-center gap-2 font-chakra text-sm uppercase tracking-widest" data-testid="legal-back-btn">
           <ArrowLeft size={16} /> ZURÜCK
         </button>
       </header>
@@ -304,7 +304,7 @@ function LegalShell({ title, children, onBack }) {
           {children}
         </div>
         <div className="mt-8 text-center">
-          <Link to="/" className="text-[#FF4500] font-chakra uppercase tracking-widest text-xs hover:text-[#FF5A1F] glow-text-soft" data-testid="legal-home-link">
+          <Link to="/" className="text-[#00BFFF] font-chakra uppercase tracking-widest text-xs hover:text-[#00E5FF] glow-text-soft" data-testid="legal-home-link">
             ← ZUR STARTSEITE
           </Link>
         </div>

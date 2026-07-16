@@ -54,7 +54,7 @@ export default function PaymentReturn() {
       <div className="relative z-10 text-center max-w-md af-card p-10 clip-corner-tl-br" data-testid="payment-return-card">
         {status === "checking" && (
           <>
-            <Loader2 size={56} className="mx-auto text-[#FF4500] animate-spin" />
+            <Loader2 size={56} className="mx-auto text-[#00BFFF] animate-spin" />
             <h1 className="font-teko text-4xl mt-4 chrome-text">PRÜFE ZAHLUNG</h1>
             <p className="text-gray-500 font-chakra text-sm mt-2">Versuch {attempts + 1}/8</p>
           </>
