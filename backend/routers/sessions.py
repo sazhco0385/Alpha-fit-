@@ -186,7 +186,31 @@ async def log_set(payload: LogSetRequest, user: dict = Depends(get_current_user)
             "current_set_index": payload.set_index + 1,
         }}
     )
-    return {"ok": True, "logged_count": len(logged)}
+
+    # Real-time PR check for cinematic feedback (does not persist — final persistence at session/complete)
+    pr = None
+    try:
+        plan_id = user.get("current_plan_id")
+        if plan_id:
+            plan = await db.training_plans.find_one({"id": plan_id}, {"_id": 0})
+            if plan:
+                day = next((d for d in (plan.get("days") or []) if d.get("day_index") == session.get("day_index")), None)
+                if day:
+                    exs = day.get("exercises") or []
+                    if 0 <= payload.exercise_index < len(exs):
+                        ex_name = (exs[payload.exercise_index].get("name") or "").strip()
+                        if ex_name:
+                            from routers.personal_records import check_set_pr
+                            pr = await check_set_pr(
+                                user["id"], ex_name,
+                                float(payload.weight_kg), int(payload.reps),
+                                session_logged_sets=logged,
+                                exercise_index=payload.exercise_index,
+                            )
+    except Exception as e:
+        logger.warning(f"log-set PR check failed: {e}")
+
+    return {"ok": True, "logged_count": len(logged), "pr": pr}
 
 @router.post("/sessions/update-progress")
 async def update_progress(payload: dict, user: dict = Depends(get_current_user)):

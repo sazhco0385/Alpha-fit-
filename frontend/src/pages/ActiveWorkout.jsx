@@ -9,6 +9,7 @@ import BadgeGlow from "../components/BadgeGlow";
 import PRCard from "../components/PRCard";
 import { playCountdownBeep, playRestOverChime, isSoundEnabled } from "../lib/sound";
 import { getRestCategory } from "../lib/restCategory";
+import PRCinematicOverlay from "../components/PRCinematicOverlay";
 
 export default function ActiveWorkout() {
   const { sessionId } = useParams();
@@ -30,6 +31,7 @@ export default function ActiveWorkout() {
   const [done, setDone] = useState(false);
   const [newBadges, setNewBadges] = useState([]);
   const [newPRs, setNewPRs] = useState([]);
+  const [livePR, setLivePR] = useState(null);
   const [suggestion, setSuggestion] = useState(null);
   const restRef = useRef(null);
 
@@ -119,17 +121,23 @@ export default function ActiveWorkout() {
   const overallProgress = ((exIdx + setIdx / Math.max(totalSets, 1)) / totalExercises) * 100;
 
   const completeSet = async () => {
+    let prPayload = null;
     try {
-      await api.post("/sessions/log-set", {
+      const { data } = await api.post("/sessions/log-set", {
         session_id: sessionId,
         exercise_index: exIdx,
         set_index: setIdx,
         reps: Number(reps),
         weight_kg: Number(weight),
       });
+      prPayload = data?.pr || null;
     } catch (err) {
       toast.error("Logging fehlgeschlagen");
       return;
+    }
+    // Fire cinematic PR moment BEFORE rest — user sees the flash first
+    if (prPayload) {
+      setLivePR(prPayload);
     }
     // Auto-advance
     if (isLastSet) {
@@ -180,6 +188,15 @@ export default function ActiveWorkout() {
       {/* Aurora backdrop — cranks up during rest */}
       <div className={`workout-aurora ${resting ? "workout-aurora--rest" : ""}`} aria-hidden />
       <div className="workout-grain" aria-hidden />
+
+      {/* PR cinematic moment (per-set) */}
+      {livePR && (
+        <PRCinematicOverlay
+          pr={livePR}
+          duration={livePR.rarity === "mythic" ? 3800 : 3000}
+          onDone={() => setLivePR(null)}
+        />
+      )}
 
       {/* Top bar */}
       <div className="relative z-10 p-2 sm:p-6 flex items-center justify-between gap-2">

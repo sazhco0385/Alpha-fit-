@@ -51,6 +51,49 @@ def _rarity_for(weight: float, improvement_pct: float, multi_count: int = 1) -> 
     return "bronze"
 
 
+async def check_set_pr(user_id: str, exercise_name: str, weight: float, reps: int, session_logged_sets: Optional[list] = None, exercise_index: Optional[int] = None) -> Optional[dict]:
+    """Lightweight per-set PR check for real-time cinematic feedback.
+    Does NOT persist — persistence still happens at session complete.
+    Returns a mini PR descriptor if this set beats the user's current best
+    (across all persisted PRs *and* all earlier sets of the same exercise in this session), else None.
+    """
+    if not user_id or not exercise_name or weight <= 0 or reps <= 0:
+        return None
+    e1rm_new = _e1rm(weight, reps)
+
+    # Compare against DB best
+    prev = await db.personal_records.find_one(
+        {"user_id": user_id, "exercise_name": exercise_name},
+        {"_id": 0}, sort=[("e1rm", -1)],
+    )
+    prev_e1rm = float(prev.get("e1rm")) if prev else 0.0
+
+    # Compare against earlier sets in THIS session for the same exercise
+    # (excluding the just-logged set which is the last one in session_logged_sets)
+    if session_logged_sets and exercise_index is not None:
+        for s in session_logged_sets[:-1]:  # exclude the current set
+            if s.get("exercise_index") != exercise_index:
+                continue
+            e = _e1rm(float(s.get("weight_kg") or 0), int(s.get("reps") or 0))
+            if e > prev_e1rm:
+                prev_e1rm = e
+
+    if e1rm_new <= prev_e1rm + 0.5:
+        return None
+    improvement_pct = ((e1rm_new - prev_e1rm) / prev_e1rm * 100.0) if prev_e1rm > 0 else 100.0
+    rarity = _rarity_for(weight, improvement_pct if prev_e1rm > 0 else 0)
+    return {
+        "exercise_name": exercise_name,
+        "weight_kg": weight,
+        "reps": reps,
+        "e1rm": e1rm_new,
+        "previous_e1rm": prev_e1rm,
+        "improvement_pct": round(improvement_pct, 1) if prev_e1rm > 0 else None,
+        "is_first": prev_e1rm <= 0,
+        "rarity": rarity,
+    }
+
+
 async def detect_prs_for_session(session: dict, plan: Optional[dict] = None) -> list[dict]:
     """Check all logged sets for new PRs.
     Returns list of newly created PR documents.
