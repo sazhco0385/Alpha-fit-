@@ -7,7 +7,7 @@ import WeekSchedule from "../components/WeekSchedule";
 import CollapsibleSection from "../components/CollapsibleSection";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { Brain, Crown, Play, Calendar, Flame, RefreshCw, Loader2, Weight, Scan, BookOpen, Sparkles, TrendingUp } from "lucide-react";
+import { Brain, Crown, Play, Calendar, Flame, RefreshCw, Loader2, Weight, Scan, BookOpen, Sparkles, TrendingUp, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -72,187 +72,197 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      {/* Hero greeting */}
-      <div className="mb-6 sm:mb-8" data-testid="dashboard-hero">
-        <div className="text-[10px] sm:text-xs text-gray-500 font-chakra uppercase tracking-[0.3em]">WILLKOMMEN ZURÜCK</div>
-        <h1 className="font-teko text-4xl sm:text-5xl md:text-6xl tracking-wide chrome-text mt-1 break-words">
-          ALPHA <span className="electric-text glow-text">{user?.name?.toUpperCase()}</span>
+      {/* Hero greeting - High Impact, Oversized Typography */}
+      <div className="mb-8 sm:mb-12 mt-4" data-testid="dashboard-hero">
+        <div className="text-xs text-muted-foreground font-chakra uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+          <Activity size={14} className="text-primary animate-pulse" /> SYSTEM ONLINE
+        </div>
+        <h1 className="font-teko text-5xl sm:text-7xl md:text-8xl tracking-tight text-foreground leading-none break-words uppercase">
+          ALPHA <span className="electric-text block sm:inline">{user?.name}</span>
         </h1>
       </div>
 
-      {/* Resume Banner */}
-      {activeSession && (
-        <div className="af-card p-4 sm:p-5 mb-5 sm:mb-6 tracing-border clip-corner-tl-br relative" data-testid="resume-banner">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <div className="text-[10px] sm:text-xs text-[#00BFFF] uppercase tracking-widest font-chakra">TRAINING LÄUFT</div>
-              <div className="font-teko text-2xl sm:text-3xl mt-1 chrome-text">Setze dein Training fort</div>
-              <div className="text-gray-500 text-xs sm:text-sm font-chakra">Tag {activeSession.day_index} · {activeSession.logged_sets?.length || 0} Sätze geloggt</div>
-            </div>
-            <button onClick={() => navigate(`/workout/${activeSession.id}`)} className="btn-primary flex items-center gap-2" data-testid="resume-workout-btn">
-              <Play size={18} /> FORTSETZEN
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Streak Banner */}
-      {stats.current_streak >= 3 && !activeSession && (
-        <div className="af-card p-4 mb-5 sm:mb-6 clip-corner-tl-br relative overflow-hidden" data-testid="streak-banner" style={{ borderColor: "#FF5722" }}>
-          <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 20% 50%, #FF5722 0%, transparent 50%)" }} />
-          <div className="relative flex items-center gap-3">
-            <Flame size={36} className="text-[#FF5722] flex-shrink-0" style={{ filter: "drop-shadow(0 0 12px rgba(255,87,34,0.8))" }} />
-            <div className="min-w-0">
-              <div className="font-teko text-2xl sm:text-3xl chrome-text">{stats.current_streak}-TAGE STREAK</div>
-              <div className="text-xs sm:text-sm text-gray-300 font-chakra">Verliere ihn nicht — trainiere heute!</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Alpha Coach Insights (collapsible) */}
-      <CollapsibleSection
-        title="Alpha Coach"
-        icon={Brain}
-        hint="Deine Wochen-Analyse"
-        defaultOpen={false}
-        storageKey="coach"
-        testid="section-coach"
-      >
-        <CoachInsights compact />
-      </CollapsibleSection>
-
-      {/* Daily Summary (collapsible) */}
-      <CollapsibleSection
-        title="Heute"
-        icon={Sparkles}
-        hint="Motivation · Kalorien · Gewicht"
-        defaultOpen={false}
-        storageKey="daily"
-        testid="section-daily"
-      >
-        <DailySummary plan={plan} sessions={sessions} />
-      </CollapsibleSection>
-
-      {/* Week Schedule (always visible - primary today-focus) */}
-      <WeekSchedule
-        plan={plan}
-        sessions={sessions}
-        onStartDay={startDay}
-      />
-
-      {/* Stats Bento (collapsible) */}
-      <CollapsibleSection
-        title="Statistik"
-        icon={TrendingUp}
-        hint={`${stats.total_completed} Workouts · Streak ${stats.current_streak}`}
-        defaultOpen={false}
-        storageKey="stats"
-        testid="section-stats"
-      >
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          <StatCard icon={Flame} label="Workouts" value={stats.total_completed} testid="stat-workouts" />
-          <StatCard icon={Calendar} label="Streak (Tage)" value={stats.current_streak} highlight={stats.current_streak >= 3} testid="stat-streak" />
-          <StatCard icon={Weight} label="Volumen (kg)" value={formatVolume(stats.total_volume_kg)} testid="stat-volume" />
-          <StatCard icon={Crown} label="Status" value={user?.is_premium ? "PREMIUM" : "FREE"} highlight={user?.is_premium} gold={user?.is_premium} testid="stat-status" />
-        </div>
-      </CollapsibleSection>
-
-      {/* Training Plan */}
-      <section className="mb-6 sm:mb-8">
-        <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-          <h2 className="font-teko text-2xl sm:text-3xl tracking-wide chrome-text whitespace-nowrap">DEIN PLAN</h2>
-          <div className="flex gap-2 flex-wrap">
-            <button onClick={adjustPlan} disabled={regenerating} className="btn-outline text-xs flex items-center gap-1.5 whitespace-nowrap" data-testid="adjust-plan-btn">
-              {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-              KI&nbsp;ANPASSEN
-            </button>
-            <button onClick={() => navigate("/plan")} className="btn-outline text-xs whitespace-nowrap" data-testid="view-plan-btn">DETAILS</button>
-            <button onClick={() => navigate("/plan-history")} className="btn-outline text-xs whitespace-nowrap" data-testid="plan-history-btn">HISTORIE</button>
-          </div>
-        </div>
-        {adjustStatus && adjustStatus.status !== "no_plan" && (
-          <div className="mb-3 flex items-center gap-2 text-[11px] font-chakra" data-testid="adjust-status-badge">
-            <span
-              className="inline-block w-2 h-2 rounded-full"
-              style={{
-                background: adjustStatus.status === "ready" ? "#00FF7F" : adjustStatus.status === "cooldown" ? "#FFD740" : "#00BFFF",
-                boxShadow: `0 0 8px ${adjustStatus.status === "ready" ? "#00FF7F" : adjustStatus.status === "cooldown" ? "#FFD740" : "#00BFFF"}`,
-              }}
-            />
-            <span className="text-gray-400">Nächste KI-Anpassung:</span>
-            <span className="text-gray-200">{adjustStatus.message}</span>
-          </div>
-        )}
-
-        {plan ? (
-          <div>
-            <div className="text-[#00BFFF] font-teko text-xl mb-1 glow-text-soft">{plan.name}</div>
-            <div className="text-body-muted text-sm sm:text-base font-chakra mb-4 leading-relaxed">{plan.progression_notes}</div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {plan.days?.map((day) => (
-                <div key={day.day_index} className="af-card p-4 sm:p-5 clip-corner-tl-br hover:glow-box transition" data-testid={`plan-day-${day.day_index}`}>
-                  <div className="flex items-center justify-between mb-3 gap-2">
-                    <div className="text-xs text-gray-500 uppercase tracking-widest font-chakra">TAG {day.day_index}</div>
-                    {day.focus && <span className="text-[10px] text-[#00BFFF] border border-[#00BFFF]/50 px-2 py-0.5 font-chakra uppercase tracking-widest whitespace-nowrap">{day.focus}</span>}
-                  </div>
-                  <div className="font-teko text-lg sm:text-xl tracking-wide mb-3 chrome-text break-words leading-tight">{day.name}</div>
-                  <div className="text-xs text-gray-400 font-chakra mb-4">{day.exercises?.length || 0} Übungen</div>
-                  <button onClick={() => startDay(day.day_index)} className="btn-primary w-full flex items-center justify-center gap-2 text-sm" data-testid={`start-day-${day.day_index}`}>
-                    <Play size={14} /> STARTEN
-                  </button>
+      {/* Grid Layout Strategy: Bento Grid Mode B (High Density) */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 mb-8">
+        
+        {/* Active Session - Hero Span */}
+        {activeSession && (
+          <div className="md:col-span-12 lg:col-span-8 af-card p-6 sm:p-8 tracing-border relative overflow-hidden group" data-testid="resume-banner">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-transform group-hover:scale-110"></div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+              <div>
+                <div className="text-[11px] sm:text-xs text-primary uppercase tracking-[0.2em] font-chakra mb-2 font-semibold">Training Läuft</div>
+                <div className="font-teko text-3xl sm:text-4xl chrome-text uppercase mb-1">Setze dein Training fort</div>
+                <div className="text-muted-foreground text-sm font-chakra flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
+                  Tag {activeSession.day_index} <span className="text-border">/</span> {activeSession.logged_sets?.length || 0} Sätze geloggt
                 </div>
-              ))}
+              </div>
+              <button onClick={() => navigate(`/workout/${activeSession.id}`)} className="btn-primary flex-shrink-0" data-testid="resume-workout-btn">
+                <Play size={20} className="mr-2" fill="currentColor" /> FORTSETZEN
+              </button>
             </div>
           </div>
-        ) : (
-          <div className="af-card p-8 text-center">
-            <Brain size={32} className="mx-auto text-[#00BFFF] mb-2" />
-            <div className="text-gray-400 font-chakra">Plan wird generiert...</div>
+        )}
+
+        {/* Streak Banner - Secondary Span */}
+        {stats.current_streak >= 3 && !activeSession && (
+          <div className="md:col-span-12 lg:col-span-8 af-card p-6 sm:p-8 relative overflow-hidden group" data-testid="streak-banner" style={{ borderColor: 'var(--af-primary)' }}>
+            <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors"></div>
+            <div className="relative flex items-center gap-5 z-10">
+              <div className="bg-primary/20 p-4 rounded-full">
+                <Flame size={40} className="text-primary" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-teko text-3xl sm:text-4xl electric-text tracking-tight uppercase leading-none">{stats.current_streak}-TAGE STREAK</div>
+                <div className="text-sm text-muted-foreground font-chakra mt-1">Verliere deinen Fokus nicht.</div>
+              </div>
+            </div>
           </div>
         )}
-      </section>
 
-      {/* Quick Actions (compact) */}
-      <section className="mb-6 sm:mb-8 grid grid-cols-2 gap-3" data-testid="quick-actions">
-        <button
-          onClick={() => navigate("/bodyscan")}
-          className="af-card p-3 sm:p-4 clip-corner-tl-br hover:border-[#00BFFF] transition w-full text-left flex items-center gap-3"
-          data-testid="dashboard-bodyscan-cta"
-        >
-          <Scan size={20} className="text-[#00BFFF] flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.5))" }} />
-          <div className="flex-1 min-w-0">
-            <div className="font-teko text-base sm:text-lg chrome-text tracking-wide leading-tight">BODY SCAN</div>
-            <div className="text-[10px] sm:text-[11px] text-gray-500 font-chakra uppercase tracking-widest">KI-Analyse</div>
+        {/* Quick Stats - Sidebar Spans */}
+        <div className="md:col-span-12 lg:col-span-4 grid grid-cols-2 gap-4">
+          <StatCard icon={Flame} label="Workouts" value={stats.total_completed} testid="stat-workouts" />
+          <StatCard icon={Calendar} label="Streak" value={stats.current_streak} highlight={stats.current_streak >= 3} testid="stat-streak" />
+          <StatCard icon={Weight} label="Volumen (kg)" value={formatVolume(stats.total_volume_kg)} testid="stat-volume" />
+          <StatCard icon={Crown} label="Status" value={user?.is_premium ? "PRO" : "FREE"} gold={user?.is_premium} testid="stat-status" />
+        </div>
+      </div>
+
+      {/* Week Schedule (Full Width Row) */}
+      <div className="mb-8">
+        <WeekSchedule plan={plan} sessions={sessions} onStartDay={startDay} />
+      </div>
+
+      {/* Two Column Layout for Insights & Plan */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 sm:gap-8 mb-8">
+        
+        {/* Left Column: Plan View */}
+        <section className="xl:col-span-8">
+          <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-4">
+            <h2 className="font-teko text-3xl tracking-wide chrome-text m-0">DEIN PLAN</h2>
+            <div className="flex gap-2">
+              <button onClick={adjustPlan} disabled={regenerating} className="btn-outline px-3 py-1.5 min-h-[36px] text-xs flex items-center gap-1.5" data-testid="adjust-plan-btn">
+                {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                <span className="hidden sm:inline">KI ANPASSEN</span>
+              </button>
+              <button onClick={() => navigate("/plan")} className="btn-outline px-3 py-1.5 min-h-[36px] text-xs" data-testid="view-plan-btn">DETAILS</button>
+            </div>
           </div>
-        </button>
-        <button
-          onClick={() => navigate("/library")}
-          className="af-card p-3 sm:p-4 clip-corner-tl-br hover:border-[#00BFFF] transition w-full text-left flex items-center gap-3"
-          data-testid="dashboard-library-cta"
-        >
-          <BookOpen size={20} className="text-[#00BFFF] flex-shrink-0" style={{ filter: "drop-shadow(0 0 8px rgba(0,191,255,0.5))" }} />
-          <div className="flex-1 min-w-0">
-            <div className="font-teko text-base sm:text-lg chrome-text tracking-wide leading-tight">BIBLIOTHEK</div>
-            <div className="text-[10px] sm:text-[11px] text-gray-500 font-chakra uppercase tracking-widest">54 Übungen</div>
+          
+          {adjustStatus && adjustStatus.status !== "no_plan" && (
+            <div className="mb-4 bg-secondary/50 border border-white/5 rounded p-3 flex items-center gap-3 text-xs font-chakra" data-testid="adjust-status-badge">
+              <div className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${adjustStatus.status === 'ready' ? 'bg-[#39FF14]' : 'bg-primary'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${adjustStatus.status === 'ready' ? 'bg-[#39FF14]' : 'bg-primary'}`}></span>
+              </div>
+              <span className="text-muted-foreground uppercase tracking-wider">SYSTEM STATUS:</span>
+              <span className="text-white font-medium">{adjustStatus.message}</span>
+            </div>
+          )}
+
+          {plan ? (
+            <div>
+              <div className="flex flex-col sm:flex-row sm:items-baseline gap-3 mb-6">
+                <h3 className="text-primary font-teko text-2xl m-0 leading-none">{plan.name}</h3>
+                <p className="text-muted-foreground text-sm font-chakra flex-1 sm:border-l sm:border-white/10 sm:pl-3">{plan.progression_notes}</p>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                {plan.days?.map((day) => (
+                  <div key={day.day_index} className="af-card p-5 group flex flex-col h-full" data-testid={`plan-day-${day.day_index}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-xs text-muted-foreground font-chakra uppercase tracking-[0.2em]">TAG {day.day_index}</div>
+                      {day.focus && <span className="text-[10px] text-primary border border-primary/30 bg-primary/5 px-2 py-0.5 rounded-sm font-chakra uppercase tracking-widest">{day.focus}</span>}
+                    </div>
+                    <div className="font-teko text-2xl tracking-wide mb-2 text-white group-hover:electric-text transition-colors leading-none uppercase">{day.name}</div>
+                    <div className="text-sm text-muted-foreground font-chakra mb-6 flex-1 flex items-center gap-2">
+                      <Activity size={14} /> {day.exercises?.length || 0} Übungen
+                    </div>
+                    <button onClick={() => startDay(day.day_index)} className="btn-outline w-full hover:bg-primary hover:text-black hover:border-primary group-hover:border-primary/50" data-testid={`start-day-${day.day_index}`}>
+                      STARTEN
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="af-card p-12 text-center border-dashed border-white/20">
+              <Brain size={48} className="mx-auto text-muted-foreground mb-4 opacity-50" />
+              <div className="text-muted-foreground font-chakra uppercase tracking-widest">Plan wird generiert...</div>
+            </div>
+          )}
+        </section>
+
+        {/* Right Column: Insights & Quick Actions */}
+        <section className="xl:col-span-4 flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
+            <h2 className="font-teko text-2xl tracking-wide text-white m-0 border-b border-white/5 pb-2">COMMAND CENTER</h2>
+            <button onClick={() => navigate("/bodyscan")} className="af-card p-4 hover:border-primary group text-left flex items-center gap-4 transition-all" data-testid="dashboard-bodyscan-cta">
+              <div className="bg-white/5 p-3 rounded group-hover:bg-primary/10 group-hover:text-primary transition-colors text-white">
+                <Scan size={24} />
+              </div>
+              <div>
+                <div className="font-teko text-xl text-white uppercase tracking-wide leading-none mb-1">Body Scan</div>
+                <div className="text-xs text-muted-foreground font-chakra uppercase tracking-wider">KI-Analyse Starten</div>
+              </div>
+            </button>
+            
+            <button onClick={() => navigate("/library")} className="af-card p-4 hover:border-primary group text-left flex items-center gap-4 transition-all" data-testid="dashboard-library-cta">
+              <div className="bg-white/5 p-3 rounded group-hover:bg-primary/10 group-hover:text-primary transition-colors text-white">
+                <BookOpen size={24} />
+              </div>
+              <div>
+                <div className="font-teko text-xl text-white uppercase tracking-wide leading-none mb-1">Bibliothek</div>
+                <div className="text-xs text-muted-foreground font-chakra uppercase tracking-wider">Datenbank Öffnen</div>
+              </div>
+            </button>
           </div>
-        </button>
-      </section>
+
+          <div className="mt-4">
+            <CollapsibleSection title="Alpha Coach" icon={Brain} hint="Wochen-Analyse" defaultOpen={true} storageKey="coach" testid="section-coach">
+              <CoachInsights compact />
+            </CollapsibleSection>
+          </div>
+          
+          <div className="mt-2">
+            <CollapsibleSection title="Heute" icon={Sparkles} hint="Kalorien · Gewicht" defaultOpen={false} storageKey="daily" testid="section-daily">
+              <DailySummary plan={plan} sessions={sessions} />
+            </CollapsibleSection>
+          </div>
+        </section>
+
+      </div>
     </Layout>
   );
 }
 
 function StatCard({ icon: Icon, label, value, highlight, gold, testid }) {
-  const iconColor = gold ? "text-[#E0B968]" : "text-[#00BFFF]";
-  const boxClass = gold
-    ? "gold-glow-box gold-border"
-    : highlight ? "glow-box border-[#00BFFF]" : "";
-  const valueClass = gold ? "gold-chrome" : "chrome-text";
+  const isGold = gold;
+  const isHighlight = highlight;
+  
+  let borderClass = "border-white/10";
+  let textClass = "text-white";
+  let iconClass = "text-muted-foreground";
+  
+  if (isGold) {
+    borderClass = "border-[#D4AF37]/50 shadow-[0_0_15px_rgba(212,175,55,0.1)]";
+    textClass = "text-[#FFDF00]";
+    iconClass = "text-[#D4AF37]";
+  } else if (isHighlight) {
+    borderClass = "border-primary/50 shadow-[0_0_15px_rgba(255,69,0,0.1)]";
+    textClass = "text-primary";
+    iconClass = "text-primary";
+  }
+
   return (
-    <div className={`af-card p-4 clip-corner-tl-br ${boxClass}`} data-testid={testid}>
-      <Icon size={18} className={iconColor} />
-      <div className={`font-teko text-3xl mt-2 tracking-wide ${valueClass}`}>{value}</div>
-      <div className="text-[10px] text-body-muted uppercase tracking-[0.25em] font-chakra mt-1">{label}</div>
+    <div className={`af-card p-4 sm:p-5 flex flex-col justify-between ${borderClass} h-full`} data-testid={testid}>
+      <Icon size={20} className={`${iconClass} mb-3`} />
+      <div>
+        <div className={`font-teko text-3xl sm:text-4xl leading-none tracking-tight mb-1 ${textClass}`}>{value}</div>
+        <div className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-chakra">{label}</div>
+      </div>
     </div>
   );
 }

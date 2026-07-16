@@ -1,144 +1,101 @@
 {
-  "theme": "dark",
-  "archetype": "Archetype 2: Performance Pro (Electric Neon Hybrid)",
-  "brand": {
-    "name": "alpha-fit",
-    "aesthetic": "Apex Predator / Intensified Cyber Athletic. Metallic chrome, electric blue glow, pitch black background, sharp geometries, shield/badge motifs.",
-    "emotional_tone": "Intense, badass, elite, hyper-focused, futuristic."
-  },
+  "project_name": "alpha-fit",
+  "theme": "Performance Pro (Dark Mode Only)",
   "typography": {
-    "font_install_instruction": "Add to Google Fonts import: @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Teko:wght@400;500;600;700&display=swap');",
-    "primary_font_family": "'Teko', sans-serif",
-    "secondary_font_family": "'Chakra Petch', sans-serif",
-    "headings": {
-      "font_family": "'Teko', sans-serif",
-      "weight": "font-bold",
-      "tracking": "tracking-wide",
-      "text_transform": "uppercase",
-      "sizes": {
-        "h1": "text-5xl sm:text-6xl md:text-7xl",
-        "h2": "text-4xl sm:text-5xl",
-        "h3": "text-2xl sm:text-3xl"
-      }
-    },
-    "body": {
-      "font_family": "'Chakra Petch', sans-serif",
-      "weight": "font-normal",
-      "sizes": {
-        "default": "text-base",
-        "small": "text-sm",
-        "large": "text-lg md:text-xl"
-      }
-    },
-    "labels": {
-      "styling": "uppercase tracking-[0.2em] text-xs font-semibold text-chrome-silver"
+    "headings": "Teko, uppercase, tight tracking, massive sizes (text-5xl to text-8xl). Must feel heavy and athletic.",
+    "body": "Chakra Petch, technical and legible. Uppercase with wide tracking for labels.",
+    "scale": {
+      "hero": "text-6xl to text-8xl",
+      "h1": "text-5xl md:text-6xl",
+      "h2": "text-4xl md:text-5xl",
+      "h3": "text-2xl md:text-3xl",
+      "body": "text-base",
+      "labels": "text-[10px] sm:text-xs tracking-[0.2em] uppercase font-semibold"
     }
   },
   "colors": {
-    "background": {
-      "base": "#000000",
-      "surface": "#05050A",
-      "surface_elevated": "#0A0A10"
-    },
-    "brand": {
-      "primary": "#00BFFF",
-      "secondary": "#1E90FF",
-      "accent_glow": "#00E5FF"
-    },
-    "text": {
-      "primary": "#FFFFFF",
-      "secondary": "#D0D0E0",
-      "muted": "#606070",
-      "inverse": "#000000"
-    },
-    "borders": {
-      "subtle": "#1A1A24",
-      "active": "#00BFFF",
-      "glow": "rgba(0, 191, 255, 0.4)"
-    },
-    "status": {
-      "success": "#00FF7F",
-      "warning": "#FFD700",
-      "danger": "#FF3B30"
-    }
+    "background": "#050505",
+    "surfaces": ["#0A0A0B", "#121214"],
+    "primary": "#FF4500",
+    "primary_description": "Electric Blaze - High Energy Orange/Red. Used for primary CTAs and active states.",
+    "secondary": "#FF5A1F",
+    "success": "#39FF14",
+    "success_description": "Volt Green - Used for PRs, completed workouts, and positive feedback.",
+    "gold": "#D4AF37",
+    "borders": "rgba(255,255,255,0.08)",
+    "text": "#FFFFFF",
+    "text_muted": "#A1A1AA"
   },
-  "effects_and_surfaces": {
-    "glow": {
-      "text_shadow": "drop-shadow-[0_0_8px_rgba(0,191,255,0.8)]",
-      "box_shadow_subtle": "shadow-[0_0_15px_rgba(0,191,255,0.2)]",
-      "box_shadow_intense": "shadow-[0_0_25px_rgba(0,191,255,0.5)]",
-      "badge_glow": "shadow-[0_0_30px_rgba(0,229,255,0.8)] border border-[#00E5FF]"
-    },
-    "surfaces": {
-      "cards": "bg-[#05050A] border border-[#1A1A24] rounded-xl overflow-hidden",
-      "premium_cards": "bg-gradient-to-b from-[#0A0A10] to-[#000000] border border-[#00BFFF] relative",
-      "glassmorphism": "backdrop-blur-xl bg-black/60 border-b border-[#00BFFF]/20"
-    },
-    "textures": {
-      "grain_overlay": "opacity-5 mix-blend-overlay pointer-events-none"
-    }
+  "visual_enhancers": {
+    "depth": "No soft shadows. Use 1px inner borders (box-shadow: inset 0 1px 0 rgba(255,255,255,0.05)) or subtle luminance shifts.",
+    "glow": "Tight, high-intensity glows around primary actions only (shadow-[0_0_15px_rgba(255,69,0,0.15)]).",
+    "borders": "Tracing beam borders for active components using CSS animations.",
+    "corners": "Remove old cyberpunk clip-corners. Use sharp or 4px radius (rounded-md) for an athletic/tactical feel.",
+    "gradients": "Avoid generic SaaS gradients. Use stark contrasts or deep dark gradients (e.g., #121214 to #0A0A0B)."
   },
-  "layout_and_spacing": {
-    "philosophy": "Dense and intense. Use Grid Borders (The Technical Look). Exposed grid lines in dashboards.",
-    "container_padding": "p-6 md:p-8",
-    "gap_system": "gap-4 md:gap-6",
-    "border_radius": "rounded-none md:rounded-lg",
-    "bento_grid": "grid grid-cols-1 md:grid-cols-4 gap-6"
+  "layouts": {
+    "grid": "Bento Box Mode B (High Density). 12-column grid for dashboards and dense data.",
+    "spacing": "Generous paddings (p-6, p-8) inside cards to allow content to breathe despite dense grids.",
+    "mobile_first": "Scale down gracefully. Stack columns on mobile (grid-cols-1).",
+    "alignment": "Left-align dense content and data. Center-align hero typography only when mathematically balanced."
   },
   "components": {
-    "buttons": {
-      "primary": "bg-[#00BFFF] text-black font-bold uppercase tracking-wider hover:bg-[#00E5FF] hover:shadow-[0_0_20px_rgba(0,229,255,0.6)] transition-all duration-300",
-      "secondary": "bg-transparent border border-[#00BFFF] text-[#00BFFF] font-bold uppercase tracking-wider hover:bg-[#00BFFF]/10 transition-all duration-300",
-      "premium": "bg-gradient-to-r from-[#1E90FF] to-[#00BFFF] text-black font-bold uppercase hover:shadow-[0_0_30px_rgba(0,191,255,0.8)] transition-all duration-300 relative overflow-hidden"
+    "af-card": "bg-[#0A0A0B] border border-white/10 rounded-md transition-all duration-200 hover:border-[#FF4500]/40",
+    "btn-primary": "bg-[#FF4500] text-black font-teko uppercase tracking-wider font-bold px-6 py-3 rounded-md hover:bg-[#FF5A1F] transition-all flex items-center justify-center min-h-[48px]",
+    "btn-outline": "bg-transparent border border-white/10 text-white font-teko uppercase px-6 py-3 rounded-md hover:border-[#FF4500] hover:text-[#FF4500] transition-all min-h-[48px]",
+    "input": "bg-[#121214] border border-white/10 text-white font-chakra rounded-md p-3 w-full min-h-[48px] focus:border-[#FF4500] outline-none transition-colors",
+    "badges": "Sharp rectangular or subtle rounded badges. Primary bg with 10% opacity, solid 1px border, text primary color."
+  },
+  "motion": {
+    "hover": "Slight upward translation (-translate-y-1) and border color shift.",
+    "glow_pulse": "Pulse opacity/scale of glow behind active elements. Use `animate-pulse` or custom keyframes.",
+    "transitions": "Use `transition-all duration-200 ease-out` for interactive elements."
+  },
+  "accessibility": {
+    "contrast": "Ensure text meets APCA standards. Muted text must still be readable (#A1A1AA on #050505).",
+    "focus": "Clear focus states on inputs and buttons (e.g., focus:border-[#FF4500] focus:ring-1 focus:ring-[#FF4500]).",
+    "test_ids": "All interactive elements MUST have data-testid attributes (kebab-case)."
+  },
+  "signature_moments": [
+    {
+      "name": "Level-up / Milestone Celebration",
+      "description": "Screen shake effect, massive text counter rolling up, particle explosion in Electric Blaze (#FF4500)."
     },
-    "badges": {
-      "styling": "metallic sheen, sharp geometric edges (hexagon or shield), electric blue glow core, chrome borders. Use intense box-shadows."
+    {
+      "name": "Workout Completion",
+      "description": "Full screen dark overlay. Stats stamped onto the screen one by one with heavy impact scale animations (like a physical stamp)."
     },
-    "inputs": {
-      "styling": "bg-[#0A0A10] border-b-2 border-[#1A1A24] text-white focus:border-[#00BFFF] focus:outline-none focus:ring-0 transition-colors rounded-none px-4 py-3"
+    {
+      "name": "PR Unlock",
+      "description": "Volt Green (#39FF14) tracing beam circles the stat card rapidly, followed by a bright flash and text expanding."
     },
-    "active_workout_session": {
-      "styling": "Full-screen mode. Pitch black background. Massive numbers (Teko text-8xl) for rest timers. Glowing circular progress indicators. Swipe/Auto-advance logic."
+    {
+      "name": "Rest-Timer Sequence",
+      "description": "Massive circular progress in the center of the screen with a breathing animation (expands/contracts slowly) to pace the user's rest."
     }
-  },
-  "icons": {
-    "library": "lucide-react",
-    "style": "Use sharp/technical icons. Stroke width 2 or 2.5 for better visibility."
-  },
-  "media_assets": {
-    "hero_backgrounds": [
-      {
-        "url": "https://images.unsplash.com/photo-1676655079738-af54dfd6318e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MDV8MHwxfHNlYXJjaHwyfHxib2R5YnVpbGRlciUyMGRhcmslMjBneW18ZW58MHx8fHwxNzgxMzk2ODUzfDA&ixlib=rb-4.1.0&q=85",
-        "description": "A man hanging upside down in the dark - perfect for intense, elite landing page backgrounds."
-      },
-      {
-        "url": "https://images.unsplash.com/photo-1550353127-b0da3aeaa0ca?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwyfHxuZW9uJTIwYmx1ZSUyMGFic3RyYWN0JTIwdGV4dHVyZXxlbnwwfHx8fDE3ODEzOTY4NTN8MA&ixlib=rb-4.1.0&q=85",
-        "description": "Blue and black background with swirls - use as texture overlay for premium plans."
-      }
-    ],
-    "equipment_imagery": [
-      {
-        "url": "https://images.unsplash.com/photo-1672344048213-76b6e77304bd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwxfHxmaXRuZXNzJTIwZXF1aXBtZW50JTIwZGFyayUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzgxMzk2ODUzfDA&ixlib=rb-4.1.0&q=85",
-        "description": "Black and white dumbbell - use for workout list thumbnails."
-      }
-    ],
-    "badges": "DO NOT USE placeholders. Construct badges using pure CSS/Tailwind (Lucide Icon + Hexagon shape + metallic gradient background + intense blue box-shadow)."
-  },
-  "key_features_implementation_notes": {
-    "ai_coach": "Chat interface should look like a HUD terminal. AI messages in chrome silver, User messages bordered with electric blue.",
-    "premium_paywall": "Highlight the 1-year plan. Use 'Tracing Beam' effect around the recommended plan container.",
-    "admin_dashboard": "Use 'Control Room' grid mode. High density. Data charts using Recharts with neon blue strokes.",
-    "onboarding": "Step-by-step wizard. Progress bar is a bright cyan neon line."
-  },
-  "testing_attributes": {
-    "rule": "All interactive elements must include a data-testid attribute formatted as kebab-case, role-based."
+  ],
+  "screen_blueprints": {
+    "Login": "Dark, moody minimalist. Giant alpha flame logo pulsing. Standard Shadcn inputs styled dark. Electric Blaze CTA full width.",
+    "Onboarding": "Step-by-step wizard. Massive typography for questions (text-4xl+). Grid of selectable cards for goals/equipment. Progress bar fixed at top.",
+    "Dashboard": "Bento Grid Mode B. Left/Main col: Active session hero (tracing border), Week Schedule. Right/Sidebar col: Stats bento, Quick actions.",
+    "Active Workout": "Data-heavy tactical HUD. Huge reps/weight inputs (Chakra Petch). Rest timer overlay. Swipeable/Carousel for exercise image generation.",
+    "Plan View": "List of days in distinct blocks. Expandable exercise lists. Use subtle drag-and-drop handles on the left. High contrast headers.",
+    "Progress": "Recharts line charts with Electric Blaze stroke. Muscle-group heatmap SVG colored with #FF4500 intensity map. Badges collection grid.",
+    "Nutrition": "Macro progress rings. Camera interface for scanning with corner-reticle framing. Clean list of logged meals with macro breakdown.",
+    "Body Scan": "Camera overlay with AI scanning lines (CSS scanline vertical sweep). Split screen for results: photo left, AI recommendation cards right.",
+    "Social": "Leaderboards with Gold/Silver/Bronze text accents for top 3. Avatar placeholders or initials in sharp bordered circles.",
+    "Settings": "Minimalist list layout. Toggles in Electric Blaze. High contrast destructive buttons for account deletion.",
+    "Admin Dashboard": "Dense data table. Use Shadcn tables with dark theme, tight padding, and hover row highlights.",
+    "Coach Chat": "Chat interface. AI bubbles dark with primary 1px border. User bubbles dark gray. Async polling loader with tactical typing dots."
   },
   "instructions_to_main_agent": [
-    "Strictly follow the color palette. Pure black #000000 for backgrounds, not generic grays.",
-    "Do NOT use standard rounded cards everywhere. Use sharp geometric edges or very subtle rounding to maintain the alpha/aggressive feel.",
-    "Apply `drop-shadow` for glowing text and icons to match the metallic/electric vibe.",
-    "Use framer-motion for heavy, impactful transitions. Fast snap animations, no slow bouncing.",
-    "Use standard Shadcn components but heavily restyle them. Remove default borders, apply neon blue borders and black backgrounds.",
-    "For the active workout, implement a full-screen mode that locks orientation if possible, using huge typography for timers."
-  ]
+    "Read this guideline entirely before modifying files.",
+    "The Dashboard.jsx and index.css have already been updated as the flagship implementation. Use them as reference.",
+    "Apply these design tokens and layouts to all remaining 11 pages.",
+    "Replace old `.af-card` clip-corners and cyan glows with the new `rounded-md` tactical bento box style and Electric Blaze accents.",
+    "Remove old neon cyan (#00BFFF) references in code and replace with Electric Blaze or CSS variables.",
+    "Use Shadcn UI components where possible but strip their default styling to match this dark tactical aesthetic.",
+    "Ensure all interactive elements have `data-testid`."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": "Always use dark mode. Never apply universal transition (`transition: all` without specific properties if transforms are involved, though `transition-all` in tailwind is fine). Create depth through layered design elements with z-index hierarchy and subtle borders. Use glass-morphism effects carefully with very low opacity and heavy blur. Do not use generic centered layouts for data. Every interaction needs micro-animations (hover states, focus states). No purple/violet gradients. No transparent backgrounds over scrolling content."
 }
