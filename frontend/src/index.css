@@ -1225,3 +1225,12 @@ h1, h2, h3, .heading {
   width: 8px; height: 8px; border-radius: 2px;
   box-shadow: 0 0 4px currentColor;
 }
+
+/* Hottest muscle group breathing pulse — makes the heatmap feel alive */
+@keyframes muscle-hot-breath {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1;    }
+}
+.muscle-hot-pulse {
+  animation: muscle-hot-breath 1.6s ease-in-out infinite;
+}
