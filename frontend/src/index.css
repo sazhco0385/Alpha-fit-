@@ -1017,3 +1017,211 @@ h1, h2, h3, .heading {
 .landing-final-aurora ~ * {
   border-radius: inherit;
 }
+
+/* ============================================================
+   LANDING — Feature Showcase (Autoplay Loops)
+   ============================================================ */
+.showcase-tile {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(15,15,25,0.9), rgba(0,0,0,0.95));
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+}
+.showcase-tile:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: 0 20px 40px -12px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.showcase-tile__stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 12%, #000) 0%, #000 70%);
+}
+.showcase-tile__meta {
+  padding: 12px 14px 14px;
+}
+
+/* ═══ PR Preview ═══ */
+.pr-preview { position: absolute; inset: 0; }
+.pr-preview__aurora {
+  position: absolute; inset: -10%;
+  background:
+    radial-gradient(closest-side, rgba(57,255,20,0.45), transparent 70%) 40% 50% / 70% 70% no-repeat,
+    radial-gradient(closest-side, rgba(255,215,0,0.25), transparent 70%) 65% 40% / 55% 55% no-repeat;
+  filter: blur(18px) saturate(1.4);
+  animation: pr-preview-swirl 3.5s ease-in-out infinite;
+}
+@keyframes pr-preview-swirl {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50%      { transform: scale(1.1); opacity: 0.95; }
+}
+.pr-preview__flash {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(57,255,20,0.35) 20%, transparent 55%);
+  animation: pr-preview-flash 1s ease-out both;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+@keyframes pr-preview-flash {
+  0%   { opacity: 0; transform: scale(0.4); }
+  15%  { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+.pr-preview__canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; }
+.pr-preview__content {
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; padding: 8px;
+}
+.pr-preview__badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px;
+  border: 1px solid rgba(255,215,0,0.6);
+  background: rgba(255,215,0,0.1);
+  color: #FFD700;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px;
+  letter-spacing: 0.25em;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+.pr-preview__title {
+  font-family: 'Teko', sans-serif;
+  font-size: 3rem;
+  line-height: 0.9;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  filter: drop-shadow(0 0 12px rgba(57,255,20,0.8));
+  margin-top: 2px;
+}
+.pr-preview__lift {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  font-family: 'Teko', sans-serif;
+  color: #39FF14;
+  text-shadow: 0 0 10px rgba(57,255,20,0.6);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+.pr-preview__unit {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.75);
+}
+.pr-preview__improvement {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px;
+  background: rgba(57,255,20,0.15);
+  border: 1px solid rgba(57,255,20,0.4);
+  color: #39FF14;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 9px;
+  border-radius: 999px;
+  letter-spacing: 0.15em;
+  margin-top: 4px;
+}
+
+/* ═══ Ring Preview ═══ */
+.ring-preview {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.ring-preview__inner-glow {
+  position: absolute;
+  width: 60%; height: 60%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,191,255,0.35) 0%, transparent 70%);
+  filter: blur(24px);
+  animation: ring-preview-breath 3.6s ease-in-out infinite;
+}
+@keyframes ring-preview-breath {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50%      { opacity: 0.85; transform: scale(1.08); }
+}
+.ring-preview__svg {
+  position: relative;
+  width: 82%; height: 82%;
+  z-index: 2;
+}
+.ring-preview__center {
+  position: absolute;
+  inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  pointer-events: none;
+  z-index: 3;
+}
+.ring-preview__count {
+  font-family: 'Teko', sans-serif;
+  font-size: 4rem;
+  line-height: 1;
+  color: #FFFFFF;
+  text-shadow: 0 0 12px rgba(0,191,255,0.6);
+  letter-spacing: -0.02em;
+}
+.ring-preview__label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.4em;
+  margin-top: 2px;
+}
+.ring-preview__chip {
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  padding: 3px 10px;
+  border: 1px solid rgba(255,107,53,0.5);
+  background: rgba(255,107,53,0.1);
+  color: #FF8A00;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px;
+  letter-spacing: 0.25em;
+  border-radius: 999px;
+  text-transform: uppercase;
+  z-index: 4;
+  box-shadow: 0 0 12px rgba(255,107,53,0.3);
+}
+
+/* ═══ Heatmap Preview ═══ */
+.heatmap-preview {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 40%, rgba(255,20,147,0.10) 0%, transparent 70%);
+}
+.heatmap-preview__svg {
+  width: 70%;
+  max-height: 90%;
+  transition: filter 300ms ease;
+}
+.heatmap-preview__svg ellipse,
+.heatmap-preview__svg circle,
+.heatmap-preview__svg rect {
+  transition: opacity 500ms ease, fill 500ms ease;
+}
+.heatmap-preview__label {
+  position: absolute; top: 10px; left: 10px;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 8px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 999px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 9px;
+  color: #FFFFFF;
+  letter-spacing: 0.15em;
+  backdrop-filter: blur(6px);
+}
+.heatmap-preview__dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+.heatmap-preview__legend {
+  position: absolute; bottom: 10px; right: 10px;
+  display: flex; gap: 3px;
+}
+.heatmap-preview__legend span {
+  width: 8px; height: 8px; border-radius: 2px;
+  box-shadow: 0 0 4px currentColor;
+}

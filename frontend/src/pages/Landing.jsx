@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import Logo from "../components/Logo";
 import { useAuth } from "../lib/auth";
+import FeatureShowcase from "../components/FeatureShowcase";
 
 export default function Landing() {
   const { user } = useAuth();
@@ -94,6 +95,9 @@ export default function Landing() {
           — MARCO, 27, HAMBURG
         </div>
       </section>
+
+      {/* ═══ FEATURE SHOWCASE — Autoplay demo tiles ═══ */}
+      <FeatureShowcase />
 
       {/* ═══ FEATURE STRIP ═══ */}
       <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16" data-testid="features">
