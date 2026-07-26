@@ -171,11 +171,31 @@ async def log_set(payload: LogSetRequest, user: dict = Depends(get_current_user)
     if not session:
         raise HTTPException(status_code=404, detail="Session nicht gefunden")
     logged = session.get("logged_sets", [])
+    # Snapshot exercise name + target_muscle onto the logged set so muscle-group stats
+    # still work even if the plan is later deleted or a session lost its plan_id.
+    ex_name_snapshot = ""
+    target_muscle_snapshot = ""
+    try:
+        plan_id = user.get("current_plan_id") or session.get("plan_id")
+        if plan_id:
+            plan = await db.training_plans.find_one({"id": plan_id}, {"_id": 0, "days": 1})
+            if plan:
+                day = next((d for d in (plan.get("days") or []) if d.get("day_index") == session.get("day_index")), None)
+                if day:
+                    exs = day.get("exercises") or []
+                    if 0 <= payload.exercise_index < len(exs):
+                        ex_name_snapshot = (exs[payload.exercise_index].get("name") or "").strip()
+                        target_muscle_snapshot = (exs[payload.exercise_index].get("target_muscle") or exs[payload.exercise_index].get("muscle_group") or "").strip()
+    except Exception:
+        pass
+
     logged.append({
         "exercise_index": payload.exercise_index,
         "set_index": payload.set_index,
         "reps": payload.reps,
         "weight_kg": payload.weight_kg,
+        "exercise_name": ex_name_snapshot,
+        "target_muscle": target_muscle_snapshot,
         "completed_at": now_iso(),
     })
     await db.workout_sessions.update_one(

@@ -200,13 +200,15 @@ export default function MuscleGroupsSection() {
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState(null);
   const [view, setView] = useState("front");
+  const [mode, setMode] = useState("relative");
 
   useEffect(() => {
-    api.get("/muscle-groups/stats")
+    setLoading(true);
+    api.get(`/muscle-groups/stats?mode=${mode}`)
       .then(({ data }) => setData(data))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, []);
+  }, [mode]);
 
   const groupPercents = useMemo(() => {
     const map = {};
@@ -258,6 +260,35 @@ export default function MuscleGroupsSection() {
               }`}
             >
               {v === "front" ? "Vorne" : "Hinten"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Mode toggle: relative vs absolute */}
+      <div className="flex items-center justify-between mb-3 text-[10px] font-chakra text-gray-500 uppercase tracking-widest">
+        <span>
+          {mode === "relative"
+            ? "Vergleich untereinander (zeigt Imbalancen)"
+            : "Ziel: 3× / Woche = 100 %"}
+        </span>
+        <div className="flex">
+          {[
+            { k: "relative", l: "Relativ" },
+            { k: "absolute", l: "Absolut" },
+          ].map((m) => (
+            <button
+              key={m.k}
+              type="button"
+              onClick={() => setMode(m.k)}
+              data-testid={`heat-mode-${m.k}`}
+              className={`px-2 py-1 border transition uppercase tracking-widest ${
+                mode === m.k
+                  ? "border-[#FF1493] text-[#FF1493] bg-[#FF1493]/10"
+                  : "border-gray-700 text-gray-500 hover:border-gray-500"
+              }`}
+            >
+              {m.l}
             </button>
           ))}
         </div>

@@ -1,7 +1,11 @@
 """Muscle group statistics — count how often each muscle group was trained in the
-last N weeks (default 4), returning a percentage vs. an ideal frequency baseline.
+last N weeks (default 4), returning a percentage.
 
-Baseline: 2 sessions per muscle group per week = 100 %. Capped at 100.
+Two modes:
+- **relative** (default): each muscle % is scaled vs. the *most-hit* muscle in the window.
+  This is the "heatmap" view — always exposes imbalances, always changes as training shifts.
+- **absolute**: each muscle % is scaled vs. an ideal frequency baseline (3 sessions/week).
+  Caps at 100. Useful for absolute goals like "have I hit shoulders enough?"
 """
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List
@@ -35,8 +39,9 @@ def _canonical_group(raw: str) -> str:
 
 
 @router.get("/muscle-groups/stats")
-async def muscle_group_stats(weeks: int = 4, user: dict = Depends(get_current_user)):
+async def muscle_group_stats(weeks: int = 4, mode: str = "relative", user: dict = Depends(get_current_user)):
     weeks = max(1, min(12, int(weeks)))
+    mode = mode if mode in ("relative", "absolute") else "relative"
     since = datetime.now(timezone.utc) - timedelta(weeks=weeks)
     since_iso = since.isoformat()
 
@@ -56,43 +61,69 @@ async def muscle_group_stats(weeks: int = 4, user: dict = Depends(get_current_us
     # Counts per group
     session_hits: Dict[str, int] = {g["key"]: 0 for g in _GROUPS}
     exercise_hits: Dict[str, int] = {g["key"]: 0 for g in _GROUPS}
+    set_counts:   Dict[str, int] = {g["key"]: 0 for g in _GROUPS}
 
     for s in sessions:
         plan = plans.get(s.get("plan_id"))
-        if not plan:
-            continue
-        day = next((d for d in (plan.get("days") or []) if d.get("day_index") == s.get("day_index")), None)
-        if not day:
-            continue
+        day = None
+        if plan:
+            day = next((d for d in (plan.get("days") or []) if d.get("day_index") == s.get("day_index")), None)
         touched_this_session: set = set()
-        # only count exercises where at least one set was logged
-        logged_indices = {ls.get("exercise_index") for ls in (s.get("logged_sets") or []) if isinstance(ls.get("exercise_index"), int)}
-        for i, ex in enumerate(day.get("exercises") or []):
-            if i not in logged_indices:
-                continue
-            g = _canonical_group(ex.get("target_muscle") or ex.get("muscle_group") or "")
+        logged_sets = s.get("logged_sets") or []
+        sets_per_ex: Dict[int, int] = {}
+        for ls in logged_sets:
+            i = ls.get("exercise_index")
+            if isinstance(i, int):
+                sets_per_ex[i] = sets_per_ex.get(i, 0) + 1
+
+        # Prefer snapshotted target_muscle from the logged set itself (works even if plan is gone).
+        # Fall back to plan-day lookup for older sessions that pre-date snapshotting.
+        counted_exs: set = set()
+        for ls in logged_sets:
+            i = ls.get("exercise_index")
+            raw = (ls.get("target_muscle") or "").strip()
+            if not raw and day and isinstance(i, int):
+                exs = day.get("exercises") or []
+                if 0 <= i < len(exs):
+                    raw = (exs[i].get("target_muscle") or exs[i].get("muscle_group") or "")
+            g = _canonical_group(raw)
             if not g:
                 continue
-            exercise_hits[g] += 1
+            set_counts[g] += 1
+            if (i, g) not in counted_exs and isinstance(i, int):
+                exercise_hits[g] += 1
+                counted_exs.add((i, g))
             touched_this_session.add(g)
         for g in touched_this_session:
             session_hits[g] += 1
 
-    # Baseline: 2 sessions/week per group = 100 %
-    baseline_sessions = 2 * weeks
+    # Compute percentages
+    # Volume-weighted score (2× set-weighted + session bonus) exposes imbalances better than pure counts
+    scores: Dict[str, float] = {g["key"]: session_hits[g["key"]] * 1.0 + set_counts[g["key"]] * 0.25 for g in _GROUPS}
+    max_score = max(scores.values()) if scores else 0
+
+    # Absolute baseline: 3 sessions/week per group ≈ 100 %
+    baseline_sessions = 3 * weeks
+
     result = []
     for g in _GROUPS:
-        hits = session_hits[g["key"]]
-        pct = min(100, round((hits / baseline_sessions) * 100)) if baseline_sessions > 0 else 0
+        key = g["key"]
+        hits = session_hits[key]
+        if mode == "relative":
+            pct = round((scores[key] / max_score) * 100) if max_score > 0 else 0
+        else:
+            pct = min(100, round((hits / baseline_sessions) * 100)) if baseline_sessions > 0 else 0
         result.append({
-            "key": g["key"],
+            "key": key,
             "name": g["name"],
             "sessions_hit": hits,
-            "exercises_completed": exercise_hits[g["key"]],
+            "exercises_completed": exercise_hits[key],
+            "sets_logged": set_counts[key],
             "percent": pct,
         })
     return {
         "weeks": weeks,
+        "mode": mode,
         "baseline_sessions_per_group": baseline_sessions,
         "total_sessions": len(sessions),
         "groups": result,
