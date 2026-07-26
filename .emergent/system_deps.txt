@@ -1,0 +1,8 @@
+binfmt-support=2.2.2-2
+cron=3.0pl1-162
+file=1:5.44-3
+libc6=2.36-9+deb12u14
+libstdc++6=12.2.0-14+deb12u1
+openjdk-17-jdk-headless=17.0.19+10-1~deb12u2
+qemu-user-static=1:7.2+dfsg-7+deb12u18+b3
+zlib1g=1:1.2.13.dfsg-1
