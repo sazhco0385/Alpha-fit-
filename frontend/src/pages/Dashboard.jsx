@@ -128,6 +128,48 @@ export default function Dashboard() {
               <p className="text-white/55 text-xs sm:text-sm font-chakra leading-relaxed mb-3">{plan.progression_notes}</p>
             )}
 
+            {/* Mesocycle phase pill */}
+            {plan.mesocycle_phase && (
+              <div className="mb-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border" style={{
+                borderColor:
+                  plan.mesocycle_phase.week === 4 ? "#FFD740"
+                  : plan.mesocycle_phase.week === 3 ? "#FF6B35"
+                  : plan.mesocycle_phase.week === 2 ? "#39FF14"
+                  : "#00BFFF",
+                background:
+                  plan.mesocycle_phase.week === 4 ? "rgba(255,215,64,0.08)"
+                  : plan.mesocycle_phase.week === 3 ? "rgba(255,107,53,0.08)"
+                  : plan.mesocycle_phase.week === 2 ? "rgba(57,255,20,0.08)"
+                  : "rgba(0,191,255,0.08)",
+              }} data-testid="mesocycle-badge">
+                <span className="text-[10px] font-chakra tracking-[0.3em] uppercase" style={{
+                  color:
+                    plan.mesocycle_phase.week === 4 ? "#FFD740"
+                    : plan.mesocycle_phase.week === 3 ? "#FF6B35"
+                    : plan.mesocycle_phase.week === 2 ? "#39FF14"
+                    : "#00BFFF",
+                }}>
+                  Block {plan.mesocycle_phase.block} · Woche {plan.mesocycle_phase.week}
+                </span>
+                <span className="w-1 h-1 rounded-full bg-white/30" />
+                <span className="text-[10px] font-chakra tracking-widest uppercase text-white/70">
+                  {plan.mesocycle_phase.name}
+                </span>
+              </div>
+            )}
+
+            {plan.plateaus_detected && plan.plateaus_detected.length > 0 && (
+              <div className="mb-3 p-2.5 rounded border border-[#FF1493]/40 bg-[#FF1493]/8" data-testid="plateau-warning">
+                <div className="flex items-center gap-2 text-[11px] font-chakra">
+                  <span className="w-2 h-2 rounded-full bg-[#FF1493] animate-pulse" style={{ boxShadow: "0 0 6px #FF1493" }} />
+                  <span className="text-[#FF1493] tracking-widest uppercase">Plateau erkannt</span>
+                </div>
+                <div className="text-xs text-white/65 mt-1 font-chakra">
+                  {plan.plateaus_detected.slice(0, 3).join(", ")} — KI passt beim nächsten Adjust an
+                </div>
+              </div>
+            )}
+
             {adjustStatus && adjustStatus.status !== "no_plan" && (
               <div className="mb-3 flex items-center gap-2 text-[11px] font-chakra" data-testid="adjust-status-badge">
                 <span

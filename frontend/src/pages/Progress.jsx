@@ -3,6 +3,7 @@ import Layout from "../components/Layout";
 import api from "../lib/api";
 import BadgeGlow from "../components/BadgeGlow";
 import MuscleGroupsSection from "../components/MuscleGroupsSection";
+import WeakMuscleRecommendations from "../components/WeakMuscleRecommendations";
 import { useAuth } from "../lib/auth";
 import { TrendingUp, Calendar, Dumbbell, Flame, Award, Weight, Lock, Trophy, Scale, Camera } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
@@ -86,6 +87,7 @@ export default function Progress() {
 
       {/* Muscle groups overview */}
       <MuscleGroupsSection />
+      <WeakMuscleRecommendations />
 
       {/* Chart */}
       <div className="af-card p-6 mb-8 clip-corner-tl-br" data-testid="progress-chart-card">

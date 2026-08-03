@@ -290,19 +290,113 @@ def _plan_age_weeks(plan: dict) -> float:
         return 0.0
 
 
-def _variation_instruction(plan: dict) -> str:
-    """Progressive Overload first (weeks 1-3), then allow variation (from week 4)."""
+def _mesocycle_phase(plan: dict) -> dict:
+    """Return the current periodization phase based on plan age + version history.
+    A mesocycle = 4-week block: accumulation → intensification → peak → deload → new cycle.
+    """
     weeks = _plan_age_weeks(plan)
-    if weeks < 4:
-        return (
-            f"Der Plan läuft erst seit ~{weeks:.1f} Wochen. Fokus auf PROGRESSIVE OVERLOAD: "
-            "erhöhe Gewichte wo Ziel-Reps geschafft (2.5-5kg), verringere wo unterschritten (-2.5-5kg). "
-            "Behalte ALLE Übungen identisch bei - noch KEINE neuen Übungen einführen. Nur Zahlen anpassen."
+    version = int(plan.get("version") or 1)
+    # Week within the current 4-week block (1..4)
+    week_in_block = int(weeks) % 4 + 1
+    if week_in_block == 1:
+        return {"week": 1, "block": (int(weeks) // 4) + 1, "name": "AKKUMULATION", "focus": "Volumen aufbauen"}
+    if week_in_block == 2:
+        return {"week": 2, "block": (int(weeks) // 4) + 1, "name": "PROGRESSION", "focus": "Gewichte steigern"}
+    if week_in_block == 3:
+        return {"week": 3, "block": (int(weeks) // 4) + 1, "name": "INTENSIFIKATION", "focus": "Peak-Kraft"}
+    # Week 4 → deload
+    return {"week": 4, "block": (int(weeks) // 4) + 1, "name": "DELOAD", "focus": "Regeneration + neue Reize vorbereiten"}
+
+
+def _detect_plateaus(sessions: list, plan: dict) -> list:
+    """Identify exercises where the user has hit ≥3 sessions without progress
+    (same or lower weight AND same or lower top-set reps). Returns a list of
+    exercise names that need a stimulus change."""
+    from collections import defaultdict
+    # exercise_name → list of (weight, top_reps) from newest → oldest
+    ex_hist = defaultdict(list)
+    days_by_idx = {d.get("day_index"): d for d in (plan.get("days") or [])}
+    for s in sessions[:8]:  # last 8 sessions
+        day = days_by_idx.get(s.get("day_index"))
+        if not day:
+            continue
+        # take top set per exercise from this session
+        best_per_ex = {}
+        for ls in (s.get("logged_sets") or []):
+            i = ls.get("exercise_index")
+            if not isinstance(i, int) or i < 0 or i >= len(day.get("exercises") or []):
+                continue
+            ex_name = (day["exercises"][i].get("name") or "").strip()
+            if not ex_name:
+                continue
+            w = float(ls.get("weight_kg") or 0)
+            r = int(ls.get("reps") or 0)
+            prev = best_per_ex.get(ex_name)
+            if not prev or (w, r) > prev:
+                best_per_ex[ex_name] = (w, r)
+        for name, (w, r) in best_per_ex.items():
+            ex_hist[name].append((w, r))
+    plateaus = []
+    for name, hist in ex_hist.items():
+        if len(hist) < 3:
+            continue
+        recent = hist[:3]
+        # Sorted newest first; a plateau = weight not strictly increasing over 3 sessions
+        weights = [h[0] for h in recent]
+        # No progress if max(older) >= newest
+        if max(weights[1:]) >= weights[0]:
+            plateaus.append(name)
+    return plateaus
+
+
+def _variation_instruction(plan: dict, plateaus: list = None) -> str:
+    """Mesocycle-aware progression instructions inspired by MyFitCoach / MCI style periodization."""
+    phase = _mesocycle_phase(plan)
+    weeks = _plan_age_weeks(plan)
+    plateaus = plateaus or []
+
+    plateau_note = ""
+    if plateaus:
+        joined = ", ".join(plateaus[:5])
+        plateau_note = (
+            f"\n\n⚠️ PLATEAU-ALARM: Diese Übungen zeigen seit 3+ Sessions KEINE Progression: {joined}. "
+            "Für DIESE Übungen: entweder Deload (-10-15% Gewicht, saubere Form) ODER durch eine "
+            "biomechanisch ähnliche Alternative ersetzen (z.B. Bankdrücken → Schrägbankdrücken, "
+            "Kniebeugen → Front-Squat, Latzug → enges Latziehen)."
         )
+
+    if phase["week"] == 1:
+        return (
+            f"MESOZYKLUS {phase['block']} · WOCHE 1 – AKKUMULATION (Plan-Alter: {weeks:.1f} Wochen).\n"
+            "Ziel: VOLUMEN. Behalte alle Übungen. Falls User obere Rep-Range geschafft hat (z.B. 8/6-8), "
+            "füge 1 Wdh hinzu ODER +2.5kg. Falls untere Rep-Range verpasst: Gewicht -2.5kg."
+            + plateau_note
+        )
+    if phase["week"] == 2:
+        return (
+            f"MESOZYKLUS {phase['block']} · WOCHE 2 – PROGRESSION (Plan-Alter: {weeks:.1f} Wochen).\n"
+            "Ziel: GEWICHT rauf. Bei allen Compound-Übungen die letzten Woche Ziel-Reps erreicht wurden: "
+            "+2.5-5kg (5kg bei Beinen/Rücken, 2.5kg bei Oberkörper). Volumen (Sätze) identisch. "
+            "Bei Wdh unter Ziel: Gewicht halten, sauber ausführen."
+            + plateau_note
+        )
+    if phase["week"] == 3:
+        return (
+            f"MESOZYKLUS {phase['block']} · WOCHE 3 – INTENSIFIKATION (Plan-Alter: {weeks:.1f} Wochen).\n"
+            "Ziel: PEAK-KRAFT. Bei Grundübungen (Kniebeugen, Kreuzheben, Bankdrücken, Schulterdrücken, "
+            "Rudern): Reps -2 (z.B. 8 → 6), Gewicht +5-10%. Bei Isolationsübungen: unverändert weiter. "
+            "1-2 alte Accessory-Übungen darfst du gegen frische ersetzen für neuen Reiz."
+            + plateau_note
+        )
+    # Week 4 – DELOAD
     return (
-        f"Der Plan läuft schon ~{weeks:.1f} Wochen. Erhöhe Gewichte wo Ziel-Reps geschafft (2.5-5kg), "
-        "verringere wo unterschritten (-2.5-5kg). Anzahl Tage und Übungen beibehalten falls möglich, "
-        "aber du darfst Übungen variieren wenn sinnvoll (z.B. bei Plateau ≥3 Sessions oder Muskel-Ungleichgewicht)."
+        f"MESOZYKLUS {phase['block']} · WOCHE 4 – DELOAD (Plan-Alter: {weeks:.1f} Wochen).\n"
+        "PFLICHT-DELOAD zur Regeneration: Sätze -30-40% (z.B. 4→3 oder 4→2), Gewicht -25-30% "
+        "auf ALLEN Übungen. Reps identisch, Fokus auf perfekte Technik.\n"
+        "Zusätzlich für den NÄCHSTEN Mesozyklus vorbereiten: 2-3 Accessory-Übungen gegen neue "
+        "Variationen austauschen (z.B. Bizeps Curl → Hammer Curl, Seitheben → Cable Lateral, "
+        "Bankdrücken bleibt aber wechsel Schrägbank-Winkel). Grundübungen bleiben immer erhalten."
+        + plateau_note
     )
 
 
@@ -327,6 +421,10 @@ async def _perform_plan_adjust(user: dict, plan: dict) -> dict:
                 )
 
     perf_text = "\n".join(perf_summary[-20:]) or "Noch keine Daten."
+
+    # ─── Detect plateaus & phase for smart prompting ─────────────────────
+    plateaus = _detect_plateaus(sessions, plan)
+    phase = _mesocycle_phase(plan)
 
     # Shrink plan payload (only essential fields per exercise)
     slim_days = []
@@ -355,7 +453,7 @@ Performance der letzten Einheiten:
 
 User-Profil: {json.dumps(user.get('profile'))}
 
-{_variation_instruction(plan)}
+{_variation_instruction(plan, plateaus)}
 
 WICHTIG - Pausenzeiten (rest_seconds) individuell pro Übung:
 - Schwere Grundübungen 1-6 Wdh: 150-180s | 7-10 Wdh: 90-120s
@@ -404,6 +502,9 @@ Gib NUR JSON zurück im Format (WICHTIG: 'name' OHNE Versions-Suffix wie 'v2' �
         "previous_plan_id": plan["id"],
         # Track the original creation date of this plan chain so the LLM can gate variation by age
         "first_created_at": plan.get("first_created_at") or plan.get("created_at"),
+        # Mesocycle metadata for UI + plateau tracking
+        "mesocycle_phase": phase,
+        "plateaus_detected": plateaus,
     }
     await db.training_plans.insert_one(new_plan)
     new_plan.pop("_id", None)

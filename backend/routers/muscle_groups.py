@@ -128,3 +128,77 @@ async def muscle_group_stats(weeks: int = 4, mode: str = "relative", user: dict 
         "total_sessions": len(sessions),
         "groups": result,
     }
+
+
+# ─── Exercise recommendations for weak muscle groups ───────────────────────
+_EXERCISE_LIBRARY: Dict[str, List[Dict]] = {
+    "brust": [
+        {"name": "Bankdrücken", "sets": 4, "reps": "6-10", "focus": "Kraft"},
+        {"name": "Schrägbankdrücken Kurzhantel", "sets": 3, "reps": "8-12", "focus": "Obere Brust"},
+        {"name": "Dips", "sets": 3, "reps": "8-12", "focus": "Untere Brust"},
+        {"name": "Kabelzug Fliegende", "sets": 3, "reps": "12-15", "focus": "Isolation"},
+    ],
+    "ruecken": [
+        {"name": "Kreuzheben", "sets": 4, "reps": "5-8", "focus": "Kraft"},
+        {"name": "Klimmzüge", "sets": 4, "reps": "6-10", "focus": "Latissimus"},
+        {"name": "Langhantelrudern", "sets": 3, "reps": "8-12", "focus": "Mitte"},
+        {"name": "Latzug eng", "sets": 3, "reps": "10-12", "focus": "Latissimus"},
+    ],
+    "beine": [
+        {"name": "Kniebeugen", "sets": 4, "reps": "6-10", "focus": "Quads"},
+        {"name": "Rumänisches Kreuzheben", "sets": 3, "reps": "8-12", "focus": "Hamstrings"},
+        {"name": "Beinpresse", "sets": 3, "reps": "10-15", "focus": "Volumen"},
+        {"name": "Ausfallschritte", "sets": 3, "reps": "10-12", "focus": "Balance"},
+    ],
+    "schultern": [
+        {"name": "Schulterdrücken Langhantel", "sets": 4, "reps": "6-10", "focus": "Vordere Delts"},
+        {"name": "Seitheben Kurzhantel", "sets": 3, "reps": "12-15", "focus": "Seitliche Delts"},
+        {"name": "Face Pulls", "sets": 3, "reps": "12-15", "focus": "Hintere Delts"},
+        {"name": "Frontheben", "sets": 3, "reps": "10-12", "focus": "Vordere Delts"},
+    ],
+    "arme": [
+        {"name": "Langhantel-Curls", "sets": 3, "reps": "8-12", "focus": "Bizeps"},
+        {"name": "Enges Bankdrücken", "sets": 3, "reps": "8-12", "focus": "Trizeps"},
+        {"name": "Hammer-Curls", "sets": 3, "reps": "10-12", "focus": "Brachialis"},
+        {"name": "Trizeps-Pushdown", "sets": 3, "reps": "10-15", "focus": "Trizeps-Isolation"},
+    ],
+    "bauch": [
+        {"name": "Hanging Leg Raises", "sets": 3, "reps": "10-15", "focus": "Unterer Bauch"},
+        {"name": "Cable Crunches", "sets": 3, "reps": "12-15", "focus": "Oberer Bauch"},
+        {"name": "Plank", "sets": 3, "reps": "45-60s", "focus": "Core-Stability"},
+        {"name": "Russian Twist", "sets": 3, "reps": "20", "focus": "Obliques"},
+    ],
+    "gesaess": [
+        {"name": "Hip Thrust", "sets": 4, "reps": "8-12", "focus": "Kraft"},
+        {"name": "Bulgarian Split Squats", "sets": 3, "reps": "10-12", "focus": "Aktivierung"},
+        {"name": "Kabel-Kickbacks", "sets": 3, "reps": "12-15", "focus": "Isolation"},
+        {"name": "Sumo-Kniebeugen", "sets": 3, "reps": "8-12", "focus": "Volumen"},
+    ],
+}
+
+
+@router.get("/muscle-groups/recommendations")
+async def muscle_group_recommendations(user: dict = Depends(get_current_user)):
+    """Return 3 weakest muscle groups (relative mode) with 2 recommended exercises each."""
+    stats = await muscle_group_stats(weeks=4, mode="relative", user=user)
+    groups = stats.get("groups") or []
+    # Only recommend when the user actually has data — otherwise it's noise
+    if stats.get("total_sessions", 0) < 2:
+        return {"has_enough_data": False, "recommendations": []}
+    sorted_groups = sorted(groups, key=lambda g: g["percent"])
+    weakest = [g for g in sorted_groups if g["percent"] < 60][:3]
+    recs = []
+    for g in weakest:
+        lib = _EXERCISE_LIBRARY.get(g["key"]) or []
+        recs.append({
+            "key": g["key"],
+            "name": g["name"],
+            "percent": g["percent"],
+            "sessions_hit": g["sessions_hit"],
+            "exercises": lib[:2],
+        })
+    return {
+        "has_enough_data": True,
+        "recommendations": recs,
+        "message": f"{len(recs)} Muskelgruppe{'n' if len(recs) != 1 else ''} braucht{'en' if len(recs) != 1 else ''} mehr Volumen",
+    }
