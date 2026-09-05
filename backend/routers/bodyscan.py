@@ -93,8 +93,7 @@ Sei ehrlich. Schmeichele nicht, aber demotiviere nicht. Werte sollen Trends zeig
         api_key=EMERGENT_LLM_KEY,
         session_id=f"bodyscan-{user['id']}-{uuid.uuid4()}",
         system_message=sys,
-    # TODO(gpt-5.6): upgrade when Emergent playbook lists gpt-5.6 (currently 5.5 is newest)
-    ).with_model("openai", "gpt-5.5")
+    ).with_model("openai", "gpt-5.6-sol")
 
     try:
         img = ImageContent(image_base64=image_b64)

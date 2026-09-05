@@ -27,8 +27,7 @@ async def call_llm(system: str, user_text: str, session_id: str) -> str:
         api_key=EMERGENT_LLM_KEY,
         session_id=session_id,
         system_message=system,
-    # TODO(gpt-5.6): upgrade when Emergent playbook lists gpt-5.6 (currently 5.5 is newest)
-    ).with_model("openai", "gpt-5.5")
+    ).with_model("openai", "gpt-5.6-terra")
     resp = await chat.send_message(UserMessage(text=user_text))
     return resp if isinstance(resp, str) else str(resp)
 
@@ -281,7 +280,6 @@ def fallback_plan(profile: dict) -> dict:
 def _plan_age_weeks(plan: dict) -> float:
     """Rough age of the CURRENT plan chain in weeks. Uses `first_created_at` if
     tracked, otherwise the plan's own `created_at`."""
-    from datetime import datetime, timezone
     try:
         ca = plan.get("first_created_at") or plan.get("created_at")
         d = datetime.fromisoformat(str(ca).replace("Z", "+00:00"))

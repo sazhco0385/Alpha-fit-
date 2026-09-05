@@ -42,14 +42,25 @@ def _canonical_group(raw: str) -> str:
 async def muscle_group_stats(weeks: int = 4, mode: str = "relative", user: dict = Depends(get_current_user)):
     weeks = max(1, min(12, int(weeks)))
     mode = mode if mode in ("relative", "absolute") else "relative"
-    since = datetime.now(timezone.utc) - timedelta(weeks=weeks)
-    since_iso = since.isoformat()
 
-    # Get completed sessions in window
-    sessions = await db.workout_sessions.find(
-        {"user_id": user["id"], "status": "completed", "completed_at": {"$gte": since_iso}},
-        {"_id": 0, "plan_id": 1, "day_index": 1, "logged_sets": 1},
-    ).to_list(500)
+    # Auto-extend window up to 12 weeks if the requested window has no data — better UX than "0 sessions"
+    async def _sessions_in(win_weeks: int):
+        since = (datetime.now(timezone.utc) - timedelta(weeks=win_weeks)).isoformat()
+        return await db.workout_sessions.find(
+            {"user_id": user["id"], "status": "completed", "completed_at": {"$gte": since}},
+            {"_id": 0, "plan_id": 1, "day_index": 1, "logged_sets": 1},
+        ).to_list(500)
+
+    sessions = await _sessions_in(weeks)
+    effective_weeks = weeks
+    if not sessions:
+        for extended in (8, 12):
+            if extended <= weeks:
+                continue
+            sessions = await _sessions_in(extended)
+            if sessions:
+                effective_weeks = extended
+                break
 
     # Preload plans referenced (cache to avoid repeated fetches)
     plan_ids = list({s.get("plan_id") for s in sessions if s.get("plan_id")})
@@ -103,7 +114,7 @@ async def muscle_group_stats(weeks: int = 4, mode: str = "relative", user: dict 
     max_score = max(scores.values()) if scores else 0
 
     # Absolute baseline: 3 sessions/week per group ≈ 100 %
-    baseline_sessions = 3 * weeks
+    baseline_sessions = 3 * effective_weeks
 
     result = []
     for g in _GROUPS:
@@ -122,7 +133,9 @@ async def muscle_group_stats(weeks: int = 4, mode: str = "relative", user: dict 
             "percent": pct,
         })
     return {
-        "weeks": weeks,
+        "weeks": effective_weeks,
+        "requested_weeks": weeks,
+        "auto_extended": effective_weeks != weeks,
         "mode": mode,
         "baseline_sessions_per_group": baseline_sessions,
         "total_sessions": len(sessions),

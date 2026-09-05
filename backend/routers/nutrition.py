@@ -52,8 +52,7 @@ Wenn du das Essen nicht erkennen kannst, setze confidence auf 0.3 und gib trotzd
         api_key=EMERGENT_LLM_KEY,
         session_id=f"nutrition-{user['id']}-{uuid.uuid4()}",
         system_message=sys,
-    # TODO(gpt-5.6): upgrade when Emergent playbook lists gpt-5.6 (currently 5.5 is newest)
-    ).with_model("openai", "gpt-5.5")
+    ).with_model("openai", "gpt-5.6-sol")
 
     try:
         img = ImageContent(image_base64=image_b64)
@@ -132,7 +131,7 @@ Alle Werte als Zahlen, NICHT als Strings. Für die GESAMTE Portion ({portion:.0f
         api_key=EMERGENT_LLM_KEY,
         session_id=f"nutrition-name-{user['id']}-{uuid.uuid4()}",
         system_message=sys,
-    ).with_model("openai", "gpt-5.5")
+    ).with_model("openai", "gpt-5.6-sol")
 
     try:
         resp = await chat.send_message(UserMessage(text=prompt))

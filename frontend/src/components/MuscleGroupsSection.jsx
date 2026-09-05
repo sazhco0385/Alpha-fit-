@@ -242,7 +242,11 @@ export default function MuscleGroupsSection() {
             Muskelgruppen im Detail
           </h2>
           <div className="text-xs text-gray-500 font-chakra">
-            Letzte {data.weeks} Wochen · {data.total_sessions} Trainings analysiert
+            {data.auto_extended ? (
+              <>Letzte {data.weeks} Wochen (erweitert) · {data.total_sessions} Trainings analysiert</>
+            ) : (
+              <>Letzte {data.weeks} Wochen · {data.total_sessions} Trainings analysiert</>
+            )}
           </div>
         </div>
         {/* Front/Back toggle */}

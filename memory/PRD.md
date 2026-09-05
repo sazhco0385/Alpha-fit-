@@ -15,14 +15,20 @@ Reverted the failed "Performance Pro" orange overhaul. Kept the original electri
 ## Architecture
 - Frontend: React + TailwindCSS + shadcn/ui + Recharts + lucide-react
 - Backend: FastAPI + Motor (MongoDB async) + emergentintegrations LLM
-- LLM: GPT-5.5 via Emergent Universal Key (auto-upgrade path documented for gpt-5.6-sol)
+- LLM: GPT-5.6 (sol / terra) via Emergent Universal Key — Coach, Body-Scan, Nutrition all upgraded
 - Payments: Stripe · Email: Resend · Push: Web Push VAPID
 
 ## Recently Completed
-- **Design v3 "Neon Aurora"** (Feb 2026): mobile-first Dashboard redesign with aurora hero, daily-quote emotional anchor, warm streak flame, tile-3d hover animations
-- **Rest-Timer Kategorie-Badge**: neon badge under countdown explaining rest duration
+- **GPT-5.6 Upgrade** (Feb 2026): swapped models in `llm_coach.py`, `bodyscan.py`, `nutrition.py`. 61/61 backend tests pass. Ruff F811 duplicate imports in `llm_coach.py` cleaned up.
+- **AI Coach Mesocycle & Plateau Logic**: prompt now understands Accumulation / Intensification / Peaking / Deload; UI shows current phase on Dashboard
+- **Anatomical Muscle Heatmap**: anatomically correct model, relative calc, auto-extending window when data sparse, pulsing animation for hottest muscle + `WeakMuscleRecommendations.jsx`
+- **Landing Page Overhaul**: mobile-first Aurora + `FeatureShowcase.jsx` with CSS-only live loops (PR cinematic, rest ring, heatmap)
+- **PR Cinematic Overlay**: volt-green Aurora flashes + confetti when PR is broken, wired into `detect_prs_for_session`
+- **Rest Timer Ring**: circular animated SVG gradient countdown on `ActiveWorkout.jsx`
+- **Rest Timer Categories**: neon badge under countdown explaining rest duration
+- **Android TWA**: `assetlinks.json` configured with user's Play Console SHA-256 fingerprint
+- **Design v3 "Neon Aurora"**: mobile-first Dashboard redesign, aurora hero, daily quote, warm streak flame
 - **Rest-Seconds Bug Fix**: DB migration for 33 legacy plans + normalizer
-- **GPT-5.6 Check**: not yet available via Emergent
 - **Muscle-Group Heatmap** (`/progress`)
 - **Plan History + Rollback** (`/plan-history`)
 - **Progressive-Overload-Gating** in LLM prompts
@@ -31,14 +37,13 @@ Reverted the failed "Performance Pro" orange overhaul. Kept the original electri
 - **Email Verification** with grandfathering (disabled via env until DKIM)
 
 ## Backlog / Roadmap
+- **P1 Daily Quests** — 3 daily + 1 weekly quest, XP bar, Duolingo hook
 - **P1 Onboarding Redesign** — apply Aurora look to onboarding wizard
 - **P1 Active Workout HUD** — apply Aurora look with tactical beam-border around active set
-- **P1 Daily Quests** — 3 daily + 1 weekly quest, XP bar, Duolingo hook
 - **P2 Body-Measurements** — waist/chest/arms/thighs + photo history
 - **P2 Rest-Sound Cue** — different gong per rest category
 - **P3 Health Connect Export Parser** (Google Fit / Android)
 - **P4 Mail-Quota-Widget** in Admin dashboard
-- **P4 GPT-5.6 auto-detect** — startup ping when available
 
 ## Blocked
 - **Email verification** requires user's DKIM/DMARC/SPF DNS. `EMAIL_VERIFICATION_REQUIRED=false`.
