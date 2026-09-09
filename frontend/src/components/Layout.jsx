@@ -63,7 +63,7 @@ export default function Layout({ children }) {
         <NavLink to="/impressum" className="hover:text-[#00BFFF]" data-testid="layout-impressum-link">Impressum</NavLink>
         <NavLink to="/agb" className="hover:text-[#00BFFF]" data-testid="layout-agb-link">AGB</NavLink>
         <NavLink to="/datenschutz" className="hover:text-[#00BFFF]" data-testid="layout-datenschutz-link">Datenschutz</NavLink>
-        <span className="w-full sm:w-auto text-center">© Sky-Networks UG</span>
+        <span className="w-full sm:w-auto text-center">© S.L solutions UG</span>
       </div>
 
       {/* Bottom nav */}

@@ -19,6 +19,9 @@ Reverted the failed "Performance Pro" orange overhaul. Kept the original electri
 - Payments: Stripe · Email: Resend · Push: Web Push VAPID
 
 ## Recently Completed
+- **"Mega Krass" Dashboard Redesign** (Sep 2026): cinematic aurora hero with animated beam border + scanline + staggered entrance animations, breathing streak pill, chrome stat tiles with radial glow + hover pop, glassmorphism quick-action tiles (4: Body Scan, Bibliothek, Fortschritt, Ernährung) with neon icon glow boxes, tracing-beam border on active plan day card, mega quote box, pulsing resume CTA
+- **Branding Update**: "Sky-Networks UG" → "S.L solutions UG" everywhere (Landing footer, Legal, Layout footer)
+- **GPT-5.6 Labels**: all user-facing GPT-5.5 mentions updated to GPT-5.6 (Landing, Legal, Premium, Coach header, email templates)
 - **GPT-5.6 Upgrade** (Feb 2026): swapped models in `llm_coach.py`, `bodyscan.py`, `nutrition.py`. 61/61 backend tests pass. Ruff F811 duplicate imports in `llm_coach.py` cleaned up.
 - **AI Coach Mesocycle & Plateau Logic**: prompt now understands Accumulation / Intensification / Peaking / Deload; UI shows current phase on Dashboard
 - **Anatomical Muscle Heatmap**: anatomically correct model, relative calc, auto-extending window when data sparse, pulsing animation for hottest muscle + `WeakMuscleRecommendations.jsx`

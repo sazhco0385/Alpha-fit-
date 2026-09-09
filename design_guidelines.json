@@ -1,144 +1,115 @@
 {
-  "theme": "dark",
-  "archetype": "Archetype 2: Performance Pro (Electric Neon Hybrid)",
-  "brand": {
-    "name": "alpha-fit",
-    "aesthetic": "Apex Predator / Intensified Cyber Athletic. Metallic chrome, electric blue glow, pitch black background, sharp geometries, shield/badge motifs.",
-    "emotional_tone": "Intense, badass, elite, hyper-focused, futuristic."
-  },
+  "project_name": "alpha-fit",
+  "design_archetype": "Performance Pro & Cyber Neon Aurora ('Mega Krass' Redesign)",
+  "emotional_tone": "Jaw-dropping, aggressive athletic precision, tactical dark cyber elegance, hyper-engaging motion",
+  "theme": "Dark Mode (Obsidian & Electric Aurora)",
   "typography": {
-    "font_install_instruction": "Add to Google Fonts import: @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Teko:wght@400;500;600;700&display=swap');",
-    "primary_font_family": "'Teko', sans-serif",
-    "secondary_font_family": "'Chakra Petch', sans-serif",
-    "headings": {
-      "font_family": "'Teko', sans-serif",
-      "weight": "font-bold",
-      "tracking": "tracking-wide",
-      "text_transform": "uppercase",
-      "sizes": {
-        "h1": "text-5xl sm:text-6xl md:text-7xl",
-        "h2": "text-4xl sm:text-5xl",
-        "h3": "text-2xl sm:text-3xl"
-      }
-    },
-    "body": {
-      "font_family": "'Chakra Petch', sans-serif",
-      "weight": "font-normal",
-      "sizes": {
-        "default": "text-base",
-        "small": "text-sm",
-        "large": "text-lg md:text-xl"
-      }
-    },
-    "labels": {
-      "styling": "uppercase tracking-[0.2em] text-xs font-semibold text-chrome-silver"
+    "heading_font": "Teko, sans-serif",
+    "body_font": "Chakra Petch, sans-serif",
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Teko:wght@400;500;600;700&display=swap",
+    "rules": {
+      "H1": "font-teko uppercase text-4xl sm:text-6xl tracking-tight leading-none text-white",
+      "H2": "font-teko uppercase text-2xl sm:text-4xl tracking-wider leading-tight text-white/95",
+      "H3": "font-teko uppercase text-xl sm:text-2xl tracking-wider text-[#00E5FF]",
+      "Body": "font-chakra text-sm sm:text-base leading-relaxed text-[#D2D2DE]",
+      "Labels": "font-chakra text-[10px] sm:text-xs uppercase tracking-[0.25em] text-white/50",
+      "Stat_Values": "font-teko text-3xl sm:text-5xl leading-none font-bold"
     }
   },
   "colors": {
-    "background": {
-      "base": "#000000",
-      "surface": "#05050A",
-      "surface_elevated": "#0A0A10"
+    "bg_obsidian": "#030308",
+    "surface_dark": "#07070F",
+    "surface_card": "#0A0A14",
+    "surface_border": "#1A1A28",
+    "primary_cyan": "#00E5FF",
+    "primary_blue": "#00BFFF",
+    "aurora_purple": "#9333EA",
+    "neon_pink": "#FF1493",
+    "volt_green": "#39FF14",
+    "flame_orange": "#FF6B35",
+    "royal_gold": "#C9A04E",
+    "text_bright": "#FFFFFF",
+    "text_muted": "#B8B8C8",
+    "text_subtle": "#8888A0"
+  },
+  "layout_and_bento": {
+    "spacing_scale": "p-3 sm:p-5 md:p-8 gap-3 sm:gap-4 md:gap-6",
+    "dashboard_grid": "Base grid grid-cols-1 md:grid-cols-12 gap-4. Hero spans 12 cols. Stats row spans 12 cols (3 or 4 tiles). Week Schedule spans 12 cols or 8 cols hero side. Plan section 12 cols or 2-col bento.",
+    "border_rules": "All tiles must have direct padding (p-4 or p-5) to avoid content edge collision. Use custom clip-corner-tl-br cut corners and 1px border with rgba(0,191,255,0.18) minimum opacity.",
+    "hover_states": "tile-3d hover:-translate-y-1 hover:border-[#00E5FF]/50 hover:shadow-[0_12px_30px_-10px_rgba(0,229,255,0.35)]"
+  },
+  "visual_enhancers": {
+    "aurora_backdrop": "Multi-layer radial-gradient with blur-2xl and 22s animation 'aurora-drift' for depth",
+    "tracing_beam": "1px dynamic shimmering border on priority cards with animated linear gradient",
+    "glassmorphism": "backdrop-blur-xl bg-black/60 border border-white/10 for floating badges and modal cards",
+    "grain_overlay": "SVG fractalNoise turbulence background overlay at 8%-12% opacity to break digital flatness",
+    "glow_effects": "glow-text (text-shadow) for primary headings and volt-green PR bursts"
+  },
+  "image_urls": [
+    {
+      "category": "hero_background_or_workout",
+      "url": "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "description": "Athletic man lifting barbell in dark gym with dramatic side lighting"
     },
-    "brand": {
-      "primary": "#00BFFF",
-      "secondary": "#1E90FF",
-      "accent_glow": "#00E5FF"
+    {
+      "category": "strength_training",
+      "url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "description": "Person preparing for heavy barbell lift in high-contrast tactical dark setting"
     },
-    "text": {
-      "primary": "#FFFFFF",
-      "secondary": "#D0D0E0",
-      "muted": "#606070",
-      "inverse": "#000000"
-    },
-    "borders": {
-      "subtle": "#1A1A24",
-      "active": "#00BFFF",
-      "glow": "rgba(0, 191, 255, 0.4)"
-    },
-    "status": {
-      "success": "#00FF7F",
-      "warning": "#FFD700",
-      "danger": "#FF3B30"
+    {
+      "category": "equipment_gym",
+      "url": "https://images.unsplash.com/photo-1734630341082-0fec0e10126c?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "description": "Heavy dumbbells lined up in gym"
     }
-  },
-  "effects_and_surfaces": {
-    "glow": {
-      "text_shadow": "drop-shadow-[0_0_8px_rgba(0,191,255,0.8)]",
-      "box_shadow_subtle": "shadow-[0_0_15px_rgba(0,191,255,0.2)]",
-      "box_shadow_intense": "shadow-[0_0_25px_rgba(0,191,255,0.5)]",
-      "badge_glow": "shadow-[0_0_30px_rgba(0,229,255,0.8)] border border-[#00E5FF]"
+  ],
+  "components_blueprint": {
+    "DashboardHero": {
+      "path": "/app/frontend/src/components/DashboardHero.jsx",
+      "styling": "Cinematic aurora container with animated gradient backdrop, time-aware greeting badge, breathing streak flame counter with glow pill, electric glow user headline, daily quote quote box with left cyan border, and a high-impact 'TRAINING FORTSETZEN' CTA button with pulse animation.",
+      "testid_required": ["dashboard-hero", "hero-greeting", "hero-streak", "hero-name", "daily-quote-hero", "hero-resume-btn"]
     },
-    "surfaces": {
-      "cards": "bg-[#05050A] border border-[#1A1A24] rounded-xl overflow-hidden",
-      "premium_cards": "bg-gradient-to-b from-[#0A0A10] to-[#000000] border border-[#00BFFF] relative",
-      "glassmorphism": "backdrop-blur-xl bg-black/60 border-b border-[#00BFFF]/20"
+    "QuickStatsRow": {
+      "path": "/app/frontend/src/pages/Dashboard.jsx",
+      "styling": "3-column or 4-column Bento grid row featuring: 1. Workouts completed, 2. Total Volume with formatted unit (t / M), 3. Pro Status / Streak, 4. Current Mesocycle Phase. Each tile has a subtle radial glow background and chrome gradient typography.",
+      "testid_required": ["dashboard-stats-row", "stat-workouts", "stat-volume", "stat-status"]
     },
-    "textures": {
-      "grain_overlay": "opacity-5 mix-blend-overlay pointer-events-none"
+    "WeekSchedule": {
+      "path": "/app/frontend/src/components/WeekSchedule.jsx",
+      "styling": "Horizontal mobile scrollable / desktop grid day selector with completed indicator checkmarks, current day cyan aura highlight, and rest day mute states.",
+      "testid_required": ["week-schedule-container", "week-day-tile"]
+    },
+    "PlanSection": {
+      "path": "/app/frontend/src/pages/Dashboard.jsx",
+      "styling": "Bento plan cards with corner diagonal cuts (clip-corner-tl-br), mesocycle block/week status badge, plateau warning banners, AI Plan adjustment action button with spinner state, and day action buttons.",
+      "testid_required": ["dashboard-plan-section", "view-plan-btn", "mesocycle-badge", "adjust-plan-btn", "plan-history-btn"]
+    },
+    "QuickActionsGrid": {
+      "path": "/app/frontend/src/pages/Dashboard.jsx",
+      "styling": "2x2 grid of glassmorphic action tiles (Body Scan, Library, Nutrition, Progress) with neon inner icon glow boxes and hover translate effects.",
+      "testid_required": ["quick-actions", "dashboard-bodyscan-cta", "dashboard-library-cta"]
+    },
+    "MuscleGroupsSection": {
+      "path": "/app/frontend/src/components/MuscleGroupsSection.jsx",
+      "styling": "Anatomical front/back SVG heatmap with pulsing animation on the hottest muscle group, intensity color bar legend (Cyan -> Pink -> Volt Green), and weak muscle recommendation pills.",
+      "testid_required": ["muscle-groups-heatmap", "muscle-hot-pulse", "weak-muscle-pill"]
+    },
+    "PRCinematicOverlay": {
+      "path": "/app/frontend/src/components/PRCinematicOverlay.jsx",
+      "styling": "Fullscreen modal with high-intensity Volt Green Aurora swirl, central glitch RGB title text, particle canvas confetti explosion, weight lift delta chip, and sound trigger feedback.",
+      "testid_required": ["pr-cinematic-overlay", "pr-title", "pr-close-btn"]
     }
-  },
-  "layout_and_spacing": {
-    "philosophy": "Dense and intense. Use Grid Borders (The Technical Look). Exposed grid lines in dashboards.",
-    "container_padding": "p-6 md:p-8",
-    "gap_system": "gap-4 md:gap-6",
-    "border_radius": "rounded-none md:rounded-lg",
-    "bento_grid": "grid grid-cols-1 md:grid-cols-4 gap-6"
-  },
-  "components": {
-    "buttons": {
-      "primary": "bg-[#00BFFF] text-black font-bold uppercase tracking-wider hover:bg-[#00E5FF] hover:shadow-[0_0_20px_rgba(0,229,255,0.6)] transition-all duration-300",
-      "secondary": "bg-transparent border border-[#00BFFF] text-[#00BFFF] font-bold uppercase tracking-wider hover:bg-[#00BFFF]/10 transition-all duration-300",
-      "premium": "bg-gradient-to-r from-[#1E90FF] to-[#00BFFF] text-black font-bold uppercase hover:shadow-[0_0_30px_rgba(0,191,255,0.8)] transition-all duration-300 relative overflow-hidden"
-    },
-    "badges": {
-      "styling": "metallic sheen, sharp geometric edges (hexagon or shield), electric blue glow core, chrome borders. Use intense box-shadows."
-    },
-    "inputs": {
-      "styling": "bg-[#0A0A10] border-b-2 border-[#1A1A24] text-white focus:border-[#00BFFF] focus:outline-none focus:ring-0 transition-colors rounded-none px-4 py-3"
-    },
-    "active_workout_session": {
-      "styling": "Full-screen mode. Pitch black background. Massive numbers (Teko text-8xl) for rest timers. Glowing circular progress indicators. Swipe/Auto-advance logic."
-    }
-  },
-  "icons": {
-    "library": "lucide-react",
-    "style": "Use sharp/technical icons. Stroke width 2 or 2.5 for better visibility."
-  },
-  "media_assets": {
-    "hero_backgrounds": [
-      {
-        "url": "https://images.unsplash.com/photo-1676655079738-af54dfd6318e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MDV8MHwxfHNlYXJjaHwyfHxib2R5YnVpbGRlciUyMGRhcmslMjBneW18ZW58MHx8fHwxNzgxMzk2ODUzfDA&ixlib=rb-4.1.0&q=85",
-        "description": "A man hanging upside down in the dark - perfect for intense, elite landing page backgrounds."
-      },
-      {
-        "url": "https://images.unsplash.com/photo-1550353127-b0da3aeaa0ca?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwyfHxuZW9uJTIwYmx1ZSUyMGFic3RyYWN0JTIwdGV4dHVyZXxlbnwwfHx8fDE3ODEzOTY4NTN8MA&ixlib=rb-4.1.0&q=85",
-        "description": "Blue and black background with swirls - use as texture overlay for premium plans."
-      }
-    ],
-    "equipment_imagery": [
-      {
-        "url": "https://images.unsplash.com/photo-1672344048213-76b6e77304bd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwxfHxmaXRuZXNzJTIwZXF1aXBtZW50JTIwZGFyayUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzgxMzk2ODUzfDA&ixlib=rb-4.1.0&q=85",
-        "description": "Black and white dumbbell - use for workout list thumbnails."
-      }
-    ],
-    "badges": "DO NOT USE placeholders. Construct badges using pure CSS/Tailwind (Lucide Icon + Hexagon shape + metallic gradient background + intense blue box-shadow)."
-  },
-  "key_features_implementation_notes": {
-    "ai_coach": "Chat interface should look like a HUD terminal. AI messages in chrome silver, User messages bordered with electric blue.",
-    "premium_paywall": "Highlight the 1-year plan. Use 'Tracing Beam' effect around the recommended plan container.",
-    "admin_dashboard": "Use 'Control Room' grid mode. High density. Data charts using Recharts with neon blue strokes.",
-    "onboarding": "Step-by-step wizard. Progress bar is a bright cyan neon line."
-  },
-  "testing_attributes": {
-    "rule": "All interactive elements must include a data-testid attribute formatted as kebab-case, role-based."
   },
   "instructions_to_main_agent": [
-    "Strictly follow the color palette. Pure black #000000 for backgrounds, not generic grays.",
-    "Do NOT use standard rounded cards everywhere. Use sharp geometric edges or very subtle rounding to maintain the alpha/aggressive feel.",
-    "Apply `drop-shadow` for glowing text and icons to match the metallic/electric vibe.",
-    "Use framer-motion for heavy, impactful transitions. Fast snap animations, no slow bouncing.",
-    "Use standard Shadcn components but heavily restyle them. Remove default borders, apply neon blue borders and black backgrounds.",
-    "For the active workout, implement a full-screen mode that locks orientation if possible, using huge typography for timers."
-  ]
+    "Verify all components use 'Chakra Petch' for technical body/labels and 'Teko' for all headings and metrics.",
+    "Ensure every interactive element (buttons, cards, links, tabs) has a unique data-testid attribute in kebab-case.",
+    "Do NOT use pure black background for cards or transparent dropdowns. Use var(--af-surface) or #07070F with explicit border styling.",
+    "Maintain mobile-first responsiveness (390px baseline) while taking advantage of grid-cols-12 on desktop for a rich Bento arrangement.",
+    "Enhance micro-interactions: add subtle scale, glow, and border transitions to every hoverable element."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": {
+    "avoid_ai_slop": "Never use plain white cards, default Inter font for headers, or flat uninspired blue buttons.",
+    "contrast_rules": "Always maintain high contrast text over dark surfaces. Body text must be #D2D2DE or brighter.",
+    "micro_animations": "Ensure hover states, pulse indicators, and entrance stagger animations exist across the entire dashboard.",
+    "testing": "All key metrics and buttons MUST retain their data-testid attributes for E2E verification."
+  }
 }

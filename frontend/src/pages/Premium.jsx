@@ -12,7 +12,7 @@ const PLANS = [
 ];
 
 const BENEFITS = [
-  { icon: Brain,      title: "KI-Coach 24/7",        desc: "GPT-5.5 powered. Plan-Anpassung & Chat ohne Limits." },
+  { icon: Brain,      title: "KI-Coach 24/7",        desc: "GPT-5.6 powered. Plan-Anpassung & Chat ohne Limits." },
   { icon: Scan,       title: "AI Body Scan",         desc: "Foto-Analyse: Muskelgruppen, Symmetrie, Schwachstellen." },
   { icon: Apple,      title: "AI Nutrition Tracker", desc: "Foto-Erkennung + Makros automatisch berechnet." },
   { icon: TrendingUp, title: "Auto-Progression",     desc: "Gewichte & Wiederholungen passen sich automatisch an." },

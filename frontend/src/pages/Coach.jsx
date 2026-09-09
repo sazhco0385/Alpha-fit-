@@ -57,7 +57,7 @@ export default function Coach() {
       <div className="mb-5 sm:mb-6">
         <h1 className="font-teko text-3xl sm:text-5xl chrome-text tracking-wide">KI COACH</h1>
         <p className="text-body-muted font-chakra text-[10px] sm:text-sm uppercase tracking-widest">
-          Angetrieben von GPT-5.5 · Alpha Protokoll
+          Angetrieben von GPT-5.6 · Alpha Protokoll
         </p>
       </div>
 

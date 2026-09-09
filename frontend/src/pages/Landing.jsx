@@ -40,7 +40,7 @@ export default function Landing() {
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00BFFF]/40 bg-black/40 backdrop-blur mb-5 sm:mb-7" data-testid="trust-pill">
           <span className="w-1.5 h-1.5 rounded-full bg-[#39FF14]" style={{ boxShadow: "0 0 8px #39FF14" }} />
           <span className="text-[10px] sm:text-xs font-chakra tracking-[0.3em] uppercase text-white/85">
-            <span className="text-[#00BFFF]">GPT-5.5</span> POWERED · MADE IN 🇩🇪
+            <span className="text-[#00BFFF]">GPT-5.6</span> POWERED · MADE IN 🇩🇪
           </span>
         </div>
 
@@ -218,7 +218,7 @@ export default function Landing() {
       {/* ═══ Footer ═══ */}
       <footer className="relative z-10 border-t border-white/5 py-8 mt-4">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-white/40 font-chakra text-[10px] tracking-widest uppercase">
-          <div>© 2026 Sky-Networks UG · alpha-fit</div>
+          <div>© 2026 S.L solutions UG · alpha-fit</div>
           <div className="flex gap-4 sm:gap-6">
             <Link to="/impressum" className="hover:text-[#00BFFF] transition" data-testid="footer-impressum">Impressum</Link>
             <Link to="/agb" className="hover:text-[#00BFFF] transition" data-testid="footer-agb">AGB</Link>

@@ -183,7 +183,7 @@ def render_payment_success(name: str, plan: str, amount: float, currency: str, u
       </table>
       <p style="margin: 0 0 14px;">Du hast jetzt unlimitierten Zugriff auf:</p>
       <ul style="margin: 0 0 18px; padding-left: 18px; color: #cfcfcf;">
-        <li style="margin-bottom: 6px;">KI-Trainingspläne (GPT-5.5) inkl. wöchentliche Anpassungen</li>
+        <li style="margin-bottom: 6px;">KI-Trainingspläne (GPT-5.6) inkl. wöchentliche Anpassungen</li>
         <li style="margin-bottom: 6px;">Body-Scan + Form-Check via Vision AI</li>
         <li style="margin-bottom: 6px;">Nutrition Tracking mit Foto-Erkennung</li>
         <li style="margin-bottom: 6px;">Web-Push Notifications + Streak-Schutz</li>
@@ -344,7 +344,7 @@ def render_trial_usage_reminder(name: str, hours_left: int, stats: Dict[str, Any
       </table>
       <p style="margin: 0 0 14px;">Wenn dein Trial ausläuft, verlierst du:</p>
       <ul style="margin: 0 0 18px; padding-left: 18px; color: #cfcfcf;">
-        <li style="margin-bottom: 6px;">KI-Plan-Anpassungen (GPT-5.5) jede Woche neu</li>
+        <li style="margin-bottom: 6px;">KI-Plan-Anpassungen (GPT-5.6) jede Woche neu</li>
         <li style="margin-bottom: 6px;">Body-Scan + Form-Check Vision-AI</li>
         <li style="margin-bottom: 6px;">Foto-Nutrition Tracking + Streak-Freeze-Schutz</li>
         <li style="margin-bottom: 6px;">Personal Record Cards zum Teilen</li>

@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { getDailyQuote } from "../lib/quotes";
-import { Flame, Play, Quote as QuoteIcon } from "lucide-react";
+import { Flame, Play, Quote as QuoteIcon, Zap } from "lucide-react";
 
 /**
- * DashboardHero — mobile-first, cinematic aurora hero.
- * - Time-aware greeting (Morgen / Nachmittag / Abend / Nacht)
- * - Streak flame with live pulse
- * - Daily quote as the emotional anchor (always visible)
- * - Optional resume-workout CTA
+ * DashboardHero — MEGA KRASS edition.
+ * Cinematic aurora, animated beam border, scanline, staggered entrances,
+ * breathing streak pill, glow headline, oversized resume CTA.
  */
 function greeting(hour) {
   if (hour < 5) return "GUTE NACHT";
@@ -30,62 +28,70 @@ export default function DashboardHero({ user, streak = 0, onResume, resumeLabel 
   const dateStr = now.toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "long" });
 
   return (
-    <section className="dash-hero" data-testid="dashboard-hero">
-      {/* Aurora background */}
+    <section className="dash-hero--mega enter" data-testid="dashboard-hero">
       <div className="dash-hero__aurora" aria-hidden />
       <div className="dash-hero__grain" aria-hidden />
 
       <div className="relative z-10 px-1">
-        <div className="flex items-center justify-between gap-3 mb-2">
-          <div className="text-[10px] sm:text-xs text-white/60 font-chakra uppercase tracking-[0.35em]" data-testid="hero-greeting">
-            {hi}
+        {/* Top row — greeting + streak pill */}
+        <div className="flex items-center justify-between gap-3 mb-3 enter enter-d1">
+          <div className="flex items-center gap-2">
+            <Zap size={12} className="text-[#00E5FF]" style={{ filter: "drop-shadow(0 0 6px rgba(0,229,255,0.8))" }} />
+            <div
+              className="text-[10px] sm:text-xs text-white/60 font-chakra uppercase tracking-[0.35em]"
+              data-testid="hero-greeting"
+            >
+              {hi}
+            </div>
           </div>
           {streak > 0 && (
-            <div
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#FF6B35]/40 bg-[#FF6B35]/10"
-              data-testid="hero-streak"
-              style={{ boxShadow: "0 0 14px rgba(255,107,53,0.25)" }}
-            >
-              <Flame size={13} className="text-[#FF6B35] flame-pulse" />
-              <span className="font-teko text-base leading-none text-[#FFB79A] tracking-wider">
-                {streak} <span className="text-[10px] text-[#FF6B35]/80 tracking-widest">{streak === 1 ? "TAG" : "TAGE"}</span>
+            <div className="streak-pill" data-testid="hero-streak">
+              <Flame size={14} className="text-[#FF6B35] flame-pulse" />
+              <span className="font-teko text-lg leading-none text-[#FFB79A] tracking-wider">
+                {streak}
+                <span className="text-[10px] text-[#FF6B35]/80 tracking-widest ml-1">
+                  {streak === 1 ? "TAG" : "TAGE"}
+                </span>
               </span>
             </div>
           )}
         </div>
 
+        {/* Headline */}
         <h1
-          className="font-teko text-[2.4rem] leading-[0.95] sm:text-6xl md:text-7xl tracking-tight break-words"
+          className="font-teko text-[2.8rem] leading-[0.92] sm:text-7xl md:text-8xl tracking-tight break-words enter enter-d2"
           data-testid="hero-name"
         >
           <span className="chrome-text">HEY </span>
           <span className="electric-text glow-text">{name}</span>
         </h1>
 
-        <div className="text-[11px] sm:text-xs text-white/40 font-chakra uppercase tracking-[0.28em] mt-1">
+        <div className="text-[11px] sm:text-xs text-white/40 font-chakra uppercase tracking-[0.28em] mt-2 enter enter-d3">
           {dateStr}
         </div>
 
-        {/* Daily quote — always visible */}
-        <div className="dash-quote" data-testid="daily-quote-hero">
-          <QuoteIcon size={16} className="text-[#00BFFF] shrink-0 opacity-70 mt-0.5" />
+        {/* Daily quote */}
+        <div className="dash-quote--mega enter enter-d4" data-testid="daily-quote-hero">
+          <QuoteIcon size={16} className="text-[#00E5FF] shrink-0 opacity-80 mt-0.5" style={{ filter: "drop-shadow(0 0 6px rgba(0,229,255,0.6))" }} />
           <div className="min-w-0">
-            <p className="font-teko text-lg sm:text-2xl leading-snug text-white tracking-wide">
+            <p className="font-teko text-xl sm:text-2xl leading-snug text-white tracking-wide">
               „{quote.text}"
             </p>
-            <div className="text-[9px] sm:text-[10px] text-white/40 mt-1.5 font-chakra tracking-[0.3em]">
+            <div className="text-[9px] sm:text-[10px] text-white/40 mt-2 font-chakra tracking-[0.3em]">
               — {quote.author}
             </div>
           </div>
         </div>
 
+        {/* Resume CTA */}
         {onResume && (
           <button
             onClick={onResume}
-            className="dash-hero__resume btn-primary w-full mt-4 flex items-center justify-center gap-2"
+            className="btn-resume-mega btn-primary w-full mt-5 flex items-center justify-center gap-2 text-base sm:text-lg py-4 enter enter-d5"
             data-testid="hero-resume-btn"
           >
-            <Play size={18} /> {resumeLabel || "TRAINING FORTSETZEN"}
+            <Play size={20} />
+            {resumeLabel || "TRAINING FORTSETZEN"}
           </button>
         )}
       </div>

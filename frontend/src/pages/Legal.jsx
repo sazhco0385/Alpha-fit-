@@ -3,7 +3,7 @@ import Logo from "../components/Logo";
 import { ArrowLeft } from "lucide-react";
 
 const COMPANY = {
-  name: "Sky-Networks UG",
+  name: "S.L solutions UG",
   owner: "Sascha Lübke",
   street: "Friedastraße 7",
   city: "24937 Flensburg",
@@ -204,7 +204,7 @@ export function Datenschutz() {
 
       <Section title="4. KI-gestützter Trainings-Coach (OpenAI / Emergent)">
         <p>
-          Zur Erstellung und Anpassung deines Trainingsplans sowie für den Coach-Chat nutzen wir KI-Modelle (OpenAI GPT-5.5) über die
+          Zur Erstellung und Anpassung deines Trainingsplans sowie für den Coach-Chat nutzen wir KI-Modelle (OpenAI GPT-5.6) über die
           Emergent-Plattform als Vermittler. Hierbei werden folgende Daten an die KI übermittelt:
         </p>
         <ul className="list-disc list-inside mt-2 space-y-1">

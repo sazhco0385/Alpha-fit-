@@ -89,7 +89,7 @@ class NutritionNameRequest(BaseModel):
 
 @router.post("/nutrition/analyze-name")
 async def analyze_food_name(payload: NutritionNameRequest, user: dict = Depends(get_current_user)):
-    """Schätzt Nährwerte für ein bekanntes Lebensmittel ohne Foto (Text-only GPT-5.5)."""
+    """Schätzt Nährwerte für ein bekanntes Lebensmittel ohne Foto (Text-only GPT-5.6)."""
     name = (payload.food_name or "").strip()
     if not name or len(name) < 2:
         raise HTTPException(status_code=400, detail="Bitte einen Namen eingeben (min. 2 Zeichen).")
