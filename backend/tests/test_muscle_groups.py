@@ -142,7 +142,7 @@ def test_seed_session_counts_brust_and_beine(headers, admin_id, db):
     })
 
     try:
-        r = requests.get(f"{API}/muscle-groups/stats?weeks=1", headers=headers)
+        r = requests.get(f"{API}/muscle-groups/stats?weeks=1&mode=absolute", headers=headers)
         assert r.status_code == 200
         data = r.json()
         by_key = {g["key"]: g for g in data["groups"]}
@@ -202,7 +202,7 @@ def test_percent_formula_with_two_sessions(headers, admin_id, db):
         session_ids.append(sid)
 
     try:
-        r = requests.get(f"{API}/muscle-groups/stats?weeks=1", headers=headers)
+        r = requests.get(f"{API}/muscle-groups/stats?weeks=1&mode=absolute", headers=headers)
         data = r.json()
         by_key = {g["key"]: g for g in data["groups"]}
         # brust hit at least 2 times, baseline=2 → 100

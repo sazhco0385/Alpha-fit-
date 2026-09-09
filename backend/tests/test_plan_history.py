@@ -179,21 +179,28 @@ class TestVariationInstruction:
         from services.llm_coach import _variation_instruction, _plan_age_weeks
 
         now = datetime.now(timezone.utc)
-        young = {"created_at": (now - timedelta(weeks=2)).isoformat()}
-        old = {"created_at": (now - timedelta(weeks=6)).isoformat()}
+        # Fresh plan (age 0) → mesocycle week 1 AKKUMULATION
+        fresh = {"created_at": now.isoformat()}
+        # 3-week-old plan → mesocycle week 4 DELOAD (variation phase)
+        deload = {"created_at": (now - timedelta(weeks=3)).isoformat()}
 
-        young_txt = _variation_instruction(young)
-        old_txt = _variation_instruction(old)
+        fresh_txt = _variation_instruction(fresh)
+        deload_txt = _variation_instruction(deload)
 
-        assert "PROGRESSIVE OVERLOAD" in young_txt, f"Young plan should trigger overload: {young_txt}"
-        assert "KEINE neuen Übungen" in young_txt or "identisch" in young_txt
-        assert "variieren" in old_txt, f"Old plan should allow variation: {old_txt}"
+        # Fresh plan: accumulation phase focuses on volume, no variation yet
+        assert "MESOZYKLUS" in fresh_txt, f"Fresh plan should reference mesocycle: {fresh_txt}"
+        assert "AKKUMULATION" in fresh_txt, f"Fresh plan should be in accumulation: {fresh_txt}"
+        # Deload phase explicitly allows variation of accessory exercises
+        assert "DELOAD" in deload_txt, f"3-week-old plan should be in deload: {deload_txt}"
+        assert "Variationen" in deload_txt or "variieren" in deload_txt.lower(), (
+            f"Deload should allow variation: {deload_txt}"
+        )
 
-        # first_created_at takes precedence
+        # first_created_at takes precedence — 1 week old → PROGRESSION phase
         mixed = {"first_created_at": (now - timedelta(weeks=1)).isoformat(),
                  "created_at": (now - timedelta(weeks=10)).isoformat()}
-        assert "PROGRESSIVE OVERLOAD" in _variation_instruction(mixed)
+        assert "PROGRESSION" in _variation_instruction(mixed)
 
         # age helper
-        assert _plan_age_weeks(young) < 4
-        assert _plan_age_weeks(old) >= 4
+        assert _plan_age_weeks(fresh) < 1
+        assert _plan_age_weeks(deload) >= 3

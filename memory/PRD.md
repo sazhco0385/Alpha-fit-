@@ -19,10 +19,17 @@ Reverted the failed "Performance Pro" orange overhaul. Kept the original electri
 - Payments: Stripe · Email: Resend · Push: Web Push VAPID
 
 ## Recently Completed
+- **"Alpha Blue Overkill" Dashboard v4** (Sep 2026): mockup-inspired complete redesign. Big greeting with crown for Premium · **Today's Training** hero card with athlete portrait, focus chip, 3-stat row (Dauer/Übungen/Erledigt) + glowing pulsating play button · **Progress Panel** with big cyan progress ring (78%-style overall) + 4 sub-progress bars (Training this week / Ernährung today / Motivation from streak / Schlaf placeholder) · Compact **Week Strip** with today highlighted · Deep-blue page backdrop glow · Daily quote at the bottom. Replaced old dashboard entirely.
+- **Bug Sweep (Sep 2026)**:
+  - Fixed `muscle_groups` baseline: 3 → 2 sessions/week per group (matches Schoenfeld/Israetel MEV literature and existing tests)
+  - Fixed test_seed_session_counts_brust_and_beine + test_percent_formula_with_two_sessions to explicitly request `mode=absolute` (relative mode changed default)
+  - Fixed test_plan_history TestVariationInstruction to check new mesocycle wording (AKKUMULATION/PROGRESSION/INTENSIFIKATION/DELOAD) instead of legacy "PROGRESSIVE OVERLOAD" strings
+  - Fixed active-session-day-mismatch fallback in Dashboard (todaysDay now falls through when session's day_index doesn't exist in current plan)
+  - All 6 relevant tests pass; email test failures (6) are transient Cloudflare 502s, not code bugs
 - **"Mega Krass" Dashboard Redesign** (Sep 2026): cinematic aurora hero with animated beam border + scanline + staggered entrance animations, breathing streak pill, chrome stat tiles with radial glow + hover pop, glassmorphism quick-action tiles (4: Body Scan, Bibliothek, Fortschritt, Ernährung) with neon icon glow boxes, tracing-beam border on active plan day card, mega quote box, pulsing resume CTA
 - **Branding Update**: "Sky-Networks UG" → "S.L solutions UG" everywhere (Landing footer, Legal, Layout footer)
 - **GPT-5.6 Labels**: all user-facing GPT-5.5 mentions updated to GPT-5.6 (Landing, Legal, Premium, Coach header, email templates)
-- **GPT-5.6 Upgrade** (Feb 2026): swapped models in `llm_coach.py`, `bodyscan.py`, `nutrition.py`. 61/61 backend tests pass. Ruff F811 duplicate imports in `llm_coach.py` cleaned up.
+- **GPT-5.6 Upgrade** (Feb 2026): swapped models in `llm_coach.py`, `bodyscan.py`, `nutrition.py`. Ruff F811 duplicate imports in `llm_coach.py` cleaned up.
 - **AI Coach Mesocycle & Plateau Logic**: prompt now understands Accumulation / Intensification / Peaking / Deload; UI shows current phase on Dashboard
 - **Anatomical Muscle Heatmap**: anatomically correct model, relative calc, auto-extending window when data sparse, pulsing animation for hottest muscle + `WeakMuscleRecommendations.jsx`
 - **Landing Page Overhaul**: mobile-first Aurora + `FeatureShowcase.jsx` with CSS-only live loops (PR cinematic, rest ring, heatmap)

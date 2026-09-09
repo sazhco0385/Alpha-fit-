@@ -113,8 +113,8 @@ async def muscle_group_stats(weeks: int = 4, mode: str = "relative", user: dict 
     scores: Dict[str, float] = {g["key"]: session_hits[g["key"]] * 1.0 + set_counts[g["key"]] * 0.25 for g in _GROUPS}
     max_score = max(scores.values()) if scores else 0
 
-    # Absolute baseline: 3 sessions/week per group ≈ 100 %
-    baseline_sessions = 3 * effective_weeks
+    # Absolute baseline: 2 sessions/week per group ≈ 100 % (Schoenfeld/Israetel MEV)
+    baseline_sessions = 2 * effective_weeks
 
     result = []
     for g in _GROUPS:
